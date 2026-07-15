@@ -55,8 +55,8 @@ const SliderSlide = ({ banner, height, width, isMobile }) => {
               <div style={banner?.text_color ? { color: banner.text_color } : undefined}>
                 {subtitle && <h4 style={fontStyle(banner, "subtitle", isMobile, banner?.text_color ? { color: banner.text_color } : undefined)}>{subtitle}</h4>}
                 {title && <h1 style={fontStyle(banner, "title", isMobile, banner?.text_color ? { color: banner.text_color } : undefined)}>{title}</h1>}
-                <Link href={href} className="btn btn-solid hover-solid btn-md">
-                  {banner?.button_text || "Shop Now"}
+                <Link href={href} className="btn btn-solid hover-solid btn-md" style={fontStyle(banner, "button", isMobile)}>
+                  {pick(banner, "button_text", isMobile) || "Shop Now"}
                 </Link>
               </div>
             </div>
