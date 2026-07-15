@@ -20,10 +20,20 @@ const colClass = (pos) => {
   }
 };
 
+const pick = (banner, key, isMobile) => (isMobile && banner?.[`${key}_mobile`]) || banner?.[key];
+const fontStyle = (banner, prefix, isMobile, colorStyle) => {
+  const family = pick(banner, `${prefix}_font_family`, isMobile);
+  const size = pick(banner, `${prefix}_font_size`, isMobile);
+  const style = { ...(colorStyle || {}) };
+  if (family) style.fontFamily = family;
+  if (size) style.fontSize = `${size}px`;
+  return Object.keys(style).length ? style : undefined;
+};
+
 const SliderSlide = ({ banner, height, width, isMobile }) => {
   const src = resolveUrl(banner, isMobile);
-  const title = (isMobile && banner?.title_mobile) || banner?.title;
-  const subtitle = (isMobile && banner?.subtitle_mobile) || banner?.subtitle;
+  const title = pick(banner, "title", isMobile);
+  const subtitle = pick(banner, "subtitle", isMobile);
   const href = banner?.redirect_link?.link
     ? banner.redirect_link.link_type === "collection"
       ? `/category/${banner.redirect_link.link}`
@@ -43,8 +53,8 @@ const SliderSlide = ({ banner, height, width, isMobile }) => {
           <div className={colClass(banner?.text_position)}>
             <div className="slider-contain">
               <div style={banner?.text_color ? { color: banner.text_color } : undefined}>
-                {subtitle && <h4 style={banner?.text_color ? { color: banner.text_color } : undefined}>{subtitle}</h4>}
-                {title && <h1 style={banner?.text_color ? { color: banner.text_color } : undefined}>{title}</h1>}
+                {subtitle && <h4 style={fontStyle(banner, "subtitle", isMobile, banner?.text_color ? { color: banner.text_color } : undefined)}>{subtitle}</h4>}
+                {title && <h1 style={fontStyle(banner, "title", isMobile, banner?.text_color ? { color: banner.text_color } : undefined)}>{title}</h1>}
                 <Link href={href} className="btn btn-solid hover-solid btn-md">
                   {banner?.button_text || "Shop Now"}
                 </Link>

@@ -18,6 +18,14 @@ const HomeServices = ({ services, type }) => {
   const pickImg = (s) => (isMobile && s?.image_url_mobile) || s?.image_url;
   const pickTitle = (s) => (isMobile && s?.title_mobile) || s?.title;
   const pickDesc = (s) => (isMobile && s?.description_mobile) || s?.description;
+  const fontStyle = (s, prefix) => {
+    const family = (isMobile && s?.[`${prefix}_font_family_mobile`]) || s?.[`${prefix}_font_family`];
+    const size = (isMobile && s?.[`${prefix}_font_size_mobile`]) || s?.[`${prefix}_font_size`];
+    const style = {};
+    if (family) style.fontFamily = family;
+    if (size) style.fontSize = `${size}px`;
+    return Object.keys(style).length ? style : undefined;
+  };
   return (
     <>
       <Row className="g-sm-4 g-3">
@@ -28,9 +36,9 @@ const HomeServices = ({ services, type }) => {
                 <div className="service-block1">
                   <Image height={59} width={59} src={getMediaSrc(pickImg(service))} alt={pickTitle(service)} />
                   <div className="service-skeleton-img"></div>
-                  <h4>{pickTitle(service)}</h4>
+                  <h4 style={fontStyle(service, "title")}>{pickTitle(service)}</h4>
                   <h4 className="skeleton-content-h4"></h4>
-                  <p>{pickDesc(service)}</p>
+                  <p style={fontStyle(service, "description")}>{pickDesc(service)}</p>
                   <p className="skeleton-content-p"></p>
                 </div>
               </div>
@@ -41,9 +49,9 @@ const HomeServices = ({ services, type }) => {
                     <Image height={59} width={59} src={getMediaSrc(pickImg(service))} alt={pickTitle(service)} />
                     <div className="skeleton-img-box"></div>
                     <div className="media-body">
-                      <h4>{pickTitle(service)}</h4>
+                      <h4 style={fontStyle(service, "title")}>{pickTitle(service)}</h4>
                       <h4 className="skeleton-content-h4"></h4>
-                      <p>{pickDesc(service)}</p>
+                      <p style={fontStyle(service, "description")}>{pickDesc(service)}</p>
                       <p className="skeleton-content-p"></p>
                     </div>
                   </div>

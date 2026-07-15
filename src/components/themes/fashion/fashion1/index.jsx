@@ -20,6 +20,16 @@ import HomeSlider from '../../widgets/HomeSlider'
 import HomeSocialMedia from '../../widgets/HomeSocialMedia'
 import HomeTitle from '../../widgets/HomeTitle'
 
+const pickField = (obj, key, isMobile) => (isMobile && obj?.[`${key}_mobile`]) || obj?.[key];
+const fontStyle = (obj, prefix, isMobile, base) => {
+  const family = pickField(obj, `${prefix}_font_family`, isMobile);
+  const size = pickField(obj, `${prefix}_font_size`, isMobile);
+  const style = { ...(base || {}) };
+  if (family) style.fontFamily = family;
+  if (size) style.fontSize = `${size}px`;
+  return Object.keys(style).length ? style : undefined;
+};
+
 const offerBannerPositionClass = (pos) => {
   switch (pos) {
     case 'right': return ' p-right';
@@ -109,8 +119,8 @@ const Fashion1 = () => {
                     return (t || s) ? (
                       <div className="contain-banner banner-3" style={{ pointerEvents: 'none', zIndex: 2 }}>
                         <div style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
-                          {s && <h4 style={b1.text_color ? { color: b1.text_color } : undefined}>{s}</h4>}
-                          {t && <h2 className="font-smaller" style={b1.text_color ? { color: b1.text_color } : undefined}>{t}</h2>}
+                          {s && <h4 style={fontStyle(b1, 'subtitle', isMobile, b1.text_color ? { color: b1.text_color } : undefined)}>{s}</h4>}
+                          {t && <h2 className="font-smaller" style={fontStyle(b1, 'title', isMobile, b1.text_color ? { color: b1.text_color } : undefined)}>{t}</h2>}
                         </div>
                       </div>
                     ) : null;
@@ -139,8 +149,8 @@ const Fashion1 = () => {
                     return (t || s) ? (
                       <div className="contain-banner banner-3" style={{ pointerEvents: 'none', zIndex: 2 }}>
                         <div style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
-                          {s && <h4 style={b2.text_color ? { color: b2.text_color } : undefined}>{s}</h4>}
-                          {t && <h2 className="font-smaller" style={b2.text_color ? { color: b2.text_color } : undefined}>{t}</h2>}
+                          {s && <h4 style={fontStyle(b2, 'subtitle', isMobile, b2.text_color ? { color: b2.text_color } : undefined)}>{s}</h4>}
+                          {t && <h2 className="font-smaller" style={fontStyle(b2, 'title', isMobile, b2.text_color ? { color: b2.text_color } : undefined)}>{t}</h2>}
                         </div>
                       </div>
                     ) : null;
