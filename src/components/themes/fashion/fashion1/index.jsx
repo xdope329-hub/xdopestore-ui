@@ -7,6 +7,7 @@ import { horizontalProductSlider } from '@/data/sliderSetting/SliderSetting'
 import Loader from '@/layout/loader'
 import { ImagePath } from '@/utils/constants'
 import useCustomDataQuery from '@/utils/hooks/useCustomDataQuery'
+import useIsMobile from '@/utils/hooks/useIsMobile'
 import { useSkeletonLoader2 } from '@/utils/hooks/useSkeleton2'
 import React, { useContext, useEffect } from 'react'
 import { Container, Row } from 'reactstrap'
@@ -32,6 +33,7 @@ const Fashion1 = () => {
   const { data, isLoading, refetch, fetchStatus } = useCustomDataQuery({
     params: 'fashion_one',
   })
+  const isMobile = useIsMobile()
   const { setGetProductIds, isRefetching: productLoad } =
     useContext(ProductIdsContext)
   const { setGetBrandIds, isLoading: brandLoading } =
@@ -100,14 +102,19 @@ const Fashion1 = () => {
                   {data?.offer_banner?.banner_1?.text_bg && (
                     <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1, pointerEvents: 'none' }} />
                   )}
-                  {(data?.offer_banner?.banner_1?.title || data?.offer_banner?.banner_1?.subtitle) && (
-                    <div className="contain-banner banner-3" style={{ pointerEvents: 'none', zIndex: 2 }}>
-                      <div style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
-                        {data?.offer_banner?.banner_1?.subtitle && <h4 style={data.offer_banner.banner_1.text_color ? { color: data.offer_banner.banner_1.text_color } : undefined}>{data.offer_banner.banner_1.subtitle}</h4>}
-                        {data?.offer_banner?.banner_1?.title && <h2 className="font-smaller" style={data.offer_banner.banner_1.text_color ? { color: data.offer_banner.banner_1.text_color } : undefined}>{data.offer_banner.banner_1.title}</h2>}
+                  {(() => {
+                    const b1 = data?.offer_banner?.banner_1 || {};
+                    const t = (isMobile && b1.title_mobile) || b1.title;
+                    const s = (isMobile && b1.subtitle_mobile) || b1.subtitle;
+                    return (t || s) ? (
+                      <div className="contain-banner banner-3" style={{ pointerEvents: 'none', zIndex: 2 }}>
+                        <div style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
+                          {s && <h4 style={b1.text_color ? { color: b1.text_color } : undefined}>{s}</h4>}
+                          {t && <h2 className="font-smaller" style={b1.text_color ? { color: b1.text_color } : undefined}>{t}</h2>}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ) : null;
+                  })()}
                 </div>
               </div>
             )}
@@ -125,14 +132,19 @@ const Fashion1 = () => {
                   {data?.offer_banner?.banner_2?.text_bg && (
                     <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1, pointerEvents: 'none' }} />
                   )}
-                  {(data?.offer_banner?.banner_2?.title || data?.offer_banner?.banner_2?.subtitle) && (
-                    <div className="contain-banner banner-3" style={{ pointerEvents: 'none', zIndex: 2 }}>
-                      <div style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
-                        {data?.offer_banner?.banner_2?.subtitle && <h4 style={data.offer_banner.banner_2.text_color ? { color: data.offer_banner.banner_2.text_color } : undefined}>{data.offer_banner.banner_2.subtitle}</h4>}
-                        {data?.offer_banner?.banner_2?.title && <h2 className="font-smaller" style={data.offer_banner.banner_2.text_color ? { color: data.offer_banner.banner_2.text_color } : undefined}>{data.offer_banner.banner_2.title}</h2>}
+                  {(() => {
+                    const b2 = data?.offer_banner?.banner_2 || {};
+                    const t = (isMobile && b2.title_mobile) || b2.title;
+                    const s = (isMobile && b2.subtitle_mobile) || b2.subtitle;
+                    return (t || s) ? (
+                      <div className="contain-banner banner-3" style={{ pointerEvents: 'none', zIndex: 2 }}>
+                        <div style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
+                          {s && <h4 style={b2.text_color ? { color: b2.text_color } : undefined}>{s}</h4>}
+                          {t && <h2 className="font-smaller" style={b2.text_color ? { color: b2.text_color } : undefined}>{t}</h2>}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ) : null;
+                  })()}
                 </div>
               </div>
             )}
