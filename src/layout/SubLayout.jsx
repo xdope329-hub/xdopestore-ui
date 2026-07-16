@@ -14,7 +14,6 @@ import MobileMenu from './header/widgets/MobileMenu'
 import NewsLetterModal from './newsLetterModal'
 import RecentPurchase from './recentPurchase'
 import TapTop from './tapTop'
-import ThemeCustomizer from './themeCustomizer'
 
 const SubLayout = ({ children }) => {
   const isTabActive = TabFocusChecker()
@@ -124,7 +123,6 @@ const SubLayout = ({ children }) => {
       {children}
       <AuthModal />
       {theme != 'full_page' && <Footers />}
-      <ThemeCustomizer />
       <NextTopLoader showSpinner={false} />
       <RecentPurchase />
       {themeOption?.popup?.news_letter?.is_enable && (
