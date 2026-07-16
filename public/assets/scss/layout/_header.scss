@@ -1515,11 +1515,16 @@ header {
   }
 
   .brand-logo {
-    display: inline-block;
-    padding-block: calc(15px + (35 - 15) * ((100vw - 575px) / (1920 - 575)));
+    display: inline-flex;
+    align-items: center;
+    padding-block: calc(6px + (12 - 6) * ((100vw - 575px) / (1920 - 575)));
 
     img {
-      width: calc(110px + (176 - 110) * ((100vw - 320px) / (1920 - 320)));
+      width: auto;
+      height: auto;
+      max-height: calc(48px + (72 - 48) * ((100vw - 575px) / (1920 - 575)));
+      max-width: 100%;
+      object-fit: contain;
     }
   }
 
