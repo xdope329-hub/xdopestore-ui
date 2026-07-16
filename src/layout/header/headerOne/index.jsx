@@ -77,6 +77,12 @@ const HeaderOne = () => {
                     <div id="mainnav">
                       <div className="header-nav-middle">
                         <div className="main-nav navbar navbar-expand-xl navbar-light navbar-sticky">
+                          {mobileSideBar && (
+                            <div
+                              className="offcanvas-backdrop fade show d-xl-none"
+                              onClick={() => setMobileSideBar(false)}
+                            />
+                          )}
                           <div className={`offcanvas offcanvas-collapse order-xl-2 ${mobileSideBar ? 'show' : ''}`}>
                             <div className="offcanvas-header navbar-shadow">
                               <h5>{t('Menu')}</h5>
