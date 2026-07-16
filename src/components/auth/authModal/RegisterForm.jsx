@@ -6,11 +6,13 @@ import { AllCountryCode } from "@/data/CountryCode";
 import Btn from "@/elements/buttons/Btn";
 import syncLocalCart from "@/utils/customFunctions/SyncLocalCart";
 import { saveSession } from "@/utils/axiosUtils";
-import { YupObject, emailSchema, nameSchema, passwordConfirmationSchema, passwordSchema, phoneSchema } from "@/utils/validation/ValidationSchema";
+import { YupObject, emailSchema, nameSchema, passwordConfirmationSchema, passwordSchema, phoneSchema, recaptchaSchema } from "@/utils/validation/ValidationSchema";
+import CaptchaField, { RECAPTCHA_SITE_KEY } from "@/components/auth/common/CaptchaField";
+import GoogleLoginButton from "@/components/auth/common/GoogleLoginButton";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
-import React, { useContext, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "reactstrap";
 
@@ -24,8 +26,15 @@ const RegisterForm = () => {
   const { setOpenAuthModal } = useContext(ThemeOptionContext);
   const { refetch: cartRefetch } = useContext(CartContext) || {};
   const router = useRouter();
+  const captchaRef = useRef(null);
 
-  const handleSubmit = async (values) => {
+  const resetCaptcha = (setFieldValue) => {
+    if (!RECAPTCHA_SITE_KEY) return;
+    captchaRef.current?.reset?.();
+    setFieldValue && setFieldValue("recaptcha", "");
+  };
+
+  const handleSubmit = async (values, { setFieldValue }) => {
     setIsSubmitting(true);
     setShowBoxMessage("");
     try {
@@ -37,6 +46,7 @@ const RegisterForm = () => {
         password: values.password,
         phone: values.phone,
         country_code: values.country_code,
+        recaptcha: values.recaptcha,
       };
       const res = await fetch(`${API_URL}/register`, {
         method: "POST",
@@ -64,10 +74,12 @@ const RegisterForm = () => {
         }
       } else {
         setShowBoxMessage(data?.message || "Registration failed");
+        resetCaptcha(setFieldValue);
       }
     } catch (err) {
       console.error("Register error:", err);
       setShowBoxMessage(`Registration failed: ${err.message}`);
+      resetCaptcha(setFieldValue);
     } finally {
       setIsSubmitting(false);
     }
@@ -82,6 +94,7 @@ const RegisterForm = () => {
         password_confirmation: "",
         country_code: "57",
         phone: "",
+        recaptcha: "",
       }}
       validationSchema={YupObject({
         name: nameSchema,
@@ -89,10 +102,11 @@ const RegisterForm = () => {
         password: passwordSchema,
         password_confirmation: passwordConfirmationSchema,
         phone: phoneSchema,
+        ...(RECAPTCHA_SITE_KEY ? { recaptcha: recaptchaSchema } : {}),
       })}
       onSubmit={handleSubmit}
     >
-      {({ errors, touched }) => (
+      {({ errors, touched, setFieldValue, submitCount }) => (
         <Form className="auth-form-box">
           {showBoxMessage && (
             <div role="alert" className="alert alert-danger login-alert">
@@ -142,9 +156,14 @@ const RegisterForm = () => {
             </div>
           </div>
 
+          <CaptchaField innerRef={captchaRef} onChange={(token) => setFieldValue("recaptcha", token)} />
+          {submitCount > 0 && errors.recaptcha && (
+            <div className="invalid-feedback d-block mb-2">{errors.recaptcha}</div>
+          )}
           <Btn loading={isSubmitting} type="submit" disabled={isSubmitting || !checkboxChecked} className={`btn ${checkboxChecked ? "" : "disabled"}`}>
             {isSubmitting ? "Creating..." : t("CreateAccount")}
           </Btn>
+          <GoogleLoginButton onError={setShowBoxMessage} />
         </Form>
       )}
     </Formik>

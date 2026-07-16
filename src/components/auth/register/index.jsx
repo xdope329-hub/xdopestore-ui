@@ -4,11 +4,13 @@ import CartContext from "@/context/cartContext";
 import Breadcrumbs from "@/utils/commonComponents/breadcrumb";
 import syncLocalCart from "@/utils/customFunctions/SyncLocalCart";
 import { saveSession } from "@/utils/axiosUtils";
-import { YupObject, emailSchema, nameSchema, passwordConfirmationSchema, passwordSchema } from "@/utils/validation/ValidationSchema";
+import { YupObject, emailSchema, nameSchema, passwordConfirmationSchema, passwordSchema, recaptchaSchema } from "@/utils/validation/ValidationSchema";
+import CaptchaField, { RECAPTCHA_SITE_KEY } from "@/components/auth/common/CaptchaField";
+import GoogleLoginButton from "@/components/auth/common/GoogleLoginButton";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
-import { useContext, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Col, Container, Row } from "reactstrap";
 
@@ -20,8 +22,15 @@ const RegisterContainer = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { refetch: cartRefetch } = useContext(CartContext) || {};
   const router = useRouter();
+  const captchaRef = useRef(null);
 
-  const handleSubmit = async (values) => {
+  const resetCaptcha = (setFieldValue) => {
+    if (!RECAPTCHA_SITE_KEY) return;
+    captchaRef.current?.reset?.();
+    setFieldValue && setFieldValue("recaptcha", "");
+  };
+
+  const handleSubmit = async (values, { setFieldValue }) => {
     setIsSubmitting(true);
     setShowBoxMessage("");
     try {
@@ -29,6 +38,7 @@ const RegisterContainer = () => {
         name: values.name,
         email: values.email,
         password: values.password,
+        recaptcha: values.recaptcha,
       };
       const res = await fetch(`${API_URL}/register`, {
         method: "POST",
@@ -49,10 +59,12 @@ const RegisterContainer = () => {
         router.push("/account/dashboard");
       } else {
         setShowBoxMessage(data?.message || "Registration failed");
+        resetCaptcha(setFieldValue);
       }
     } catch (err) {
       console.error("Register error:", err);
       setShowBoxMessage(`Registration failed: ${err.message}`);
+      resetCaptcha(setFieldValue);
     } finally {
       setIsSubmitting(false);
     }
@@ -78,16 +90,18 @@ const RegisterContainer = () => {
                     email: "",
                     password: "",
                     password_confirmation: "",
+                    recaptcha: "",
                   }}
                   validationSchema={YupObject({
                     name: nameSchema,
                     email: emailSchema,
                     password: passwordSchema,
                     password_confirmation: passwordConfirmationSchema,
+                    ...(RECAPTCHA_SITE_KEY ? { recaptcha: recaptchaSchema } : {}),
                   })}
                   onSubmit={handleSubmit}
                 >
-                  {({ errors, touched }) => (
+                  {({ errors, touched, setFieldValue, submitCount }) => (
                     <Form className="theme-form">
                       <Row className="form-row">
                         <Col md="4">
@@ -113,9 +127,17 @@ const RegisterContainer = () => {
                           {errors.password_confirmation && touched.password_confirmation && <ErrorMessage name="password_confirmation" render={() => <div className="invalid-feedback d-block">{errors.password_confirmation}</div>} />}
                         </Col>
 
+                        <Col md="12">
+                          <CaptchaField innerRef={captchaRef} onChange={(token) => setFieldValue("recaptcha", token)} />
+                          {submitCount > 0 && errors.recaptcha && (
+                            <div className="invalid-feedback d-block mb-2">{errors.recaptcha}</div>
+                          )}
+                        </Col>
+
                         <Btn loading={isSubmitting} type="submit" disabled={isSubmitting} className="btn-solid w-auto">
                           {isSubmitting ? "Creating..." : t("CreateAccount")}
                         </Btn>
+                        <GoogleLoginButton onError={setShowBoxMessage} />
                       </Row>
                     </Form>
                   )}

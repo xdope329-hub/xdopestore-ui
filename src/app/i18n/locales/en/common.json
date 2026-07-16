@@ -1,6 +1,6 @@
 {
-  "NoTagsFound": " No Tags Found",  
-  "StartSelling":"StartSelling",
+  "NoTagsFound": " No Tags Found",
+  "StartSelling": "StartSelling",
   "TotalPrice": "Total Price",
   "EnterReason": "Enter reason",
   "EnableAfterDelivery": "Enable after delivery",
@@ -465,7 +465,7 @@
   "Weight": "Weight",
   "NoItemsAdded": "No Items Added",
   "NoItemsAddedDescription": "It appears that nothing has been added to your cart. Explore categories if you want to.",
-  "NoCompareItemsAddedDescription":"It appears that nothing has been added to your Compare. Explore categories if you want to.",  
+  "NoCompareItemsAddedDescription": "It appears that nothing has been added to your Compare. Explore categories if you want to.",
   "Compare": "Compare",
   "EnterFullName": "Enter Full Name",
   "EnterPhoneNumber": "Enter Phone Number",
@@ -704,5 +704,6 @@
   "AddressAddedSuccessfully": "Address added successfully",
   "AddressUpdatedSuccessfully": "Address updated successfully",
   "ProfileUpdatedSuccessfully": "Profile updated successfully",
-  "SubscribedSuccessfully": "Subscribed successfully"
+  "SubscribedSuccessfully": "Subscribed successfully",
+  "GoogleLoginFailed": "Google sign-in failed. Please try again."
 }

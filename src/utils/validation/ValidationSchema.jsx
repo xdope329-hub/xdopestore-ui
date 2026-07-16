@@ -5,7 +5,7 @@ export const YupObject = (schemaObject) => Yup.object().shape(schemaObject);
 export const emailSchema = Yup.string().email("Enter Valid Email").required("Email is required");
 export const passwordSchema = Yup.string().min(8, "Too Short!").max(20, "Too Long!").required();
 export const nameSchema = Yup.string().required();
-export const recaptchaSchema = Yup.string().required();
+export const recaptchaSchema = Yup.string().required("Please complete the captcha");
 export const descriptionSchema = Yup.string().required().min(10, "The description must be at least 10 characters.");
 export const roleIdSchema = Yup.string().required();
 export const permissionsSchema = Yup.array().min(1).required();
