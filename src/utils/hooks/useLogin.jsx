@@ -11,10 +11,11 @@ import { LoginAPI } from "../axiosUtils/API";
 import syncLocalCart from "../customFunctions/SyncLocalCart";
 import { YupObject, emailSchema, passwordSchema, recaptchaSchema } from "../validation/ValidationSchema";
 
+// Captcha is only enforced when the site key is configured at build time.
 export const LogInSchema = YupObject({
   email: emailSchema,
   password: passwordSchema,
-  recaptcha: recaptchaSchema,
+  ...(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ? { recaptcha: recaptchaSchema } : {}),
 });
 
 const LoginHandle = async (responseData, router, refetch, CallBackUrl, cartRefetch, setShowBoxMessage, addToWishlist, setOpenAuthModal) => {

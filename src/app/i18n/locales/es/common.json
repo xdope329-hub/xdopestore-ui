@@ -1,6 +1,6 @@
 {
   "NoTagsFound": "No se encontraron etiquetas",
-  "StartSelling":"Empezar a vender",
+  "StartSelling": "Empezar a vender",
   "TotalPrice": "Precio total",
   "EnterReason": "Ingresar motivo",
   "EnableAfterDelivery": "Habilitar después de la entrega",
@@ -706,5 +706,6 @@
   "AddressAddedSuccessfully": "Dirección agregada exitosamente",
   "AddressUpdatedSuccessfully": "Dirección actualizada exitosamente",
   "ProfileUpdatedSuccessfully": "Perfil actualizado exitosamente",
-  "SubscribedSuccessfully": "Suscripción exitosa"
+  "SubscribedSuccessfully": "Suscripción exitosa",
+  "GoogleLoginFailed": "No se pudo iniciar sesión con Google. Inténtalo de nuevo."
 }
