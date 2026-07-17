@@ -29,7 +29,20 @@ const FooterThree = () => {
   };
 
   return (
-    <footer className="footer-style-1" style={{ backgroundColor: themeOption?.footer?.bg_color }}>
+    <footer
+      className="footer-style-1"
+      style={{
+        backgroundColor: themeOption?.footer?.bg_color,
+        fontFamily: themeOption?.footer?.font_family || undefined,
+        color: themeOption?.footer?.text_color || undefined,
+      }}
+    >
+      {themeOption?.footer?.text_color && (
+        <style>{`.footer-style-1, .footer-style-1 *:not(i):not(svg):not(path) { color: ${themeOption.footer.text_color} !important; }`}</style>
+      )}
+      {themeOption?.footer?.font_family && (
+        <style>{`.footer-style-1, .footer-style-1 * { font-family: ${themeOption.footer.font_family} !important; }`}</style>
+      )}
       <section className="section-b-space darken-layout section-t-space">
         <Container>
           <Row className="footer-theme g-md-5 g-2">
