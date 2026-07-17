@@ -1,7 +1,7 @@
 import acceptLanguage from "accept-language";
 import { createInstance } from "i18next";
 import resourcesToBackend from "i18next-resources-to-backend";
-import { cookies as getCookies, headers as getHeaders } from "next/headers";
+import { cookies as getCookies } from "next/headers";
 import { cache } from "react";
 import { initReactI18next } from "react-i18next/initReactI18next";
 import "server-only";
@@ -22,14 +22,13 @@ const cookieName = "i18next";
 
 export async function detectLanguage() {
   const cookies = await getCookies();
-  const headers = await getHeaders();
 
   let language;
+  // Only honour an explicit choice (the i18next cookie set by the language
+  // switcher). Browser Accept-Language is intentionally ignored so the store
+  // always defaults to Spanish (fallbackLng) for first-time visitors.
   if (!language && cookies.has(cookieName)) {
     language = acceptLanguage.get(cookies.get(cookieName)?.value);
-  }
-  if (!language) {
-    language = acceptLanguage.get(headers.get("Accept-Language"));
   }
   if (!language) {
     language = fallbackLng;
