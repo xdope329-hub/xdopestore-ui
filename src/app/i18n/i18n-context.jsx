@@ -15,6 +15,9 @@ i18next
   .init({
     ...getOptions(),
     detection: {
+      // Only the explicit choice (cookie) counts — never the browser's
+      // navigator language — so Spanish stays the default for new visitors.
+      order: ["cookie"],
       caches: ["cookie"],
     },
   });
