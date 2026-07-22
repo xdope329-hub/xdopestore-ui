@@ -12,11 +12,16 @@ import ThemeOptionContext from "@/context/themeOptionsContext";
 const MenuList = ({ menu, isOpen, setIsOpen, level }) => {
   const { t } = useTranslation("common");
   const router = useRouter();
+  const isAuthenticated = Cookies.get("uat");
+  const { setOpenAuthModal, setMobileSideBar } = useContext(ThemeOptionContext);
+
+  // Close the mobile drawer after picking a menu entry (covers same-page
+  // selections too, where the route-change listener wouldn't fire).
+  const closeDrawer = () => setMobileSideBar && setMobileSideBar(false);
   const redirect = (path) => {
+    closeDrawer();
     router.push(`/${path}`);
   };
-  const isAuthenticated = Cookies.get("uat");
-  const { setOpenAuthModal } = useContext(ThemeOptionContext);
 
   const protectedRoutes = [`/account/dashboard`, `/account/notification`, `/account/point`, `/account/refund`, `/account/order`, `/account/addresses`, `/wishlist`];
 
@@ -45,14 +50,14 @@ const MenuList = ({ menu, isOpen, setIsOpen, level }) => {
         )}
 
         {menu.link_type === "link" && menu.is_target_blank === 0 && (
-          <Link onClick={() => protectedRoute(menu.path)} className={`dropdown-item ${isOpen[level] === menu.title ? "show" : ""}`} href={`${menu.path.charAt(0) == "/" ? menu.path : `/${menu.path}`}`}>
+          <Link onClick={() => { protectedRoute(menu.path); closeDrawer(); }} className={`dropdown-item ${isOpen[level] === menu.title ? "show" : ""}`} href={`${menu.path.charAt(0) == "/" ? menu.path : `/${menu.path}`}`}>
             {t(menu.title)}
             {menu.badge_text && <label className={`menu-label ${menu?.badge_color ? menu?.badge_color : ""}`}>{menu?.badge_text}</label>}
           </Link>
         )}
 
         {menu?.is_target_blank === 1 && (
-          <a className={`dropdown-item ${isOpen[level] === menu?.title ? "show" : ""}`} href={menu?.path}>
+          <a className={`dropdown-item ${isOpen[level] === menu?.title ? "show" : ""}`} href={menu?.path} onClick={closeDrawer}>
             {t(menu?.title)}
             {menu?.badge_text && <label className={`menu-label ${menu?.badge_color ? menu?.badge_color : ""}`}>{menu?.badge_text}</label>}
           </a>

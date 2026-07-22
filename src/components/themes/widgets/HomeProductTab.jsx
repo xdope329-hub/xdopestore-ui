@@ -48,7 +48,18 @@ const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle,
     return categoryData.filter((cat) => idSet.has(cat.id));
   };
 
-  const filteredCategories = isFilterCategoryDataNested ? filterCategoryDataNested(categoryData, categoryIds) : filterCategoryData(categoryData, categoryIds);
+  const filteredCategoriesRaw = isFilterCategoryDataNested ? filterCategoryDataNested(categoryData, categoryIds) : filterCategoryData(categoryData, categoryIds);
+
+  // Fallback: if the configured category_ids don't resolve to any real
+  // category (stale/empty config, or an id-format mismatch), don't leave the
+  // tab silently empty — show the product categories that actually have
+  // products, preferring those with a product count.
+  const filteredCategories = (() => {
+    if (filteredCategoriesRaw?.length) return filteredCategoriesRaw;
+    const all = categoryData || [];
+    const withProducts = all.filter((c) => Number(c?.products_count) > 0);
+    return withProducts.length ? withProducts : all;
+  })();
 
   // Auto-select the first category as soon as the tab list is available so the
   // storefront shows its products by default (instead of "No Product Found").
@@ -62,6 +73,13 @@ const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle,
   const { data: product, refetch, fetchStatus, isLoading } = useFetchQuery([currentCategory], () => request({ url: ProductAPI, params: { category_ids: currentCategory || customSelectedId, status: 1, paginate: paginate ? paginate : 4 } }, router), { enabled: !!(currentCategory || customSelectedId), refetchOnWindowFocus: false, select: (res) => res?.data?.data });
 
   const changeTab = (index, category) => {
+    // Clicking the already-active category (always the case when only one
+    // category is configured) navigates to that category's product page;
+    // clicking a different tab keeps the inline tab-switching behaviour.
+    if (activeTab === index && currentCategory === category?.id && category?.slug) {
+      router.push(`/category/${category.slug}`);
+      return;
+    }
     setActiveTab(index);
     setCurrentCategory(category?.id);
   };

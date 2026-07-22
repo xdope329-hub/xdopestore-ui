@@ -707,5 +707,7 @@
   "AddressUpdatedSuccessfully": "Dirección actualizada exitosamente",
   "ProfileUpdatedSuccessfully": "Perfil actualizado exitosamente",
   "SubscribedSuccessfully": "Suscripción exitosa",
-  "GoogleLoginFailed": "No se pudo iniciar sesión con Google. Inténtalo de nuevo."
+  "GoogleLoginFailed": "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
+  "LoginToContinue": "Inicia sesión para continuar al pago",
+  "LoginToContinueDescription": "Tu carrito está guardado. Inicia sesión o crea una cuenta para completar tu compra."
 }

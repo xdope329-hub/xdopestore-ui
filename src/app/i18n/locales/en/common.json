@@ -705,5 +705,7 @@
   "AddressUpdatedSuccessfully": "Address updated successfully",
   "ProfileUpdatedSuccessfully": "Profile updated successfully",
   "SubscribedSuccessfully": "Subscribed successfully",
-  "GoogleLoginFailed": "Google sign-in failed. Please try again."
+  "GoogleLoginFailed": "Google sign-in failed. Please try again.",
+  "LoginToContinue": "Log in to continue to payment",
+  "LoginToContinueDescription": "Your cart is saved. Please log in or create an account to complete your purchase."
 }

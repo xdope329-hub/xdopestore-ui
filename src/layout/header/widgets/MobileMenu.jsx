@@ -1,5 +1,7 @@
+import CartContext from "@/context/cartContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
 import { Href } from "@/utils/constants";
+import useBumpOnIncrease from "@/utils/hooks/useBumpOnIncrease";
 import { t } from "i18next";
 import Cookies from "js-cookie";
 import Link from "next/link";
@@ -9,6 +11,9 @@ import { RiHeartLine, RiHome2Line, RiSearch2Line, RiShoppingBagLine, RiUserLine 
 
 const MobileMenu = () => {
   const { setOpenAuthModal, setCartCanvas } = useContext(ThemeOptionContext);
+  const { cartProducts } = useContext(CartContext) || {};
+  const cartCount = cartProducts?.length || 0;
+  const cartBumped = useBumpOnIncrease(cartCount);
 
   const isAuthenticated = Cookies.get("uat");
   const router = useRouter();
@@ -40,8 +45,11 @@ const MobileMenu = () => {
           </Link>
         </li>
         <li className={active == "3" ? "active" : ""}>
-          <a href={Href} onClick={() => setCartCanvas(true)}>
-            <RiShoppingBagLine />
+          <a href={Href} onClick={() => setCartCanvas(true)} style={{ position: "relative" }}>
+            <span className={cartBumped ? "cart-bump" : ""} style={{ display: "inline-flex", position: "relative" }}>
+              <RiShoppingBagLine />
+              {cartCount > 0 && <span className="mobile-cart-badge">{cartCount}</span>}
+            </span>
             <span>{t("Cart")}</span>
           </a>
         </li>
