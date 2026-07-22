@@ -33,3 +33,12 @@
   text-align: center;
   font-weight: 600;
 }
+
+/* The bottom navigation now shows on product pages too — lift the product
+   page's floating checkout pill above it so they don't overlap on mobile
+   (the bottom bar is ~66px tall). */
+@media (max-width: 767px) {
+  .stickyCart .sticky-bottom-cart {
+    bottom: 78px;
+  }
+}

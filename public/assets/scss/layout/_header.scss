@@ -1576,7 +1576,10 @@ header {
 
         @media (max-width: 578px) {
 
-          &:nth-child(2),
+          /* On phones hide only the wishlist icon. The cart icon must stay
+             visible: the cart drawer component is nested inside it, so hiding
+             this li also hid the drawer (add-to-cart gave no visible feedback
+             and the bottom-bar Cart button appeared dead). */
           &:first-child {
             display: none;
           }

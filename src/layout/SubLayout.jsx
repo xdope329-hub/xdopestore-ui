@@ -119,7 +119,9 @@ const SubLayout = ({ children }) => {
   return (
     <>
       <Headers />
-      {pathName?.split('/')[1].toLowerCase() != 'product' && <MobileMenu />}
+      {/* Bottom navigation is available on every page, product pages included
+          (the product page's floating checkout pill is offset above it). */}
+      <MobileMenu />
       {children}
       <AuthModal />
       {theme != 'full_page' && <Footers />}
