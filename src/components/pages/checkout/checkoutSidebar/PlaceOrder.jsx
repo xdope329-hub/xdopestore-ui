@@ -1,5 +1,6 @@
 import Btn from "@/elements/buttons/Btn";
 import CartContext from "@/context/cartContext";
+import ThemeOptionContext from "@/context/themeOptionsContext";
 import request from "@/utils/axiosUtils";
 import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 import Cookies from "js-cookie";
@@ -11,6 +12,7 @@ const PlaceOrder = ({ values, addToCartData, errors }) => {
   const { t } = useTranslation("common");
   const access_token = Cookies.get("uat");
   const router = useRouter();
+  const { setOpenAuthModal } = useContext(ThemeOptionContext) || {};
   const [disable, setDisable] = useState(true);
   const [loading, setLoading] = useState(false);
   // Cart context is used to flush the local cart state after a successful
@@ -81,6 +83,18 @@ const PlaceOrder = ({ values, addToCartData, errors }) => {
       setLoading(false);
     }
   };
+  // Guests must authenticate before they can pay: the place-order button
+  // becomes a "log in to continue" action that opens the auth modal.
+  if (!access_token) {
+    return (
+      <div className="text-end">
+        <Btn className="order-btn" onClick={() => setOpenAuthModal && setOpenAuthModal(true)}>
+          {t("LoginToContinue")}
+        </Btn>
+      </div>
+    );
+  }
+
   return (
     <div className="text-end">
       {addToCartData?.is_digital_only ? (

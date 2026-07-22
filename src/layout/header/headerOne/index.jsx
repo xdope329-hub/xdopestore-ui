@@ -3,8 +3,8 @@ import ThemeOptionContext from '@/context/themeOptionsContext'
 import WishlistContext from '@/context/wishlistContext'
 import { useHeaderScroll } from '@/utils/hooks/HeaderScroll'
 import Cookies from 'js-cookie'
-import { useRouter } from 'next/navigation'
-import { useContext, useEffect, useMemo, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { RiHeartLine, RiLogoutBoxRLine, RiMenuLine, RiUserLine, RiDashboardLine } from 'react-icons/ri'
 import { Button, Col, Container, Row } from 'reactstrap'
 import HeaderCart from '../widgets/headerCart'
@@ -19,6 +19,34 @@ const HeaderOne = () => {
   const UpScroll = useHeaderScroll(false)
   const { t } = useTranslation('common')
   const router = useRouter()
+  const pathname = usePathname()
+
+  // Close the mobile drawer whenever the route changes — this handles every
+  // navigation from inside the drawer (menu links, etc.). Submenu toggles
+  // don't change the path, so they correctly leave the drawer open.
+  useEffect(() => {
+    setMobileSideBar(false)
+  }, [pathname])
+
+  // Swipe-to-close: the drawer slides in from the left, so a leftward drag
+  // (or a clear horizontal swipe) dismisses it, like a native side menu.
+  const touchRef = useRef(null)
+  const onDrawerTouchStart = (e) => {
+    const touch = e.changedTouches[0]
+    touchRef.current = { x: touch.clientX, y: touch.clientY }
+  }
+  const onDrawerTouchEnd = (e) => {
+    if (!touchRef.current) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - touchRef.current.x
+    const dy = t.clientY - touchRef.current.y
+    touchRef.current = null
+    // Mostly-horizontal leftward swipe past a threshold → close.
+    if (dx < -60 && Math.abs(dx) > Math.abs(dy)) {
+      setMobileSideBar(false)
+    }
+  }
+
   const wishlistCount = useMemo(() => {
     const fromIds = wishlistIds ? Object.keys(wishlistIds).length : 0
     return fromIds || (wishlistProducts?.length ?? 0)
@@ -83,7 +111,11 @@ const HeaderOne = () => {
                               onClick={() => setMobileSideBar(false)}
                             />
                           )}
-                          <div className={`offcanvas offcanvas-collapse order-xl-2 ${mobileSideBar ? 'show' : ''}`}>
+                          <div
+                            className={`offcanvas offcanvas-collapse order-xl-2 ${mobileSideBar ? 'show' : ''}`}
+                            onTouchStart={onDrawerTouchStart}
+                            onTouchEnd={onDrawerTouchEnd}
+                          >
                             <div className="offcanvas-header navbar-shadow">
                               <h5>{t('Menu')}</h5>
                               <Button close className="lead" id="toggle_menu_btn" type="button" onClick={() => setMobileSideBar(false)}>

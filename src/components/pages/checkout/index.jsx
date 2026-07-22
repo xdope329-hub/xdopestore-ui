@@ -14,6 +14,7 @@ import { Form, Formik } from "formik";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { Fragment, useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Col, Row } from "reactstrap";
 import * as Yup from "yup";
 import CheckoutForm from "./CheckoutForm";
@@ -23,17 +24,21 @@ import DeliveryOptions from "./DeliveryOptions";
 import PaymentOptions from "./PaymentOptions";
 
 const CheckoutContent = () => {
+  const { t } = useTranslation("common");
   const { accountData, refetch } = useContext(AccountContext);
   const { settingData } = useContext(SettingContext);
   const [address, setAddress] = useState([]);
   const [modal, setModal] = useState("");
   const router = useRouter();
   const [accessToken, setAccessToken] = useState(null);
+  const { isLoading: themeLoad, openAuthModal, setOpenAuthModal } = useContext(ThemeOptionContext);
 
+  // Re-read the auth cookie whenever the auth modal opens/closes, so once a
+  // guest logs in from the checkout prompt the address/payment UI appears
+  // without a manual refresh.
   useEffect(() => {
-    const token = Cookies.get("uat");
-    setAccessToken(token);
-  }, []);
+    setAccessToken(Cookies.get("uat"));
+  }, [openAuthModal]);
 
   const { data: addressData, refetch: refetchAddresses } = useFetchQuery(
     [AddressAPI],
@@ -63,7 +68,6 @@ const CheckoutContent = () => {
       addToCartRefetch();
     }
   }, [addToCartLoader, accessToken]);
-  const { isLoading: themeLoad } = useContext(ThemeOptionContext);
 
   const addressSchema = Yup.object().shape({
     title: nameSchema,
@@ -137,9 +141,15 @@ const CheckoutContent = () => {
                   <Col lg="7">
                     <div className="left-sidebar-checkout">
                       <div className="checkout-detail-box">
-                        {settingData?.activation?.guest_checkout && !accessToken && (
+                        {!accessToken && (
                           <div className="checkout-form-section">
-                            <CheckoutForm values={values} setFieldValue={setFieldValue} errors={errors} />
+                            <div className="checkout-login-required theme-card text-center p-4">
+                              <h4 className="mb-2">{t("LoginToContinue")}</h4>
+                              <p className="mb-3">{t("LoginToContinueDescription")}</p>
+                              <button type="button" className="btn btn-solid" onClick={() => setOpenAuthModal(true)}>
+                                {t("Login")}
+                              </button>
+                            </div>
                           </div>
                         )}
                         {accessToken && (
