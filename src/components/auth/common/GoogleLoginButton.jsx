@@ -11,32 +11,49 @@ import { useContext, useEffect, useRef } from "react";
 const API_URL = process.env.API_PROD_URL || "http://localhost:5000";
 // NEXT_PUBLIC_ vars are inlined into the client bundle at build time.
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
 /**
  * "Sign in with Google" button (Google Identity Services).
  * Renders nothing until NEXT_PUBLIC_GOOGLE_CLIENT_ID is configured, so the
  * app works unchanged before the OAuth client is created.
  *
+ * When reCAPTCHA is configured, the captcha must be completed BEFORE Google
+ * sign-in: pass the form's captcha token via `recaptchaToken`. Until it is
+ * present, an invisible blocker sits over the button and clicking it surfaces
+ * "complete the captcha first". The token is sent to the API, which verifies
+ * it server-side (same middleware as the password login).
+ *
  * On success it performs the same session bootstrap as the password login:
  * saveSession -> account cookie -> guest-cart sync -> close modal / redirect.
  */
-const GoogleLoginButton = ({ onError }) => {
+const GoogleLoginButton = ({ onError, recaptchaToken, onCaptchaConsumed }) => {
   const { setOpenAuthModal } = useContext(ThemeOptionContext) || {};
   const { refetch: cartRefetch } = useContext(CartContext) || {};
   const router = useRouter();
   const btnRef = useRef(null);
   const initialized = useRef(false);
 
+  // Latest captcha token for the GSI callback (initialized once) to read.
+  const tokenRef = useRef(recaptchaToken);
+  useEffect(() => {
+    tokenRef.current = recaptchaToken;
+  }, [recaptchaToken]);
+
+  const captchaBlocked = !!RECAPTCHA_SITE_KEY && !recaptchaToken;
+
   const handleCredential = async (response) => {
     try {
       const res = await fetch(`${API_URL}/login/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ credential: response?.credential }),
+        body: JSON.stringify({ credential: response?.credential, recaptcha: tokenRef.current }),
       });
       const data = await res.json();
       if (!res.ok) {
         onError && onError(data?.message || "GoogleLoginFailed");
+        // The captcha token was consumed by the server check — force a redo.
+        RECAPTCHA_SITE_KEY && onCaptchaConsumed && onCaptchaConsumed();
         return;
       }
 
@@ -93,7 +110,21 @@ const GoogleLoginButton = ({ onError }) => {
   return (
     <>
       <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
-      <div className="google-login-btn mt-3 d-flex justify-content-center" ref={btnRef} data-testid="google-login" />
+      <div className="position-relative">
+        <div
+          className="google-login-btn mt-3 d-flex justify-content-center"
+          ref={btnRef}
+          data-testid="google-login"
+          style={captchaBlocked ? { opacity: 0.55 } : undefined}
+        />
+        {captchaBlocked && (
+          <div
+            data-testid="google-captcha-block"
+            onClick={() => onError && onError("CompleteCaptchaFirst")}
+            style={{ position: "absolute", inset: 0, zIndex: 2, cursor: "not-allowed" }}
+          />
+        )}
+      </div>
     </>
   );
 };

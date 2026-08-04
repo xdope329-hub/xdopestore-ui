@@ -78,8 +78,8 @@ const LoginForm = ({ setState }) => {
   return (
     <Formik
       initialValues={{
-        email: "consumer@xdope.com",
-        password: "Consumer@123",
+        email: "",
+        password: "",
         recaptcha: "",
       }}
       validationSchema={YupObject({
@@ -89,7 +89,7 @@ const LoginForm = ({ setState }) => {
       })}
       onSubmit={handleSubmit}
     >
-      {({ errors, touched, setFieldValue, submitCount }) => (
+      {({ values, errors, touched, setFieldValue, submitCount }) => (
         <Form className="auth-form-box">
           {showBoxMessage && (
             <div role="alert" className="alert alert-danger login-alert">
@@ -110,7 +110,7 @@ const LoginForm = ({ setState }) => {
               <div className="invalid-feedback d-block">{errors.password}</div>
             )}
             <a href={Href} className="forgot" onClick={() => setState("forgot")}>
-              {t("ForgotYourPassword")}?
+              {t("ForgotYourPassword")}
             </a>
           </div>
           <CaptchaField innerRef={captchaRef} onChange={(token) => setFieldValue("recaptcha", token)} />
@@ -120,7 +120,7 @@ const LoginForm = ({ setState }) => {
           <Btn loading={isSubmitting} type="submit" disabled={isSubmitting}>
             {isSubmitting ? t("LoggingIn") : t("Login")}
           </Btn>
-          <GoogleLoginButton onError={setShowBoxMessage} />
+          <GoogleLoginButton onError={setShowBoxMessage} recaptchaToken={values.recaptcha} onCaptchaConsumed={() => resetCaptcha(setFieldValue)} />
         </Form>
       )}
     </Formik>

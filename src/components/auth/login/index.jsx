@@ -25,8 +25,8 @@ const LoginContainer = () => {
               <div className="theme-card">
                 <Formik
                   initialValues={{
-                    email: "consumer@xdope.com",
-                    password: "Consumer@123",
+                    email: "",
+                    password: "",
                     recaptcha: "",
                   }}
                   validationSchema={YupObject({
@@ -43,7 +43,7 @@ const LoginContainer = () => {
                     });
                   }}
                 >
-                  {({ errors, touched, setFieldValue, submitCount }) => (
+                  {({ values, errors, touched, setFieldValue, submitCount }) => (
                     <Form className="theme-form">
                       <FormGroup>
                         <label htmlFor="email">{t("Email")}</label>
@@ -62,7 +62,7 @@ const LoginContainer = () => {
                       <Btn  type="submit" className="btn-solid">
                         {t("Login")}
                       </Btn>
-                      <GoogleLoginButton />
+                      <GoogleLoginButton recaptchaToken={values.recaptcha} onCaptchaConsumed={() => { captchaRef.current?.reset?.(); setFieldValue("recaptcha", ""); }} />
                     </Form>
                   )}
                 </Formik>

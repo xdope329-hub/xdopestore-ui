@@ -27,6 +27,9 @@ async function checkExtras(page, scope) {
   if (STRICT === "1") {
     expect(captchaCount).toBe(1);
     expect(googleCount).toBe(1);
+    // Captcha is mandatory for Google sign-in too: with no token solved yet,
+    // the blocking overlay must be sitting over the Google button.
+    expect(await scope.locator('[data-testid="google-captcha-block"]').count()).toBe(1);
   } else if (STRICT === "0") {
     expect(captchaCount).toBe(0);
     expect(googleCount).toBe(0);
@@ -41,8 +44,15 @@ async function checkExtras(page, scope) {
 test("login page renders form and env-gated auth extras", async ({ page }) => {
   await page.goto("/auth/login", { waitUntil: "networkidle" });
   await page.locator(".loader-wrapper").waitFor({ state: "hidden", timeout: 15000 }).catch(() => {});
-  await expect(page.locator('input[name="email"]').first()).toBeVisible();
-  await expect(page.locator('input[name="password"]').first()).toBeVisible();
+  const email = page.locator('input[name="email"]').first();
+  const password = page.locator('input[name="password"]').first();
+  await expect(email).toBeVisible();
+  await expect(password).toBeVisible();
+  // Fields must start EMPTY with hint placeholders — never prefilled values.
+  await expect(email).toHaveValue("");
+  await expect(password).toHaveValue("");
+  expect(await email.getAttribute("placeholder")).toBeTruthy();
+  expect(await password.getAttribute("placeholder")).toBeTruthy();
   await checkExtras(page, page);
 });
 

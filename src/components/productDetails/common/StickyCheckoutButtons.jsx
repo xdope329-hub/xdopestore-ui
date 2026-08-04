@@ -33,7 +33,7 @@ const StickyCheckoutButtons = ({ productState, setProductState, extraOption, isD
         <>
           <ProductWholesale productState={productState} />
           <h4>
-            {"Total Price:"} <span className="theme-color">{convertCurrency(productState?.totalPrice)}</span>
+            {t("TotalPrice")}: <span className="theme-color">{convertCurrency(productState?.totalPrice)}</span>
           </h4>
         </>
       ) : null}
