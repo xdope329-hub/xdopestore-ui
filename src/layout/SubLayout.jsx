@@ -7,6 +7,7 @@ import Cookies from 'js-cookie'
 import { usePathname, useSearchParams } from 'next/navigation'
 import NextTopLoader from 'nextjs-toploader'
 import { useContext, useEffect, useState } from 'react'
+import ConfettiBurst from './confettiBurst'
 import ExitModal from './exitModal'
 import Footers from './footer'
 import Headers from './header'
@@ -126,6 +127,7 @@ const SubLayout = ({ children }) => {
       <AuthModal />
       {theme != 'full_page' && <Footers />}
       <NextTopLoader showSpinner={false} />
+      <ConfettiBurst />
       <RecentPurchase />
       {themeOption?.popup?.news_letter?.is_enable && (
         <NewsLetterModal />

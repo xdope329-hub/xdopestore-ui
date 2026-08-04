@@ -6,9 +6,7 @@ import Breadcrumbs from "@/utils/commonComponents/breadcrumb";
 import { useContext } from "react";
 import { Col } from "reactstrap";
 import ContactDetails from "./ContactDetails";
-import ContactLeftSideBox from "./ContactLeftSideBox";
 import ContactUsForm from "./ContactUsForm";
-import MapSection from "./MapSection";
 
 const ContactUsContent = () => {
   const { isLoading } = useContext(ThemeOptionContext);
@@ -24,10 +22,6 @@ const ContactUsContent = () => {
         <Col lg="7">
           <ContactUsForm />
         </Col>
-        <ContactLeftSideBox />
-      </WrapperComponent>
-      <WrapperComponent classes={{ sectionClass: "contact-page pt-0 overflow-hidden", fluidClass: "container-fluid p-0" }}>
-        <MapSection />
       </WrapperComponent>
     </>
   );

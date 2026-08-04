@@ -1,6 +1,7 @@
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
+import { fireConfetti } from "@/utils/customFunctions/Confetti";
 import { useRouter } from "next/navigation";
 import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,12 +16,15 @@ const StickyCheckoutButtons = ({ productState, setProductState, extraOption, isD
 
   const router = useRouter();
   const addToCart = () => {
+    fireConfetti();
     setCartCanvas(true);
     handleIncDec(productState?.productQty, productState?.product, false, false, false, productState);
   };
   const buyNow = () => {
+    fireConfetti();
     handleIncDec(productState?.productQty, productState?.product, false, false, false, productState);
-    router.push(`/checkout`);
+    // Let the confetti play before moving to checkout.
+    setTimeout(() => router.push(`/checkout`), 1100);
   };
 
   return (

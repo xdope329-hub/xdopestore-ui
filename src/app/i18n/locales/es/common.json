@@ -713,5 +713,7 @@
   "PaymentMethodCod": "Pago contra entrega",
   "PaymentMethodCodDescription": "Paga en efectivo cuando llegue tu pedido.",
   "PaymentMethodMercadoPago": "Mercado Pago",
-  "PaymentMethodMercadoPagoDescription": "Paga de forma segura con tarjeta, PSE o tu saldo de Mercado Pago."
+  "PaymentMethodMercadoPagoDescription": "Paga de forma segura con tarjeta, PSE o tu saldo de Mercado Pago.",
+  "AddedToCart": "Producto agregado al carrito",
+  "RemovedFromCart": "Producto eliminado del carrito"
 }
