@@ -101,29 +101,29 @@ const RegisterContainer = () => {
                   })}
                   onSubmit={handleSubmit}
                 >
-                  {({ errors, touched, setFieldValue, submitCount }) => (
+                  {({ values, errors, touched, setFieldValue, submitCount }) => (
                     <Form className="theme-form">
                       <Row className="form-row">
                         <Col md="4">
                           <label htmlFor="fname">{t("FullName")}</label>
-                          <Field className="form-control" name="name" type="text" id="fname" placeholder="First name" required />
+                          <Field className="form-control" name="name" type="text" id="fname" placeholder={t("FirstName")} required />
                           {errors.name && touched.name && <ErrorMessage name="name" render={() => <div className="invalid-feedback d-block">{errors.name}</div>} />}
                         </Col>
                         <Col md="4">
                           <label htmlFor="email">{t("Email")}</label>
-                          <Field className="form-control" name="email" type="text" id="email" placeholder="Email" required />
+                          <Field className="form-control" name="email" type="text" id="email" placeholder={t("Email")} required />
                           {errors.email && touched.email && <ErrorMessage name="email" render={() => <div className="invalid-feedback d-block">{errors.email}</div>} />}
                         </Col>
                       </Row>
                       <Row className="form-row">
                         <Col md="6">
                           <label htmlFor="password">{t("Password")}</label>
-                          <Field className="form-control" type="password" name="password" id="password" placeholder="Enter your password" required />
+                          <Field className="form-control" type="password" name="password" id="password" placeholder={t("EnterYourPassword")} required />
                           {errors.password && touched.password && <ErrorMessage name="password" render={() => <div className="invalid-feedback d-block">{errors.password}</div>} />}
                         </Col>
                         <Col md="6">
                           <label htmlFor="password_confirmation">{t("ConfirmPassword")}</label>
-                          <Field className="form-control" name="password_confirmation" type="password" id="password_confirmation" placeholder="Confirm your password" required />
+                          <Field className="form-control" name="password_confirmation" type="password" id="password_confirmation" placeholder={t("ConfirmYourPassword")} required />
                           {errors.password_confirmation && touched.password_confirmation && <ErrorMessage name="password_confirmation" render={() => <div className="invalid-feedback d-block">{errors.password_confirmation}</div>} />}
                         </Col>
 
@@ -135,9 +135,9 @@ const RegisterContainer = () => {
                         </Col>
 
                         <Btn loading={isSubmitting} type="submit" disabled={isSubmitting} className="btn-solid w-auto">
-                          {isSubmitting ? "Creating..." : t("CreateAccount")}
+                          {isSubmitting ? t("Creating") : t("CreateAccount")}
                         </Btn>
-                        <GoogleLoginButton onError={setShowBoxMessage} />
+                        <GoogleLoginButton onError={setShowBoxMessage} recaptchaToken={values.recaptcha} onCaptchaConsumed={() => resetCaptcha(setFieldValue)} />
                       </Row>
                     </Form>
                   )}

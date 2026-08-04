@@ -106,7 +106,7 @@ const RegisterForm = () => {
       })}
       onSubmit={handleSubmit}
     >
-      {({ errors, touched, setFieldValue, submitCount }) => (
+      {({ values, errors, touched, setFieldValue, submitCount }) => (
         <Form className="auth-form-box">
           {showBoxMessage && (
             <div role="alert" className="alert alert-danger login-alert">
@@ -161,9 +161,9 @@ const RegisterForm = () => {
             <div className="invalid-feedback d-block mb-2">{errors.recaptcha}</div>
           )}
           <Btn loading={isSubmitting} type="submit" disabled={isSubmitting || !checkboxChecked} className={`btn ${checkboxChecked ? "" : "disabled"}`}>
-            {isSubmitting ? "Creating..." : t("CreateAccount")}
+            {isSubmitting ? t("Creating") : t("CreateAccount")}
           </Btn>
-          <GoogleLoginButton onError={setShowBoxMessage} />
+          <GoogleLoginButton onError={setShowBoxMessage} recaptchaToken={values.recaptcha} onCaptchaConsumed={() => resetCaptcha(setFieldValue)} />
         </Form>
       )}
     </Formik>

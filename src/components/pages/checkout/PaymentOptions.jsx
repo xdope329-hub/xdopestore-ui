@@ -17,10 +17,16 @@ const PaymentOptions = ({ values, setFieldValue }) => {
   const { t } = useTranslation("common");
   const { settingData } = useContext(SettingContext);
   const [initial, setInitial] = useState("");
+  // Pre-select the first ACTIVE payment method from settings (never a hidden
+  // one — previously this hardcoded "cod", which broke once COD was disabled).
   useEffect(() => {
-    setFieldValue("payment_method", "cod");
-    setInitial(0);
-  }, []);
+    const methods = settingData?.payment_methods || [];
+    const firstActiveIndex = methods.findIndex((m) => m?.status);
+    if (firstActiveIndex !== -1) {
+      setFieldValue("payment_method", methods[firstActiveIndex].name);
+      setInitial(firstActiveIndex);
+    }
+  }, [settingData?.payment_methods]);
   return (
     <CheckoutCard icon={<RiBankCardLine />}>
       <div className="checkout-title">
