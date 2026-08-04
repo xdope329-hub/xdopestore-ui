@@ -3,6 +3,7 @@ import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
 import { Href } from "@/utils/constants";
+import { fireConfetti } from "@/utils/customFunctions/Confetti";
 import { useRouter } from "next/navigation";
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,12 +22,15 @@ const ProductContent = ({ productState, setProductState, productAccordion, noDet
   const { setCartCanvas, themeOption } = useContext(ThemeOptionContext);
   const router = useRouter();
   const addToCart = () => {
+    fireConfetti();
     setCartCanvas(true);
     handleIncDec(productState?.productQty, productState?.product, false, false, false, productState);
   };
   const buyNow = () => {
+    fireConfetti();
     handleIncDec(productState?.productQty, productState?.product, false, false, false, productState);
-    router.push(`/checkout`);
+    // Let the confetti play before moving to checkout.
+    setTimeout(() => router.push(`/checkout`), 1100);
   };
   const [modal, setModal] = useState("");
   const activeModal = {

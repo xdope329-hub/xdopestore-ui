@@ -29,4 +29,9 @@ test('contact page: Spanish default, new text, only FB/IG/WhatsApp', async ({ pa
 
   // language switcher still allows English (dropdown shows Español as current)
   await expect(page.locator('#select-language span').first()).toHaveText(/Español/i);
+
+  // Removed sections stay removed: no phone/location/email/fax icon boxes,
+  // and no embedded map.
+  await expect(page.locator('.contact-right')).toHaveCount(0);
+  await expect(page.locator('.map-box, iframe[src*="google.com/maps"]')).toHaveCount(0);
 });

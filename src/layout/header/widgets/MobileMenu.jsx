@@ -1,12 +1,13 @@
 import CartContext from "@/context/cartContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
+import WishlistContext from "@/context/wishlistContext";
 import { Href } from "@/utils/constants";
 import useBumpOnIncrease from "@/utils/hooks/useBumpOnIncrease";
 import { t } from "i18next";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useContext, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { RiHeartLine, RiHome2Line, RiSearch2Line, RiShoppingBagLine, RiUserLine } from "react-icons/ri";
 
 const MobileMenu = () => {
@@ -14,6 +15,15 @@ const MobileMenu = () => {
   const { cartProducts } = useContext(CartContext) || {};
   const cartCount = cartProducts?.length || 0;
   const cartBumped = useBumpOnIncrease(cartCount);
+
+  // Wishlist indicator: show a count badge on the bottom-nav item whenever
+  // the wishlist has products, and bump it when something is added.
+  const { wishlistIds, wishlistProducts } = useContext(WishlistContext) || {};
+  const wishlistCount = useMemo(() => {
+    const fromIds = wishlistIds ? Object.keys(wishlistIds).length : 0;
+    return fromIds || (wishlistProducts?.length ?? 0);
+  }, [wishlistIds, wishlistProducts]);
+  const wishlistBumped = useBumpOnIncrease(wishlistCount);
 
   const isAuthenticated = Cookies.get("uat");
   const router = useRouter();
@@ -54,8 +64,11 @@ const MobileMenu = () => {
           </a>
         </li>
         <li className={active == "4" ? "active" : ""}>
-          <a href={Href} onClick={() => handleWishlist()}>
-            <RiHeartLine />
+          <a href={Href} onClick={() => handleWishlist()} style={{ position: "relative" }}>
+            <span className={wishlistBumped ? "cart-bump" : ""} style={{ display: "inline-flex", position: "relative" }}>
+              <RiHeartLine />
+              {wishlistCount > 0 && <span className="mobile-cart-badge">{wishlistCount}</span>}
+            </span>
             <span>{t("Wishlist")}</span>
           </a>
         </li>

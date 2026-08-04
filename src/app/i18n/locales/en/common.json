@@ -711,5 +711,7 @@
   "PaymentMethodCod": "Cash on delivery",
   "PaymentMethodCodDescription": "Pay in cash when your order arrives.",
   "PaymentMethodMercadoPago": "Mercado Pago",
-  "PaymentMethodMercadoPagoDescription": "Pay securely with card, PSE or your Mercado Pago balance."
+  "PaymentMethodMercadoPagoDescription": "Pay securely with card, PSE or your Mercado Pago balance.",
+  "AddedToCart": "Product added to cart",
+  "RemovedFromCart": "Product removed from cart"
 }

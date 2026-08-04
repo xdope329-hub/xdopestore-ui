@@ -118,6 +118,7 @@ const CartProvider = (props) => {
   const removeCart = (id, cartId) => {
     const updatedCart = cartProducts?.filter((item) => (item?.variation_id ? item?.variation_id !== id : item.product_id !== id));
     setCartProducts(updatedCart);
+    ToastNotification("success", i18next.t("RemovedFromCart"));
     // Mirror the deletion on the server so the user's cart in the DB matches.
     if (isCookie && cartId) {
       deleteCart(cartId);
@@ -175,6 +176,8 @@ const CartProvider = (props) => {
         sub_total: cloneVariation?.selectedVariation?.sale_price ? updatedQty * cloneVariation?.selectedVariation?.sale_price : updatedQty * productObj?.sale_price,
       };
       isCookie ? !isLoading && setCartProducts((prev) => [...prev, params]) : setCartProducts((prev) => [...prev, params]);
+      // A brand-new item just went into the cart — tell the user explicitly.
+      ToastNotification("success", i18next.t("AddedToCart"));
     } else {
       // Checking the Stock QTY of particular product
       const productStockQty = cart[index]?.variation?.quantity ? cart[index]?.variation?.quantity : cart[index]?.product?.quantity;
