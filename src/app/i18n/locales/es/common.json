@@ -709,5 +709,9 @@
   "SubscribedSuccessfully": "Suscripción exitosa",
   "GoogleLoginFailed": "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
   "LoginToContinue": "Inicia sesión para continuar al pago",
-  "LoginToContinueDescription": "Tu carrito está guardado. Inicia sesión o crea una cuenta para completar tu compra."
+  "LoginToContinueDescription": "Tu carrito está guardado. Inicia sesión o crea una cuenta para completar tu compra.",
+  "PaymentMethodCod": "Pago contra entrega",
+  "PaymentMethodCodDescription": "Paga en efectivo cuando llegue tu pedido.",
+  "PaymentMethodMercadoPago": "Mercado Pago",
+  "PaymentMethodMercadoPagoDescription": "Paga de forma segura con tarjeta, PSE o tu saldo de Mercado Pago."
 }

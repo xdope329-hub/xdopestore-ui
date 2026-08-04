@@ -6,6 +6,13 @@ import { Fragment, useContext, useEffect, useState } from "react";
 import SettingContext from "@/context/settingContext";
 import { ModifyString } from "@/utils/customFunctions/ModifyString";
 
+// Friendly display data per gateway; anything unknown falls back to the raw
+// name in uppercase (previous behaviour).
+const PAYMENT_METHOD_META = {
+  cod: { labelKey: "PaymentMethodCod", descriptionKey: "PaymentMethodCodDescription" },
+  mercadopago: { labelKey: "PaymentMethodMercadoPago", descriptionKey: "PaymentMethodMercadoPagoDescription" },
+};
+
 const PaymentOptions = ({ values, setFieldValue }) => {
   const { t } = useTranslation("common");
   const { settingData } = useContext(SettingContext);
@@ -41,7 +48,10 @@ const PaymentOptions = ({ values, setFieldValue }) => {
                             }}
                           />
                           <Label className="form-check-label" htmlFor={elem.name}>
-                            {ModifyString(elem?.name, "upper")}
+                            {PAYMENT_METHOD_META[elem?.name] ? t(PAYMENT_METHOD_META[elem.name].labelKey) : ModifyString(elem?.name, "upper")}
+                            {PAYMENT_METHOD_META[elem?.name]?.descriptionKey && (
+                              <small className="d-block text-muted">{t(PAYMENT_METHOD_META[elem.name].descriptionKey)}</small>
+                            )}
                           </Label>
                         </div>
                       </div>

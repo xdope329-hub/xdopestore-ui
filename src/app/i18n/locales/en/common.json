@@ -707,5 +707,9 @@
   "SubscribedSuccessfully": "Subscribed successfully",
   "GoogleLoginFailed": "Google sign-in failed. Please try again.",
   "LoginToContinue": "Log in to continue to payment",
-  "LoginToContinueDescription": "Your cart is saved. Please log in or create an account to complete your purchase."
+  "LoginToContinueDescription": "Your cart is saved. Please log in or create an account to complete your purchase.",
+  "PaymentMethodCod": "Cash on delivery",
+  "PaymentMethodCodDescription": "Pay in cash when your order arrives.",
+  "PaymentMethodMercadoPago": "Mercado Pago",
+  "PaymentMethodMercadoPagoDescription": "Pay securely with card, PSE or your Mercado Pago balance."
 }
