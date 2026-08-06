@@ -46,7 +46,9 @@ export async function generateMetadata({ params }) {
     robots,
     ...(canonical && { alternates: { canonical } }),
     openGraph: {
-      type: "product",
+      // "product" is not a valid Next.js OpenGraph type — it crashes the
+      // page in production builds ("Invalid OpenGraph type: product").
+      type: "website",
       title: ogTitle,
       description: ogDescription,
       ...(ogImage && { images: [{ url: ogImage, width: 1200, height: 630, alt: title }] }),

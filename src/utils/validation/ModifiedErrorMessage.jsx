@@ -3,10 +3,10 @@ export const handleModifier = (value) => {
         let newStr = value.replaceAll("_", " ")
         newStr = newStr.split(' ')[0].charAt(0).toUpperCase() + newStr.slice(1)
         newStr = newStr.split('field')[0]
-        return newStr;
+        return newStr.trim();
     } else {
         let modifyName = value?.split(' ')[0].charAt(0).toUpperCase() + value?.slice(1)
         modifyName = modifyName?.split('field')[0]
-        return modifyName;
+        return modifyName?.trim();
     }
 }

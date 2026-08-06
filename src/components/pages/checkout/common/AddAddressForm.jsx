@@ -32,7 +32,8 @@ const AddAddressForm = ({ mutate, isLoading, type, editAddress, setEditAddress, 
         phone: editAddress ? editAddress?.phone : "",
         type: type ? type : null,
         country_code: editAddress ? editAddress?.country_code : "57",
-        is_default: editAddress ? Boolean(editAddress?.is_default) : false,
+        // New addresses default to "save as default"; editing keeps the saved value.
+        is_default: editAddress?.id ? Boolean(editAddress?.is_default) : true,
       }}
       validationSchema={YupObject({
         title: nameSchema,

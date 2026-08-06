@@ -23,10 +23,10 @@ const ProductInformation = ({ productState }) => {
           </li>
         ) : null}
         <li>
-          {t("StockStatus")} :{productState?.selectedVariation?.stock_status ? ModifyString(productState?.selectedVariation?.stock_status, false, "_") : ModifyString(productState?.product?.stock_status, false, "_")}
+          {t("StockStatus")} : {t((productState?.selectedVariation?.stock_status ?? productState?.product?.stock_status) === "out_of_stock" ? "OutOfStock" : "InStock")}
         </li>
         <li>
-          {t("Quantity")} : {productState?.selectedVariation?.quantity ?? productState?.product?.quantity} Items Left
+          {t("Quantity")} : {productState?.selectedVariation?.quantity ?? productState?.product?.quantity} {t("ItemsLeft")}
         </li>
       </ul>
     </div>

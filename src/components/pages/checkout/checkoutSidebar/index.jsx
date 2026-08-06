@@ -11,7 +11,7 @@ import SidebarProduct from "./SidebarProduct";
 
 const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData }) => {
   const [storeCoupon, setStoreCoupon] = useState("");
-  const { cartProducts, isLoading: CartLoading, cartTotal } = useContext(CartContext);
+  const { cartProducts, isLoading: CartLoading, deleteCartLoader, cartTotal } = useContext(CartContext);
   const [errorCoupon, setErrorCoupon] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const { settingData } = useContext(SettingContext);
@@ -50,7 +50,7 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData }) => {
     // Don't auto-fire /checkout while the cart is still loading or is empty —
     // the API responds with 422 "Cart is empty" which would surface as an
     // error banner the moment the page loads. Wait until we know we have items.
-    if (CartLoading) return;
+    if (CartLoading || deleteCartLoader) return;
     if (!cartProducts?.length) return;
 
     // The /checkout endpoint reads `coupon_code` from the body, but Formik
@@ -72,7 +72,7 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData }) => {
         recompute();
       }
     }
-  }, [CartLoading, cartTotal, cartProducts?.length, errors, values["points_amount"], values["wallet_balance"], values["billing_address_id"], values["delivery_description"], values["payment_method"], values["shipping_address_id"], values["delivery_interval"], storeCoupon]);
+  }, [CartLoading, deleteCartLoader, cartTotal, cartProducts?.length, errors, values["points_amount"], values["wallet_balance"], values["billing_address_id"], values["delivery_description"], values["payment_method"], values["shipping_address_id"], values["delivery_interval"], storeCoupon]);
 
   return (
     <>

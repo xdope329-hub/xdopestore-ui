@@ -756,5 +756,21 @@
   "Error al inicializar el pago": "Could not start the payment",
   "Orden no encontrada": "Order not found",
   "No autorizado": "Not authorized",
-  "CompleteCaptchaFirst": "Please complete the captcha first"
+  "CompleteCaptchaFirst": "Please complete the captcha first",
+  "Country": "Country",
+  "State": "State",
+  "City": "City",
+  "Pincode": "Pincode",
+  "SelectCountry": "Select country",
+  "Title is a required": "Label is required",
+  "Street is a required": "Address is required",
+  "City is a required": "City is required",
+  "Pincode is a required": "Pincode is required",
+  "Phone is a required": "Phone is required",
+  "Country id is a required": "Country is required",
+  "State id is a required": "State is required",
+  "Title": "Label",
+  "InStock": "In Stock",
+  "Deleted Successfully": "Deleted successfully",
+  "MessageSentSuccessfully": "Message sent successfully"
 }
