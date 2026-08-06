@@ -204,27 +204,28 @@ export const bookSlider = (length) => {
 
 /* horizontalProductSlider */
 export const horizontalProductSlider = (length) => {
-  // Cap slots at the real item count and disable looping when everything
-  // fits — otherwise react-slick clones slides and items appear duplicated.
+  // Keep the slot count FIXED and only disable looping when everything fits.
+  // (infinite:false prevents react-slick's clone-duplication; a fixed
+  // slidesToShow keeps a lone product at normal card width instead of
+  // stretching it across the whole row.)
   const count = length || 1;
-  const show = (n) => Math.min(n, count);
   return {
     infinite: count > 4,
     swipeToSlide: true,
-    slidesToShow: show(4),
+    slidesToShow: 4,
     arrows: false,
     responsive: [
       {
         breakpoint: 992,
         settings: {
-          slidesToShow: show(3),
+          slidesToShow: 3,
           infinite: count > 3,
         },
       },
       {
         breakpoint: 767,
         settings: {
-          slidesToShow: show(2),
+          slidesToShow: 2,
           infinite: count > 2,
         },
       },
@@ -234,24 +235,23 @@ export const horizontalProductSlider = (length) => {
 
 export const dynamicHorizontalSlider = (length) => {
   const count = length || 1;
-  const show = (n) => Math.min(n, count);
   return {
     infinite: count > 4,
     swipeToSlide: true,
-    slidesToShow: show(4),
+    slidesToShow: 4,
     arrows: false,
     responsive: [
       {
         breakpoint: 992,
         settings: {
-          slidesToShow: show(3),
+          slidesToShow: 3,
           infinite: count > 3,
         },
       },
       {
         breakpoint: 767,
         settings: {
-          slidesToShow: show(2),
+          slidesToShow: 2,
           infinite: count > 2,
         },
       },
@@ -770,43 +770,42 @@ export const BrandSlider = (length) => {
   // already fits — otherwise react-slick clones slides and the same brand
   // appears repeated to fill the row.
   const count = length || 1;
-  const show = (n) => Math.min(n, count);
   return {
     dots: false,
     infinite: count > 5,
     speed: 300,
-    slidesToShow: show(5),
+    slidesToShow: 5,
     swipeToSlide: true,
     responsive: [
       {
         breakpoint: 1600,
         settings: {
-          slidesToShow: show(5),
-          slidesToScroll: show(5),
+          slidesToShow: 5,
+          slidesToScroll: 5,
           infinite: count > 5,
         },
       },
       {
         breakpoint: 1199,
         settings: {
-          slidesToShow: show(4),
-          slidesToScroll: show(4),
+          slidesToShow: 4,
+          slidesToScroll: 4,
           infinite: count > 4,
         },
       },
       {
         breakpoint: 992,
         settings: {
-          slidesToShow: show(3),
-          slidesToScroll: show(3),
+          slidesToShow: 3,
+          slidesToScroll: 3,
           infinite: count > 3,
         },
       },
       {
         breakpoint: 480,
         settings: {
-          slidesToShow: show(2),
-          slidesToScroll: show(2),
+          slidesToShow: 2,
+          slidesToScroll: 2,
           infinite: count > 2,
         },
       },
