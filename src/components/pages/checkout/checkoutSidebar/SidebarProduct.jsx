@@ -1,13 +1,15 @@
+import HandleQuantity from "@/components/cart/HandleQuantity";
 import { placeHolderImage } from "@/components/widgets/Placeholder";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import Image from "next/image";
 import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
+import { RiCloseLine } from "react-icons/ri";
 
 const SidebarProduct = ({ values }) => {
   const { t } = useTranslation("common");
-  const { cartProducts } = useContext(CartContext);
+  const { cartProducts, removeCart } = useContext(CartContext);
   const { convertCurrency } = useContext(SettingContext);
   return (
     <div className="checkout-details">
@@ -30,8 +32,20 @@ const SidebarProduct = ({ values }) => {
                   <h5 className="text-theme">
                     {item?.variation ? convertCurrency(item?.variation.sale_price) : convertCurrency(item?.product?.sale_price)} x {item.quantity}
                   </h5>
+                  <HandleQuantity productObj={item?.product} elem={item} />
                 </div>
-                <span className="text-theme">{convertCurrency((item?.variation ? item?.variation.sale_price : item?.product?.sale_price) * item.quantity)}</span>
+                <div className="d-flex flex-column align-items-end justify-content-between">
+                  <button
+                    type="button"
+                    className="btn p-0 border-0 bg-transparent text-content checkout-remove-item"
+                    aria-label={t("Remove")}
+                    title={t("Remove")}
+                    onClick={() => removeCart(item?.variation_id ? item?.variation_id : item?.product_id, item?.id)}
+                  >
+                    <RiCloseLine />
+                  </button>
+                  <span className="text-theme">{convertCurrency((item?.variation ? item?.variation.sale_price : item?.product?.sale_price) * item.quantity)}</span>
+                </div>
               </div>
             </li>
           ))}

@@ -89,9 +89,6 @@ const CartProvider = (props) => {
   // server cart (/cart) is the source of truth, so don't mirror state into
   // localStorage — otherwise the initial mount (cartProducts=[]) would wipe a
   // pending guest cart before the recovery sync has a chance to push it up.
-  useEffect(() => {
-    if (!isCookie) storeInLocalStorage();
-  }, [cartProducts]);
 
   // Getting total
   const total = useMemo(() => {
@@ -99,6 +96,17 @@ const CartProvider = (props) => {
       return prev + Number(curr.sub_total);
     }, 0);
   }, [getCartLoading, cartProducts, deleteCartLoader]);
+
+  useEffect(() => {
+    if (!isCookie) {
+      storeInLocalStorage();
+    } else {
+      // Logged-in: cartTotal must track local cart mutations too (qty +/-,
+      // removals). Server responses still overwrite it with authoritative
+      // values when they arrive; this keeps the UI consistent in between.
+      setCartTotal(total);
+    }
+  }, [cartProducts, total]);
 
   // Total Function for child components
   const getTotal = (value) => {
@@ -328,6 +336,7 @@ const CartProvider = (props) => {
         isLoading,
         getCartLoading,
         replaceCartLoader,
+        deleteCartLoader,
         replaceCart,
       }}
     >

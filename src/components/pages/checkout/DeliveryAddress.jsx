@@ -62,7 +62,7 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
       <CheckoutCard icon={<RiMapPinLine />}>
         <div className='checkout-title'>
           <h4>
-            {t(title)} {t('Address')}
+            {t(`${title}Address`)}
           </h4>
           <a className='d-flex align-items-center fw-bold' onClick={() => setModal(type)}>
             <RiAddLine className='me-1'></RiAddLine>

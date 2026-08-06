@@ -92,7 +92,7 @@ const ReactstrapSelectInput = ({ field, form: { touched, errors, setFieldValue }
     <>
       {props.label && (
         <Label htmlFor={props.inputprops.id}>
-          {props.label}
+          {t(props.label)}
         </Label>
       )}
       <div className="custom-select-box cursor-pointer" ref={ref}>

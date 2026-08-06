@@ -2,19 +2,28 @@ import SearchableSelectInput from "@/components/widgets/inputFields/SearchableSe
 import SimpleInputField from "@/components/widgets/inputFields/SimpleInputField";
 import { AllCountryCode } from "@/data/CountryCode";
 import Btn from "@/elements/buttons/Btn";
-import { Form } from "formik";
+import { Form, useFormikContext } from "formik";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Col, ModalFooter, Row } from "reactstrap";
 
 const SelectForm = ({ values, isLoading, data, setModal, isFooterDisplay = true }) => {
+  const { setFieldValue } = useFormikContext();
+  // Default the country to Colombia for new addresses once the catalog loads.
+  useEffect(() => {
+    if (!values?.country_id && data?.length && setFieldValue) {
+      const colombia = data.find((c) => c?.name === "Colombia") || data[0];
+      colombia && setFieldValue("country_id", colombia.id);
+    }
+  }, [data]);
   const { t } = useTranslation("common");
   return (
     <Form>
       <Row>
         <SimpleInputField
           nameList={[
-            { name: "title", placeholder: t("EnterTitle"), toplabel: "Title", colprops: { xs: 12 }, require: "true" },
             { name: "street", placeholder: t("EnterAddress"), toplabel: "Address", colprops: { xs: 12 }, require: "true" },
+            { name: "title", placeholder: t("EnterTitle"), toplabel: "Title", colprops: { xs: 12 }, require: "true" },
           ]}
         />
         <Col xs="12" className="phone-field">
@@ -47,7 +56,7 @@ const SelectForm = ({ values, isLoading, data, setModal, isFooterDisplay = true 
                 name: "country_id",
                 id: "country_id",
                 options: data,
-                defaultOption: t("SelectState"),
+                defaultOption: t("SelectCountry"),
               },
             },
             {
