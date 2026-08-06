@@ -6,17 +6,17 @@ const LinkBox = ({ menu }) => {
   return (
     <>
       {menu.link_type === "sub" ? (
-        <h5 className="dropdown-header">{menu.title}</h5>
+        <h5 className="dropdown-header">{t(menu.title)}</h5>
       ) : (
         <>
           {menu.link_type == "link" && menu.is_target_blank === 0 ? (
             <Link className="dropdown-item" href={menu?.path.charAt(0) == "/" ? `${menu?.path}` : `/${menu?.path}`}>
-              {menu.title}
+              {t(menu.title)}
               {menu.badge_text && <label className={`menu-label ${menu?.badge_color?menu?.badge_color:''}`}>{menu?.badge_text}</label>}
             </Link>
           ) : (
             <Link href={menu?.path} className="dropdown-item" target="_blank">
-              {menu?.title}
+              {t(menu?.title)}
               {menu?.badge_text && <label className={`menu-label ${menu?.badge_color?menu?.badge_color:''}`}>{menu?.badge_text}</label>}
             </Link>
           )}

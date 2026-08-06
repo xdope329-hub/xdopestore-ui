@@ -799,5 +799,10 @@
   "Missing refresh token": "Falta el token de sesión",
   "Invalid or expired refresh token": "Sesión inválida o expirada",
   "Could not place the order": "No se pudo realizar el pedido",
-  "Cart cleared": "Carrito vaciado"
+  "Cart cleared": "Carrito vaciado",
+  "Featured Products": "Productos Destacados",
+  "Shop by Category": "Compra por Categoría",
+  "Our Brands": "Nuestras Marcas",
+  "Products in dashboard": "Descubre nuestros productos",
+  "Contact": "Contacto"
 }
