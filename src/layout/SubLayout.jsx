@@ -15,6 +15,7 @@ import MobileMenu from './header/widgets/MobileMenu'
 import NewsLetterModal from './newsLetterModal'
 import RecentPurchase from './recentPurchase'
 import TapTop from './tapTop'
+import WhatsAppButton from './whatsappButton'
 
 const SubLayout = ({ children }) => {
   const isTabActive = TabFocusChecker()
@@ -133,6 +134,7 @@ const SubLayout = ({ children }) => {
         <NewsLetterModal />
       )}
       <TapTop />
+      <WhatsAppButton />
       {themeOption?.popup?.exit?.is_enable && (
         <ExitModal />
       )}
