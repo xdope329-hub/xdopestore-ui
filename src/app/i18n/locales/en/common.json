@@ -772,5 +772,6 @@
   "Title": "Label",
   "InStock": "In Stock",
   "Deleted Successfully": "Deleted successfully",
-  "MessageSentSuccessfully": "Message sent successfully"
+  "MessageSentSuccessfully": "Message sent successfully",
+  "ChatOnWhatsApp": "Chat on WhatsApp"
 }
