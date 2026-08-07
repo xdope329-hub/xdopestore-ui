@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
  *
  * Configured from the admin (Settings -> WhatsApp), so the number can change
  * without a deploy. Renders nothing until an admin enables it and saves a
- * number. Sits bottom-left so it never collides with the back-to-top button.
+ * number. Sits bottom-right; the back-to-top button (when enabled) stacks above it.
  */
 const WhatsAppButton = () => {
   const { t } = useTranslation("common");
@@ -36,7 +36,7 @@ const WhatsAppButton = () => {
       <style>{`
         .xd-whatsapp-fab {
           position: fixed;
-          left: calc(18px + (30 - 18) * ((100vw - 320px) / (1920 - 320)));
+          right: calc(18px + (30 - 18) * ((100vw - 320px) / (1920 - 320)));
           bottom: calc(18px + (30 - 18) * ((100vw - 767px) / (1920 - 767)));
           z-index: 8;
           width: 52px;
