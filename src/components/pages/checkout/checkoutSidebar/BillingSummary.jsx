@@ -14,9 +14,14 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
   const { t } = useTranslation("common");
 
   const subtotal = cartTotal || cartProducts?.reduce((s, i) => s + (i.sub_total || 0), 0) || 0;
-  const shipping = values?.shipping_total || 0;
+  const shipping = data?.data?.shipping_total ?? values?.shipping_total ?? 0;
   const couponDiscount = data?.data?.coupon_total_discount || 0;
-  const total = (data?.data?.total) ?? (subtotal + shipping - couponDiscount);
+  // Compute the total from the LIVE local cart so quantity changes reflect
+  // immediately; only defer to the server's figure while a coupon is applied
+  // (the discount rules live server-side). The next /checkout recompute
+  // reconciles both anyway.
+  const localTotal = subtotal + shipping - couponDiscount;
+  const total = couponDiscount > 0 && data?.data?.total != null ? data.data.total : localTotal;
 
   return (
     <div className="checkout-details ">
