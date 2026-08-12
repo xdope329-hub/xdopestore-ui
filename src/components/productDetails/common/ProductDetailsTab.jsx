@@ -1,10 +1,8 @@
 import NavTabTitles from "@/components/widgets/NavTabs";
-import NoDataFound from "@/components/widgets/NoDataFound";
 import TextLimit from "@/utils/customFunctions/TextLimit";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Col, Row, TabContent, TabPane } from "reactstrap";
-import CustomerReview from "./CustomerReview";
+import { Col, TabContent, TabPane } from "reactstrap";
 import QnATab from "./QnATab";
 import { RiArrowDownSLine } from "react-icons/ri";
 import Btn from "@/elements/buttons/Btn";
@@ -13,9 +11,11 @@ const ProductDetailsTab = ({ productState }) => {
   const { t } = useTranslation("common");
   let [showMore, setShowMore] = useState(false);
   const [activeTab, setActiveTab] = useState(1);
+  // Review tab intentionally hidden storewide (kept QA). To restore it, add
+  // { id: 2, name: "Review" } back here and re-add the matching TabPane below
+  // (renders <CustomerReview /> — see git history).
   const ProductDetailsTabTitle = [
     { id: 1, name: "Description" },
-    { id: 2, name: "Review" },
     { id: 3, name: "QA" },
   ];
 
@@ -36,19 +36,6 @@ const ProductDetailsTab = ({ productState }) => {
           </div>
         </TabPane>
 
-        <TabPane className={activeTab == 2 ? "show active" : ""}>
-          <div className="single-product-tables ">
-            <Row>
-              {productState?.product?.can_review || productState?.product?.reviews_count ? (
-                <CustomerReview productState={productState} />
-              ) : (
-                <Col xl={12}>
-                  <NoDataFound customClass="no-data-added" title="NoReviewYet" description="NoReviewYetDescription" />
-                </Col>
-              )}
-            </Row>
-          </div>
-        </TabPane>
         <TabPane className={activeTab == 3 ? "show active" : ""}>
           <QnATab productState={productState} activeTab={activeTab} />
         </TabPane>
