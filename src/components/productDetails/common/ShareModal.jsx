@@ -1,6 +1,6 @@
 import Btn from "@/elements/buttons/Btn";
 import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RiCloseLine } from "react-icons/ri";
 import { Input, Modal, ModalBody, ModalHeader } from "reactstrap";
@@ -8,28 +8,42 @@ import { Input, Modal, ModalBody, ModalHeader } from "reactstrap";
 const ShareModal = ({ productState, modal, setModal }) => {
   const socialMediaIcons = ["ri-facebook-line", "ri-twitter-line", "ri-linkedin-line", "ri-whatsapp-line", "ri-mail-line"];
   const { slug } = productState?.product;
-  const prodURL = process.env.API_PROD_URL;
-  const [shareLink, setShareLink] = useState(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(prodURL + "/product/" + slug)}`);
+  // The shared link must point to THIS storefront, not the API
+  // (process.env.API_PROD_URL was used before, producing localhost:5000/API links).
+  // window.location is browser-only, so resolve it in an effect.
+  const [productUrl, setProductUrl] = useState("");
+  const [shareLink, setShareLink] = useState("");
   const { t } = useTranslation("common");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && slug) {
+      const url = `${window.location.origin}/product/${slug}`;
+      setProductUrl(url);
+      setShareLink(url);
+    }
+  }, [slug]);
 
   const copyLink = () => {
     navigator.clipboard.writeText(shareLink);
     ToastNotification("success", "LinkCopiedToClipboard");
   };
 
+  // Clicking a network icon now actually opens that network's share dialog
+  // (before, it only swapped the text in the input field).
   const handleShare = (shareOn) => {
     const mainMedia = shareOn.split("-")[1];
+    const encoded = encodeURIComponent(productUrl);
     if (mainMedia == "facebook") {
-      setShareLink(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(prodURL + "/product/" + slug)}`);
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encoded}`, "_blank");
     } else if (mainMedia == "twitter") {
-      setShareLink(`https://twitter.com/intent/tweet?url=${encodeURIComponent(prodURL + "/product/" + slug)}`);
+      window.open(`https://twitter.com/intent/tweet?url=${encoded}`, "_blank");
     } else if (mainMedia == "linkedin") {
-      setShareLink(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(prodURL + "/product/" + slug)}`);
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encoded}`, "_blank");
     } else if (mainMedia == "whatsapp") {
-      setShareLink(`https://api.whatsapp.com/send?text=${encodeURIComponent(prodURL + "/product/" + slug)}`);
+      window.open(`https://api.whatsapp.com/send?text=${encoded}`, "_blank");
     } else if (mainMedia == "mail") {
       const subject = "Check out this awesome product!";
-      const body = `I thought you might be interested in this product: ${prodURL + "/product/" + slug}`;
+      const body = `I thought you might be interested in this product: ${productUrl}`;
       const emailShareUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       window.location.href = emailShareUrl;
     }

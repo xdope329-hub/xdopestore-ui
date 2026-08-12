@@ -57,8 +57,13 @@ const WhatsAppButton = () => {
           box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
         }
         .xd-whatsapp-fab svg { width: 28px; height: 28px; fill: currentColor; }
+        /* Phones/tablets show a fixed bottom navigation bar — float the
+           button above it so it never covers the user/menu items. */
+        @media (max-width: 767px) {
+          .xd-whatsapp-fab { bottom: 84px; }
+        }
         @media (max-width: 575px) {
-          .xd-whatsapp-fab { width: 46px; height: 46px; }
+          .xd-whatsapp-fab { width: 46px; height: 46px; bottom: 78px; }
           .xd-whatsapp-fab svg { width: 24px; height: 24px; }
         }
         @media (prefers-reduced-motion: reduce) {
