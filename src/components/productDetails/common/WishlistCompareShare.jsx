@@ -1,31 +1,25 @@
 import WishlistContext from "@/context/wishlistContext";
-import ThemeOptionContext from "@/context/themeOptionsContext";
 import { audioFile } from "@/utils/constants";
-import Cookies from "js-cookie";
+import { getWishlistProductId } from "@/utils/customFunctions/SyncLocalWishlist";
 import React, { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RiHeartFill, RiHeartLine, RiShareLine } from "react-icons/ri";
 import ShareModal from "./ShareModal";
 
 const WishlistCompareShare = ({ productState }) => {
-  const [productWishlist, setProductWishlist] = useState("");
   const [addToWishlistAudio, setAddToWishlistAudio] = useState(null);
   const { t } = useTranslation("common");
-  const { setOpenAuthModal } = useContext(ThemeOptionContext);
-  const { addToWishlist, removeWishlist } = useContext(WishlistContext);
+  const { addToWishlist, removeWishlist, wishlistIds } = useContext(WishlistContext);
   const [modal, setModal] = useState(false);
+  const productId = getWishlistProductId(productState?.product);
+  const productWishlist = !!wishlistIds?.[productId];
 
   const handelWishlist = () => {
-    if (Cookies.get("uat")) {
-      addToWishlistAudio?.play();
-      if (productWishlist) {
-        removeWishlist(productState?.product?.id, productState?.product?.wish_list_id ?? productState?.product?.id);
-      } else {
-        addToWishlist(productState?.product);
-      }
-      setProductWishlist((prev) => !prev);
+    addToWishlistAudio?.play();
+    if (productWishlist) {
+      removeWishlist(productId, wishlistIds[productId]);
     } else {
-      setOpenAuthModal(true);
+      addToWishlist(productState?.product);
     }
   };
 
@@ -34,10 +28,6 @@ const WishlistCompareShare = ({ productState }) => {
       setAddToWishlistAudio(new Audio(audioFile));
     }
   }, []);
-
-  useEffect(() => {
-    setProductWishlist(productState?.product?.is_wishlist);
-  }, [productState]);
 
   return (
     <>

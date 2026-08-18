@@ -2,17 +2,31 @@ const { test, expect } = require("@playwright/test");
 const { loginViaAPI, dismissNewsletterModal, BASE_API } = require("./helpers/auth");
 
 test.describe("Wishlist", () => {
-  test("guest clicking header wishlist icon opens auth modal", async ({ page }) => {
+  test("guest clicking header wishlist icon opens the wishlist page", async ({ page }) => {
     await dismissNewsletterModal(page);
     await page.goto("/");
 
     // The heart/wishlist icon is the 1st li.onhover-div in .icon-nav
     await page.locator(".icon-nav li.onhover-div").first().click();
-    // Redirects to /wishlist or opens auth modal
-    await Promise.race([
-      page.locator(".auth-modal").waitFor({ state: "visible", timeout: 8000 }),
-      page.waitForURL(/wishlist/, { timeout: 8000 }),
-    ]);
+    await expect(page).toHaveURL(/wishlist/, { timeout: 8000 });
+    await expect(page.locator(".auth-modal")).not.toBeVisible();
+  });
+
+  test("guest can add a product without logging in and see it in the wishlist", async ({ page }) => {
+    await dismissNewsletterModal(page);
+    await page.goto("/collections");
+    await page.waitForSelector(".basic-product", { timeout: 15000 });
+
+    const wishlistButton = page.locator(".basic-product .wishlist-icon").first();
+    await expect(wishlistButton).toBeVisible({ timeout: 5000 });
+    await wishlistButton.click();
+
+    await expect(page.locator(".auth-modal")).not.toBeVisible();
+    await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem("wishlist") || "[]").length)).toBeGreaterThan(0);
+
+    await page.goto("/wishlist");
+    await expect(page.locator(".cart-table tbody tr").first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[role="status"] button')).toBeVisible();
   });
 
   test("logged-in user: heart icon in product card adds to wishlist", async ({ page }) => {

@@ -34,7 +34,6 @@ const SubLayout = ({ children }) => {
     `/account/refund`,
     `/account/order`,
     `/account/addresses`,
-    `/wishlist`,
   ]
 
   useEffect(() => {

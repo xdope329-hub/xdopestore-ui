@@ -8,6 +8,8 @@ import WishlistContext from "@/context/wishlistContext";
 import Loader from "@/layout/loader";
 import Breadcrumbs from "@/utils/commonComponents/breadcrumb";
 import { Href } from "@/utils/constants";
+import { getWishlistProductId } from "@/utils/customFunctions/SyncLocalWishlist";
+import Cookies from "js-cookie";
 import Link from "next/link";
 import { useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,10 +20,10 @@ import emptyImage from "/public/assets/svg/empty-items.svg";
 const WishlistContent = () => {
   const { wishlistProducts, WishlistAPILoading, removeWishlist } = useContext(WishlistContext);
   const { t } = useTranslation("common");
-  const { setCartCanvas, openAuthModal } = useContext(ThemeOptionContext);
+  const { setCartCanvas, openAuthModal, setOpenAuthModal } = useContext(ThemeOptionContext);
   const { handleIncDec, openCartSidebar } = useContext(CartContext);
   const removeFromWishlist = (product) => {
-    removeWishlist(product.id, product.id);
+    removeWishlist(getWishlistProductId(product), product.id);
   };
   const { convertCurrency } = useContext(SettingContext);
 
@@ -43,6 +45,14 @@ const WishlistContent = () => {
     <>
       <Breadcrumbs title={"Wishlist"} subNavigation={[{ name: "Wishlist" }]} />
       <WrapperComponent classes={{ sectionClass: "wishlist-section section-b-space", row: "g-sm-3 g-2", col: "table-responsive", fluidClass: "container" }} colProps={{ sm: "12" }}>
+        {!Cookies.get("uat") && wishlistProducts?.length > 0 && (
+          <div className="alert alert-light border d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4" role="status">
+            <span>{t("GuestWishlistSyncPrompt")}</span>
+            <button type="button" className="btn btn-solid btn-sm" onClick={() => setOpenAuthModal(true)}>
+              {t("SignInToSync")}
+            </button>
+          </div>
+        )}
         {WishlistAPILoading ? (
           <Loader />
         ) : wishlistProducts?.length > 0 ? (

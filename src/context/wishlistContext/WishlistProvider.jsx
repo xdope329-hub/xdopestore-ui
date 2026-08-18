@@ -1,65 +1,132 @@
 import request from "@/utils/axiosUtils";
 import { WishlistAPI } from "@/utils/axiosUtils/API";
+import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
+import syncLocalWishlist, {
+  getLocalWishlistItems,
+  getWishlistProductId,
+  LOCAL_WISHLIST_KEY,
+  storeLocalWishlistItems,
+} from "@/utils/customFunctions/SyncLocalWishlist";
 import useCreate from "@/utils/hooks/useCreate";
 import useDelete from "@/utils/hooks/useDelete";
-import useFetchQuery from "@/utils/hooks/useFetchQuery";;
+import useFetchQuery from "@/utils/hooks/useFetchQuery";
 import Cookies from "js-cookie";
 import React, { useContext, useEffect, useState } from "react";
 import WishlistContext from ".";
 import ThemeOptionContext from "../themeOptionsContext";
 
+const buildWishlistIdMap = (items, useProductIdAsValue = false) =>
+  Object.fromEntries(
+    (items || []).map((item) => {
+      const productId = getWishlistProductId(item);
+      return [productId, useProductIdAsValue ? productId : item.id];
+    }).filter(([productId]) => productId)
+  );
+
 const WishlistProvider = (props) => {
+  // Re-check the session as soon as modal login or registration completes.
+  useContext(ThemeOptionContext);
   const isCookie = Cookies.get("uat");
   const [wishlistProducts, setWishlistProducts] = useState([]);
-  // { [productId]: wishlistItemId } — drives the filled/empty heart icon
+  const [wishlistReady, setWishlistReady] = useState(false);
   const [wishlistIds, setWishlistIds] = useState({});
-  const { setOpenAuthModal } = useContext(ThemeOptionContext);
 
   const { data: WishlistApiData, isLoading: WishlistAPILoading, refetch } = useFetchQuery([WishlistAPI], () => request({ url: WishlistAPI }), { enabled: false, refetchOnWindowFocus: false, select: (res) => res?.data });
-
   const { mutate, isLoading } = useCreate(WishlistAPI, false, false, "AddedToWishlist");
   const { mutate: deleteWishlist } = useDelete(WishlistAPI, false, false, "ProductDeletedFromWishlist");
 
   useEffect(() => {
-    if (isCookie) refetch();
+    let cancelled = false;
+
+    const initializeWishlist = async () => {
+      setWishlistReady(false);
+      if (isCookie) {
+        await syncLocalWishlist();
+        if (!cancelled) await refetch();
+      } else if (!cancelled) {
+        const items = getLocalWishlistItems();
+        setWishlistProducts(items);
+        setWishlistIds(buildWishlistIdMap(items, true));
+      }
+      if (!cancelled) setWishlistReady(true);
+    };
+
+    initializeWishlist();
+    return () => { cancelled = true; };
+  }, [isCookie]);
+
+  useEffect(() => {
+    if (isCookie || typeof window === "undefined") return;
+
+    const updateFromStorage = (event) => {
+      if (event.key !== LOCAL_WISHLIST_KEY) return;
+      const items = getLocalWishlistItems();
+      setWishlistProducts(items);
+      setWishlistIds(buildWishlistIdMap(items, true));
+    };
+
+    window.addEventListener("storage", updateFromStorage);
+    return () => window.removeEventListener("storage", updateFromStorage);
   }, [isCookie]);
 
   useEffect(() => {
     if (isCookie && WishlistApiData) {
       const items = WishlistApiData.data || [];
       setWishlistProducts(items);
-      // item._id = product's _id; item.id = wishlist record id (overwritten in API transform)
-      const map = {};
-      items.forEach((item) => {
-        const productId = String(item._id);
-        map[productId] = item.id;
-      });
-      setWishlistIds(map);
+      setWishlistIds(buildWishlistIdMap(items));
+      setWishlistReady(true);
     }
   }, [WishlistAPILoading, isCookie, WishlistApiData]);
 
   const addToWishlist = (productObj) => {
+    const productId = getWishlistProductId(productObj);
+    if (!productId || wishlistIds[productId]) return;
+
     if (Cookies.get("uat")) {
-      const productId = String(productObj.id || productObj._id);
-      // Optimistic update — we don't have the wishlist id yet, use productId as placeholder
       setWishlistIds((prev) => ({ ...prev, [productId]: productId }));
-      mutate({ product_id: productObj.id }, {
+      mutate({ product_id: productId }, {
         onSuccess: () => refetch(),
-        onError: () => setWishlistIds((prev) => { const next = { ...prev }; delete next[productId]; return next; }),
+        onError: () => setWishlistIds((prev) => {
+          const next = { ...prev };
+          delete next[productId];
+          return next;
+        }),
       });
     } else {
-      setOpenAuthModal(true);
+      setWishlistProducts((prev) => {
+        const next = [...prev, productObj];
+        storeLocalWishlistItems(next);
+        return next;
+      });
+      setWishlistIds((prev) => ({ ...prev, [productId]: productId }));
+      ToastNotification("success", "GuestWishlistSaved");
     }
   };
 
   const removeWishlist = (id, wishId) => {
-    if (isCookie && wishId) {
-      const wishlistId = typeof wishId == "object" ? wishId.id : wishId;
-      const productId = String(id);
-      // Optimistic update
-      setWishlistProducts((prev) => prev.filter((p) => p.id !== wishlistId));
-      setWishlistIds((prev) => { const next = { ...prev }; delete next[productId]; return next; });
+    const productId = String(id);
+
+    if (Cookies.get("uat") && wishId) {
+      const wishlistId = typeof wishId === "object" ? wishId.id : wishId;
+      setWishlistProducts((prev) => prev.filter((item) => getWishlistProductId(item) !== productId));
+      setWishlistIds((prev) => {
+        const next = { ...prev };
+        delete next[productId];
+        return next;
+      });
       deleteWishlist(wishlistId, { onSuccess: () => refetch() });
+    } else if (!Cookies.get("uat")) {
+      setWishlistProducts((prev) => {
+        const next = prev.filter((item) => getWishlistProductId(item) !== productId);
+        storeLocalWishlistItems(next);
+        return next;
+      });
+      setWishlistIds((prev) => {
+        const next = { ...prev };
+        delete next[productId];
+        return next;
+      });
+      ToastNotification("success", "ProductDeletedFromWishlist");
     }
   };
 
@@ -68,7 +135,7 @@ const WishlistProvider = (props) => {
       value={{
         ...props,
         wishlistProducts,
-        WishlistAPILoading,
+        WishlistAPILoading: WishlistAPILoading || !wishlistReady,
         setWishlistProducts,
         removeWishlist,
         refetch,
