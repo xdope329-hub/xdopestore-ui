@@ -70,7 +70,7 @@ const HeaderOne = () => {
   }
   const handleWishlistClick = (e) => {
     e.preventDefault()
-    isAuthenticated ? router.push('/wishlist') : setOpenAuthModal(true)
+    router.push('/wishlist')
   }
   const handleLogout = (e) => {
     e.preventDefault()

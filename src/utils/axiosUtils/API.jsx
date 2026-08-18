@@ -117,7 +117,7 @@ export const FaqAPI = "/faq";
 export const RePaymentAPI = "/rePayment";
 
 // Clear Cart Api
-export const ClearCart = "clear/cart";
+export const ClearCart = "/clear/cart";
 
 // Subscribe Api
 

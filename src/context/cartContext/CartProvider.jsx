@@ -2,6 +2,7 @@ import request from "@/utils/axiosUtils";
 import { AddToCartAPI, ClearCart, ReplaceCartAPI } from "@/utils/axiosUtils/API";
 import getCookie from "@/utils/customFunctions/GetCookie";
 import syncLocalCart from "@/utils/customFunctions/SyncLocalCart";
+import { getCartProductId, getCartVariationId, isSameCartLine } from "@/utils/customFunctions/CartItemIdentity";
 import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 import useCreate from "@/utils/hooks/useCreate";
 import i18next from "i18next";
@@ -47,10 +48,10 @@ const CartProvider = (props) => {
   const { mutate: replaceCartMutate, isLoading: replaceCartLoader } = useCreate(ReplaceCartAPI, false, false, "No");
 
   //Clear Cart API
-  const { mutate: ClearCartData, isLoading: clearCartLoader } = useMutation({
+  const { mutateAsync: clearCartData, isPending: clearCartLoader } = useMutation({
     mutationFn: () => request({ url: ClearCart, method: "delete" }),
     onSuccess: (responseData) => {
-      if (responseData.status === 200 || responseData.status === 201) {
+      if (responseData?.ok) {
         ToastNotification("success", responseData.data.message);
       }
     },
@@ -115,11 +116,26 @@ const CartProvider = (props) => {
     }, 0);
   };
 
-  const clearCart = () => {
-    setCartProducts([]);
-    if (isCookie) {
-      ClearCartData();
+  const clearCart = async () => {
+    if (!isCookie) {
+      setCartProducts([]);
+      setCartTotal(0);
+      localStorage.removeItem("cart");
+      return true;
     }
+
+    if (clearCartLoader) return false;
+
+    const responseData = await clearCartData();
+    if (!responseData?.ok) {
+      ToastNotification("error", responseData?.data?.message);
+      return false;
+    }
+
+    setCartProducts(responseData?.data?.items ?? []);
+    setCartTotal(responseData?.data?.total ?? 0);
+    setGetCardData([]);
+    return true;
   };
 
   // Remove and Delete cart data from API and State
@@ -151,37 +167,25 @@ const CartProvider = (props) => {
   const handleIncDec = async (qty, productObj, isProductQty, setIsProductQty, isOpenFun, cloneVariation) => {
     const updatedQty = (isProductQty ? isProductQty : 0) + qty;
     const cart = [...cartProducts];
-    const index = cart.findIndex((item) => item.product_id === productObj?.id);
-    let newProduct;
+    const productId = getCartProductId(productObj);
+    const variationId = getCartVariationId(cloneVariation);
+    const index = cart.findIndex((item) => isSameCartLine(item, productId, variationId));
     const obj = {
-      id: null,
-      product_id: productObj?.id,
-      variation_id: cloneVariation?.selectedVariation?.id ? cloneVariation?.selectedVariation?.id : cart[index]?.variation_id ? cart[index]?.variation_id : null,
+      product_id: productId,
+      variation_id: variationId || null,
       quantity: qty,
     };
-    if (isCookie && !isLoading) {
-      if (index !== -1) {
-        obj._method = "PUT";
-      }
-    }
-    const cartUid = newProduct?.find((elem) => (elem?.variation_id ? elem?.variation_id == cloneVariation?.variation_id : elem?.product_id == productObj?.id));
-    let tempProductId = productObj?.id;
-    let tempVariantProductId = cloneVariation?.selectedVariation?.product_id;
-
-    // Checking conditions for Replace Cart
-    if (cart[index]?.variation && cloneVariation?.variation_id && tempProductId == tempVariantProductId && cloneVariation?.variation_id !== cart[index]?.variation_id) {
-      return replaceCart(updatedQty, productObj, cloneVariation);
-    }
 
     if (index === -1) {
+      const selectedVariation = cloneVariation?.selectedVariation || cloneVariation?.variation || null;
       const params = {
-        id: cartUid?.id ? cartUid?.id : null,
+        id: null,
         product: productObj,
-        product_id: productObj?.id,
-        variation: cloneVariation?.selectedVariation ? cloneVariation?.selectedVariation : null,
-        variation_id: cloneVariation?.selectedVariation?.id ? cloneVariation?.selectedVariation?.id : null,
-        quantity: cloneVariation?.selectedVariation?.productQty ? cloneVariation?.selectedVariation?.productQty : updatedQty,
-        sub_total: cloneVariation?.selectedVariation?.sale_price ? updatedQty * cloneVariation?.selectedVariation?.sale_price : updatedQty * productObj?.sale_price,
+        product_id: productId,
+        variation: selectedVariation,
+        variation_id: variationId || null,
+        quantity: updatedQty,
+        sub_total: updatedQty * (selectedVariation?.sale_price ?? productObj?.sale_price),
       };
       isCookie ? !isLoading && setCartProducts((prev) => [...prev, params]) : setCartProducts((prev) => [...prev, params]);
       // A brand-new item just went into the cart — tell the user explicitly.
@@ -200,11 +204,11 @@ const CartProvider = (props) => {
       const newQuantity = cart[index].quantity + qty;
       if (newQuantity < 1) {
         // Remove the item from the cart if the new quantity is less than 1
-        return removeCart(cloneVariation?.variation_id ? cloneVariation?.variation_id : productObj?.id, cartUid ? cartUid : cart[index].id);
+        return removeCart(variationId || productId, cart[index].id);
       } else {
         cart[index] = {
           ...cart[index],
-          id: cartUid?.id ? cartUid?.id : cart[index].id ? cart[index].id : null,
+          id: cart[index].id || null,
           quantity: newQuantity,
           sub_total: newQuantity * (cart[index]?.variation ? cart[index]?.variation?.sale_price : cart[index]?.product?.sale_price),
         };
@@ -242,71 +246,60 @@ const CartProvider = (props) => {
   // Replace Cart
   const replaceCart = async (updatedQty, productObj, cloneVariation, selectedVariation) => {
     const cart = [...cartProducts];
-    const isAvailableInCart = cart.find((cartProduct) => cartProduct?.variation_id == cloneVariation.variation_id);
+    const productId = getCartProductId(productObj);
+    const originalVariationId = getCartVariationId(selectedVariation);
+    const nextVariationId = getCartVariationId(cloneVariation);
+    const index = cart.findIndex((item) => isSameCartLine(item, productId, originalVariationId));
+
+    if (index === -1) return false;
+
+    const isAvailableInCart = cart.some((item, itemIndex) =>
+      itemIndex !== index && isSameCartLine(item, productId, nextVariationId)
+    );
 
     if (isAvailableInCart) {
       ToastNotification("error", i18next.t("AlreadyInCart"));
       return false;
     }
-    const index = cart.findIndex((item) => item.product_id === productObj?.id && item.variation_id == selectedVariation.variation_id);
-    cart[index].quantity = 0;
 
-    const productQty = cart[index]?.variation ? cart[index]?.variation?.quantity : cart[index]?.product?.quantity;
+    const quantity = cloneVariation?.productQty ?? updatedQty;
+    const nextVariation = cloneVariation?.selectedVariation || cloneVariation?.variation || null;
+    const productQty = nextVariation?.quantity ?? productObj?.quantity;
 
-    if (cart[index]?.variation) {
-      cart[index].variation.selected_variation = cart[index]?.variation?.attribute_values?.map((values) => values.value).join("/");
-    }
-
-    // Checking the Stock QTY of particular product
-    if (productQty < cart[index]?.quantity + updatedQty) {
+    if (productQty < quantity) {
       ToastNotification("error", i18next.t("StockLimitMessage", { qty: productQty }));
       return false;
     }
+
     let newProduct;
     if (isCookie && !replaceCartLoader) {
       newProduct = await fetchReplaceCartData({
         _method: "PUT",
         id: cart[index]?.id,
         product: productObj,
-        product_id: productObj?.id,
-        variation: cloneVariation?.selectedVariation ? cloneVariation?.selectedVariation : null,
-        quantity: cloneVariation?.productQty ? cloneVariation?.productQty : updatedQty,
-        variation_id: cloneVariation?.selectedVariation?.id ? cloneVariation?.selectedVariation?.id : null,
-        quantity: cloneVariation?.productQty ? cloneVariation?.productQty : updatedQty,
+        product_id: productId,
+        variation: nextVariation,
+        quantity,
+        variation_id: nextVariationId || null,
       });
     }
-    const cartUid = newProduct?.find((elem) => (elem?.variation_id ? elem?.variation_id == cloneVariation?.variation_id : elem?.product_id == productObj?.product?.id));
+    const serverCartItem = newProduct?.find((item) => isSameCartLine(item, productId, nextVariationId));
 
     const params = {
-      id: cartUid?.id ? cartUid?.id : cart[index].id ? cart[index].id : null,
+      id: serverCartItem?.id || cart[index].id || null,
       product: productObj,
-      product_id: productObj?.id,
-      variation: cloneVariation?.selectedVariation ? cloneVariation?.selectedVariation : null,
-      variation_id: cloneVariation?.selectedVariation?.id ? cloneVariation?.selectedVariation?.id : null,
-      quantity: cloneVariation?.productQty ? cloneVariation?.productQty : updatedQty,
-      sub_total: cloneVariation?.selectedVariation?.sale_price ? updatedQty * cloneVariation?.selectedVariation?.sale_price : updatedQty * productObj?.sale_price,
+      product_id: productId,
+      variation: nextVariation,
+      variation_id: nextVariationId || null,
+      quantity,
+      sub_total: quantity * (nextVariation?.sale_price ?? productObj?.sale_price),
     };
 
-    isCookie
-      ? !isLoading &&
-    setCartProducts((prevCartProducts) =>
-          prevCartProducts.map((elem) => {
-            if (elem?.product_id === cloneVariation?.selectedVariation?.product_id) {
-              return params;
-            } else {
-              return elem;
-            }
-          })
-        )
-      : setCartProducts((prevCartProducts) =>
-          prevCartProducts.map((elem) => {
-            if (elem?.product_id === cloneVariation?.selectedVariation?.product_id) {
-              return params;
-            } else {
-              return elem;
-            }
-          })
-        );
+    if (!isCookie || !isLoading) {
+      setCartProducts((prevCartProducts) =>
+        prevCartProducts.map((item, itemIndex) => itemIndex === index ? params : item)
+      );
+    }
   };
 
   // Setting data to localstorage when UAT is not there
@@ -336,6 +329,7 @@ const CartProvider = (props) => {
         isLoading,
         getCartLoading,
         replaceCartLoader,
+        clearCartLoader,
         deleteCartLoader,
         replaceCart,
       }}

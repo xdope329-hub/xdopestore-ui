@@ -1,14 +1,12 @@
 import WrapperComponent from "@/components/widgets/WrapperComponent";
-import ThemeOptionContext from "@/context/themeOptionsContext";
-import { WishlistAPI } from "@/utils/axiosUtils/API";
+import WishlistContext from "@/context/wishlistContext";
 import { Href } from "@/utils/constants";
 import { dateFormat } from "@/utils/customFunctions/DateFormat";
-import useCreate from "@/utils/hooks/useCreate";
-import Cookies from "js-cookie";
+import { getWishlistProductId } from "@/utils/customFunctions/SyncLocalWishlist";
 import Link from "next/link";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { RiHeartLine } from "react-icons/ri";
+import { RiHeartFill, RiHeartLine } from "react-icons/ri";
 import { Col } from "reactstrap";
 import ProductContent from "../common/ProductContent";
 import ProductWholesale from "../common/ProductWholesale";
@@ -16,15 +14,16 @@ import VendorContains from "../common/VendorContains";
 import DigitalImage from "./DigitalImage";
 
 const ProductDigital = ({ productState, setProductState }) => {
-  const { mutate, isLoading } = useCreate(WishlistAPI, false, false, "AddedToWishlist");
-  const { setOpenAuthModal } = useContext(ThemeOptionContext);
+  const { addToWishlist, removeWishlist, wishlistIds } = useContext(WishlistContext);
   const { t } = useTranslation("common");
+  const productId = getWishlistProductId(productState?.product);
+  const isWishlisted = !!wishlistIds?.[productId];
 
-  const handelWishlist = (productState) => {
-    if (Cookies.get("uat")) {
-      mutate({ product_id: productState?.product?.id });
+  const handelWishlist = () => {
+    if (isWishlisted) {
+      removeWishlist(productId, wishlistIds[productId]);
     } else {
-      setOpenAuthModal(true);
+      addToWishlist(productState?.product);
     }
   };
   return (
@@ -45,7 +44,7 @@ const ProductDigital = ({ productState, setProductState }) => {
             <ProductContent productState={productState} setProductState={setProductState} />
             <div className="buy-box">
               <a onClick={() => handelWishlist()}>
-                <RiHeartLine />
+                {isWishlisted ? <RiHeartFill /> : <RiHeartLine />}
                 <span>{t("AddToWishlist")}</span>
               </a>
             </div>

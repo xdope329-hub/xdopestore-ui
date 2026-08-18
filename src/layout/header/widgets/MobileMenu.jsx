@@ -32,7 +32,7 @@ const MobileMenu = () => {
     handleActive(5);
   };
   const handleWishlist = () => {
-    isAuthenticated ? router.push("/wishlist") : setOpenAuthModal(true);
+    router.push("/wishlist");
     handleActive(4);
   };
   const [active, setActive] = useState(1);

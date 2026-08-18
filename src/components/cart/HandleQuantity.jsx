@@ -1,5 +1,6 @@
 import CartContext from "@/context/cartContext";
 import Btn from "@/elements/buttons/Btn";
+import { getCartProductId, getCartVariationId, isSameCartLine } from "@/utils/customFunctions/CartItemIdentity";
 import React, { useContext, useEffect, useState, useCallback } from "react";
 import { RiAddLine, RiSubtractLine } from "react-icons/ri";
 import { Input, InputGroup } from "reactstrap";
@@ -9,7 +10,9 @@ const HandleQuantity = ({ classes = {}, productObj, elem, customIcon }) => {
   const [productQty, setProductQty] = useState(0);
 
   useEffect(() => {
-    const foundProduct = cartProducts.find((el) => (elem?.variation_id ? elem?.variation_id === el?.variation_id : el.product_id === elem?.product_id));
+    const foundProduct = cartProducts.find((item) =>
+      isSameCartLine(item, getCartProductId(elem), getCartVariationId(elem))
+    );
     if (foundProduct) {
       setProductQty(foundProduct.quantity);
     } else {

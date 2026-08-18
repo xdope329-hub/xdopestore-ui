@@ -12,7 +12,7 @@ const HeaderCartBottom = ({ modal, setModal, shippingFreeAmt, shippingCal }) => 
   const { convertCurrency } = useContext(SettingContext);
   const [selectedVariation, setSelectedVariation] = useState("");
   const { t } = useTranslation("common");
-  const { cartProducts, getTotal, clearCart } = useContext(CartContext);
+  const { cartProducts, getTotal, clearCart, clearCartLoader } = useContext(CartContext);
   // Getting total when cartProducts changes
   const total = useMemo(() => {
     return getTotal(cartProducts);
@@ -55,7 +55,14 @@ const HeaderCartBottom = ({ modal, setModal, shippingFreeAmt, shippingCal }) => 
             </Progress>
           </div>
           <div className="sidebar-title">
-            <a href={Href} onClick={clearCart}>
+            <a
+              href={Href}
+              aria-disabled={clearCartLoader}
+              onClick={(event) => {
+                event.preventDefault();
+                clearCart();
+              }}
+            >
               {t("ClearCart")}
             </a>
           </div>

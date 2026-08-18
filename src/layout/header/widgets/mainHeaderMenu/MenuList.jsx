@@ -23,7 +23,7 @@ const MenuList = ({ menu, isOpen, setIsOpen, level }) => {
     router.push(`/${path}`);
   };
 
-  const protectedRoutes = [`/account/dashboard`, `/account/notification`, `/account/point`, `/account/refund`, `/account/order`, `/account/addresses`, `/wishlist`];
+  const protectedRoutes = [`/account/dashboard`, `/account/notification`, `/account/point`, `/account/refund`, `/account/order`, `/account/addresses`];
 
   const protectedRoute = (route) => {
     if (!isAuthenticated && protectedRoutes.includes(route)) {

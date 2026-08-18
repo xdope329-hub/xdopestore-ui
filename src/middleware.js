@@ -14,7 +14,7 @@ export async function middleware(request) {
     headers: myHeaders,
   };
   let settingData = await (await fetch(process.env.API_PROD_URL + "/settings", requestOptions))?.json();
-  const protectedRoutes = [`/account/dashboard`, `/account/notification`, `/account/point`, `/account/refund`, `/account/order`, `/account/addresses`, `/wishlist`];
+  const protectedRoutes = [`/account/dashboard`, `/account/notification`, `/account/point`, `/account/refund`, `/account/order`, `/account/addresses`];
 
   const path = request.nextUrl.pathname;
   if (request.cookies.has("maintenance") && path !== `/maintenance`) {
