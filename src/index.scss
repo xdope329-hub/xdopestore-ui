@@ -42,3 +42,41 @@
     bottom: 78px;
   }
 }
+
+/* Static legal pages (Terms & Conditions, Privacy Policy). */
+.legal-section {
+  .legal-content {
+    max-width: 920px;
+    margin: 0 auto;
+
+    .legal-updated {
+      font-size: 14px;
+      opacity: 0.7;
+      margin-bottom: 18px;
+    }
+
+    p {
+      line-height: 1.7;
+      margin-bottom: 14px;
+    }
+
+    // h3/ul rules apply both to the bundled fallback (.legal-block wrappers)
+    // and to admin-managed HTML rendered directly inside .legal-content.
+    h3 {
+      font-weight: 600;
+      margin-top: 26px;
+      margin-bottom: 12px;
+    }
+
+    ul {
+      padding-left: 20px;
+      margin-bottom: 14px;
+
+      li {
+        list-style: disc;
+        line-height: 1.7;
+        margin-bottom: 6px;
+      }
+    }
+  }
+}

@@ -122,6 +122,16 @@
                     "id": 7,
                     "name": "Contact Us",
                     "value": "contact-us"
+                },
+                {
+                    "id": 8,
+                    "name": "TermsAndConditions",
+                    "value": "terms-and-conditions"
+                },
+                {
+                    "id": 9,
+                    "name": "PrivacyPolicy",
+                    "value": "privacy-policy"
                 }
             ],
             "useful_link": [
@@ -165,13 +175,25 @@
             "support_number": "123-456-7898",
             "footer_copyright": true,
             "copyright_content": "2023-24 themeforest powered by pixelstrap",
-            "footer_categories": [74, 41, 98, 107, 12, 55],
+            "footer_categories": [
+                74,
+                41,
+                98,
+                107,
+                12,
+                55
+            ],
             "social_media_enable": true,
             "payment_option_image_url": "/assets/images/theme/data/payments.png"
         },
         "header": {
             "today_deals": [],
-            "category_ids": [74, 41, 98, 107],
+            "category_ids": [
+                74,
+                41,
+                98,
+                107
+            ],
             "header_options": "header_one",
             "support_number": "123 - 456 - 7890",
             "top_bar_content": [
@@ -190,7 +212,10 @@
         },
         "general": {
             "mode": "light",
-            "taglines": ["⚡ Come Back !!", "🎉 Offers for you..."],
+            "taglines": [
+                "⚡ Come Back !!",
+                "🎉 Offers for you..."
+            ],
             "cart_style": "cart_sidebar",
             "site_title": "Multikart Marketplace: Where Vendors Shine Together",
             "site_tagline": "Shop Unique, Sell Exceptional – Multikart Multi-Vendor Universe.",
@@ -344,7 +369,18 @@
         "collection": {
             "collection_layout": "collection_category_slider",
             "collection_categories_ids": [
-                74, 41, 107, 12, 7, 28, 157, 136, 118, 79, 70, 64
+                74,
+                41,
+                107,
+                12,
+                7,
+                28,
+                157,
+                136,
+                118,
+                79,
+                70,
+                64
             ],
             "collection_banner_image_url": "/assets/images/placeholder/collection_banner.png"
         },
