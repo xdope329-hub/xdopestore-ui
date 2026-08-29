@@ -778,5 +778,12 @@
   "MessageSentSuccessfully": "Message sent successfully",
   "ChatOnWhatsApp": "Chat on WhatsApp",
   "TermsAndConditions": "Terms & Conditions",
-  "PrivacyPolicy": "Privacy Policy"
+  "PrivacyPolicy": "Privacy Policy",
+  "OrContinueWithEmail": "or continue with email",
+  "OtherCity": "Other city (not listed)",
+  "SelectCity": "Select city",
+  "ChooseCityFromList": "Choose a city from the list",
+  "EnterPincodeOptional": "Postal code (optional)",
+  "FreeShipping": "Free!",
+  "ShippingCalculatedAtAddress": "Calculated with your address"
 }

@@ -41,14 +41,13 @@ const AddAddressForm = ({ mutate, isLoading, type, editAddress, setEditAddress, 
         city: nameSchema,
         country_id: nameSchema,
         state_id: nameSchema,
-        pincode: nameSchema,
         phone: phoneSchema,
       })}
       onSubmit={(values) => {
         if (editAddress) {
           values["_method"] = method ? method : "PUT";
         }
-        values["pincode"] = values["pincode"].toString();
+        values["pincode"] = values["pincode"] ? values["pincode"].toString() : "";
         mutate(values);
         setModal(false);
       }}

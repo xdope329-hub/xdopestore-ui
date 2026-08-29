@@ -53,7 +53,7 @@ const ShippingAddressForm = ({ values, data }) => {
         <SimpleInputField
           nameList={[
             { name: "shipping_address.city", placeholder: t("EnterCity"), toplabel: "City", colprops: { md: 6 }, require: "true" },
-            { name: "shipping_address.pincode", placeholder: t("EnterPincode"), toplabel: "Pincode", colprops: { md: 6 }, require: "true" },
+            { name: "shipping_address.pincode", placeholder: t("EnterPincodeOptional"), toplabel: "Pincode", colprops: { md: 6 } },
           ]}
         />
          <Col xs={12} className="phone-field">

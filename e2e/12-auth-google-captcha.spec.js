@@ -27,9 +27,9 @@ async function checkExtras(page, scope) {
   if (STRICT === "1") {
     expect(captchaCount).toBe(1);
     expect(googleCount).toBe(1);
-    // Captcha is mandatory for Google sign-in too: with no token solved yet,
-    // the blocking overlay must be sitting over the Google button.
-    expect(await scope.locator('[data-testid="google-captcha-block"]').count()).toBe(1);
+    // Standard pattern: Google sign-in is NOT captcha-gated (the signed
+    // Google credential is the bot check) — no blocking overlay may exist.
+    expect(await scope.locator('[data-testid="google-captcha-block"]').count()).toBe(0);
   } else if (STRICT === "0") {
     expect(captchaCount).toBe(0);
     expect(googleCount).toBe(0);

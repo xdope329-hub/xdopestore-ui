@@ -163,7 +163,7 @@ const RegisterForm = () => {
           <Btn loading={isSubmitting} type="submit" disabled={isSubmitting || !checkboxChecked} className={`btn ${checkboxChecked ? "" : "disabled"}`}>
             {isSubmitting ? t("Creating") : t("CreateAccount")}
           </Btn>
-          <GoogleLoginButton onError={setShowBoxMessage} recaptchaToken={values.recaptcha} onCaptchaConsumed={() => resetCaptcha(setFieldValue)} />
+          <GoogleLoginButton onError={setShowBoxMessage} />
         </Form>
       )}
     </Formik>

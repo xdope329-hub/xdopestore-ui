@@ -27,33 +27,23 @@ const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
  * On success it performs the same session bootstrap as the password login:
  * saveSession -> account cookie -> guest-cart sync -> close modal / redirect.
  */
-const GoogleLoginButton = ({ onError, recaptchaToken, onCaptchaConsumed }) => {
+const GoogleLoginButton = ({ onError }) => {
   const { setOpenAuthModal } = useContext(ThemeOptionContext) || {};
   const { refetch: cartRefetch } = useContext(CartContext) || {};
   const router = useRouter();
   const btnRef = useRef(null);
   const initialized = useRef(false);
 
-  // Latest captcha token for the GSI callback (initialized once) to read.
-  const tokenRef = useRef(recaptchaToken);
-  useEffect(() => {
-    tokenRef.current = recaptchaToken;
-  }, [recaptchaToken]);
-
-  const captchaBlocked = !!RECAPTCHA_SITE_KEY && !recaptchaToken;
-
   const handleCredential = async (response) => {
     try {
       const res = await fetch(`${API_URL}/login/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ credential: response?.credential, recaptcha: tokenRef.current }),
+        body: JSON.stringify({ credential: response?.credential }),
       });
       const data = await res.json();
       if (!res.ok) {
         onError && onError(data?.message || "GoogleLoginFailed");
-        // The captcha token was consumed by the server check — force a redo.
-        RECAPTCHA_SITE_KEY && onCaptchaConsumed && onCaptchaConsumed();
         return;
       }
 
@@ -110,21 +100,7 @@ const GoogleLoginButton = ({ onError, recaptchaToken, onCaptchaConsumed }) => {
   return (
     <>
       <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
-      <div className="position-relative">
-        <div
-          className="google-login-btn mt-3 d-flex justify-content-center"
-          ref={btnRef}
-          data-testid="google-login"
-          style={captchaBlocked ? { opacity: 0.55 } : undefined}
-        />
-        {captchaBlocked && (
-          <div
-            data-testid="google-captcha-block"
-            onClick={() => onError && onError("CompleteCaptchaFirst")}
-            style={{ position: "absolute", inset: 0, zIndex: 2, cursor: "not-allowed" }}
-          />
-        )}
-      </div>
+      <div className="google-login-btn mt-3 d-flex justify-content-center" ref={btnRef} data-testid="google-login" />
     </>
   );
 };

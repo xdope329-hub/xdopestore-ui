@@ -62,7 +62,7 @@ const LoginContainer = () => {
                       <Btn  type="submit" className="btn-solid">
                         {t("Login")}
                       </Btn>
-                      <GoogleLoginButton recaptchaToken={values.recaptcha} onCaptchaConsumed={() => { captchaRef.current?.reset?.(); setFieldValue("recaptcha", ""); }} />
+                      <GoogleLoginButton />
                     </Form>
                   )}
                 </Formik>
