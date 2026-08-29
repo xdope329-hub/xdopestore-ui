@@ -96,6 +96,11 @@ const LoginForm = ({ setState }) => {
               <i className="ri-error-warning-line"></i> {t(showBoxMessage, { defaultValue: showBoxMessage })}
             </div>
           )}
+          {/* Google sign-in first — the fastest path for most shoppers. */}
+          <GoogleLoginButton onError={setShowBoxMessage} />
+          <div className="auth-divider" aria-hidden="true">
+            <span>{t("OrContinueWithEmail")}</span>
+          </div>
           <div className="auth-box mb-3">
             <Label htmlFor="email">{t("Email")}</Label>
             <Field name="email" className="form-control" id="email" placeholder={t("Email")} />
@@ -120,7 +125,6 @@ const LoginForm = ({ setState }) => {
           <Btn loading={isSubmitting} type="submit" disabled={isSubmitting}>
             {isSubmitting ? t("LoggingIn") : t("Login")}
           </Btn>
-          <GoogleLoginButton onError={setShowBoxMessage} recaptchaToken={values.recaptcha} onCaptchaConsumed={() => resetCaptcha(setFieldValue)} />
         </Form>
       )}
     </Formik>

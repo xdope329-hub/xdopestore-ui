@@ -810,5 +810,12 @@
   "Contact": "Contacto",
   "ChatOnWhatsApp": "Escríbenos por WhatsApp",
   "TermsAndConditions": "Términos y Condiciones",
-  "PrivacyPolicy": "Política de Privacidad"
+  "PrivacyPolicy": "Política de Privacidad",
+  "OrContinueWithEmail": "o continúa con tu correo",
+  "OtherCity": "Otra ciudad (no está en la lista)",
+  "SelectCity": "Selecciona la ciudad",
+  "ChooseCityFromList": "Elegir una ciudad de la lista",
+  "EnterPincodeOptional": "Código postal (opcional)",
+  "FreeShipping": "¡Gratis!",
+  "ShippingCalculatedAtAddress": "Se calcula con tu dirección"
 }

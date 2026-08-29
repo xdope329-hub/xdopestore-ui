@@ -80,3 +80,21 @@
     }
   }
 }
+
+/* Divider between the Google button (first) and the email login fields. */
+.auth-form-box .auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 16px;
+  color: #999;
+  font-size: 13px;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e5e5e5;
+  }
+}

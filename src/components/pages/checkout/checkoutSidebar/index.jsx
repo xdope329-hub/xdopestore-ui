@@ -60,7 +60,10 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData }) => {
     // payment method / address never silently drops the discount.
     const recompute = (extra = {}) => {
       const couponCode = storeCoupon || values["coupon"] || "";
-      mutate({ ...values, ...extra, coupon_code: couponCode });
+      // Ciudad de entrega para el cálculo de envío por zonas: invitados la
+      // llevan inline; con sesión el servidor la resuelve por el address_id.
+      const city = values["shipping_address"]?.city || values["billing_address"]?.city || "";
+      mutate({ ...values, ...extra, coupon_code: couponCode, city });
     };
 
     if (settingData?.activation?.guest_checkout && !access_token) {
@@ -72,7 +75,7 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData }) => {
         recompute();
       }
     }
-  }, [CartLoading, deleteCartLoader, cartTotal, cartProducts?.length, errors, values["points_amount"], values["wallet_balance"], values["billing_address_id"], values["delivery_description"], values["payment_method"], values["shipping_address_id"], values["delivery_interval"], storeCoupon]);
+  }, [CartLoading, deleteCartLoader, cartTotal, cartProducts?.length, errors, values["points_amount"], values["wallet_balance"], values["billing_address_id"], values["delivery_description"], values["payment_method"], values["shipping_address_id"], values["delivery_interval"], storeCoupon, values["shipping_address"]?.city, values["billing_address"]?.city]);
 
   return (
     <>

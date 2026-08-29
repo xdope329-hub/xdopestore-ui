@@ -86,7 +86,7 @@ const BillingAddressForm = ({ values, setFieldValue, errors, data }) => {
         <SimpleInputField
           nameList={[
             { name: "billing_address.city", placeholder: t("EnterCity"), toplabel: "City", colprops: { xxl: 6, lg: 12, sm: 6 }, require: "true" },
-            { name: "billing_address.pincode", placeholder: t("EnterPincode"), toplabel: "Pincode", colprops: { xxl: 6, lg: 12, sm: 6 }, require: "true" },
+            { name: "billing_address.pincode", placeholder: t("EnterPincodeOptional"), toplabel: "Pincode", colprops: { xxl: 6, lg: 12, sm: 6 } },
           ]}
         />
           <Col xs={12} className="phone-field">

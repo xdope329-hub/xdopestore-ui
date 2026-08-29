@@ -75,7 +75,6 @@ const CheckoutContent = () => {
     city: nameSchema,
     country_code: nameSchema,
     phone: nameSchema,
-    pincode: nameSchema,
     country_id: nameSchema,
     state_id: nameSchema,
   });

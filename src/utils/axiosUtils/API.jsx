@@ -128,3 +128,4 @@ export const SubscribeAPI = "/subscribe";
 export const OrderInvoiceAPI = "/order/invoice";
 
 export const SyncCart = "/sync/cart";
+export const ShippingAPI = "/shipping";

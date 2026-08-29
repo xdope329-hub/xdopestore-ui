@@ -137,7 +137,7 @@ const RegisterContainer = () => {
                         <Btn loading={isSubmitting} type="submit" disabled={isSubmitting} className="btn-solid w-auto">
                           {isSubmitting ? t("Creating") : t("CreateAccount")}
                         </Btn>
-                        <GoogleLoginButton onError={setShowBoxMessage} recaptchaToken={values.recaptcha} onCaptchaConsumed={() => resetCaptcha(setFieldValue)} />
+                        <GoogleLoginButton onError={setShowBoxMessage} />
                       </Row>
                     </Form>
                   )}

@@ -15,6 +15,10 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
 
   const subtotal = cartTotal || cartProducts?.reduce((s, i) => s + (i.sub_total || 0), 0) || 0;
   const shipping = data?.data?.shipping_total ?? values?.shipping_total ?? 0;
+  // Estado del envío por zonas: el servidor manda shipping_quote cuando ya
+  // conoce la ciudad de entrega. Antes de eso mostramos una pista en vez de $0.
+  const shippingQuote = data?.data?.shipping_quote;
+  const hasQuote = Boolean(shippingQuote) || (data?.data?.shipping_total ?? null) !== null;
   const couponDiscount = data?.data?.coupon_total_discount || 0;
   // Compute the total from the LIVE local cart so quantity changes reflect
   // immediately; only defer to the server's figure while a coupon is applied
@@ -45,7 +49,13 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
                 </li>
                 <li>
                   {t("Shipping")}
-                  <span className="count">{convertCurrency(shipping)}</span>
+                  {shippingQuote?.free_shipping ? (
+                    <span className="count text-success fw-semibold">{t("FreeShipping")}</span>
+                  ) : hasQuote ? (
+                    <span className="count">{convertCurrency(shipping)}</span>
+                  ) : (
+                    <span className="count text-content" style={{ fontSize: "13px" }}>{t("ShippingCalculatedAtAddress")}</span>
+                  )}
                 </li>
                 {couponDiscount > 0 && (
                   <li>

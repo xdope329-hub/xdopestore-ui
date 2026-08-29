@@ -9,11 +9,13 @@ import { Href } from "@/utils/constants";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";;
 import { useRouter } from "next/navigation";
 import React, { useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Slider from "react-slick";
 import { Col, Row } from "reactstrap";
 
 const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle, classes, type, title, product_box_style, sliderOptions, paginate, isFilterCategoryDataNested, dynamic, customSelect }) => {
   const router = useRouter();
+  const { t } = useTranslation("common");
   const [activeTab, setActiveTab] = useState(0);
   const [currentCategory, setCurrentCategory] = useState("");
   const { filterCategory } = useContext(CategoryContext);
@@ -70,7 +72,11 @@ const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle,
     }
   }, [filteredCategories, currentCategory]);
 
-  const { data: product, refetch, fetchStatus, isLoading } = useFetchQuery([currentCategory], () => request({ url: ProductAPI, params: { category_ids: currentCategory || customSelectedId, status: 1, paginate: paginate ? paginate : 4 } }, router), { enabled: !!(currentCategory || customSelectedId), refetchOnWindowFocus: false, select: (res) => res?.data?.data });
+  const { data: productRes, refetch, fetchStatus, isLoading } = useFetchQuery([currentCategory], () => request({ url: ProductAPI, params: { category_ids: currentCategory || customSelectedId, status: 1, paginate: paginate ? paginate : 8 } }, router), { enabled: !!(currentCategory || customSelectedId), refetchOnWindowFocus: false, select: (res) => res?.data });
+  const product = productRes?.data;
+  const totalProducts = productRes?.total ?? 0;
+  // Slug of the active tab's category, for the "view all" link below.
+  const currentCategorySlug = filteredCategories?.find((c) => c?.id === currentCategory)?.slug;
 
   const changeTab = (index, category) => {
     // Clicking the already-active category (always the case when only one
@@ -214,6 +220,13 @@ const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle,
               </Row>
             ) : (
               <NoDataFound customClass='no-data-added' title='NoProductFound' />
+            )}
+            {totalProducts > (product?.length || 0) && currentCategorySlug && (
+              <div className='text-center mt-4'>
+                <button type='button' className='btn btn-theme' onClick={() => router.push(`/category/${currentCategorySlug}`)}>
+                  {t("ViewAll")} ({totalProducts})
+                </button>
+              </div>
             )}
           </div>
         </div>

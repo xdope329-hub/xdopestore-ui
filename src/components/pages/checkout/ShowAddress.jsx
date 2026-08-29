@@ -29,11 +29,13 @@ const ShowAddress = ({ item, type, index }) => {
                   {item?.street}{item?.city ? `, ${item.city}` : ''}{item?.state?.name ? `, ${item.state.name}` : ''}{item?.country?.name ? `, ${item.country.name}` : ''}
                 </p>
               </li>
-              <li>
-                <h6 className="text-content">
-                  <span className="text-title">{t("PinCode")} :</span> {item?.pincode}
-                </h6>
-              </li>
+              {item?.pincode ? (
+                <li>
+                  <h6 className="text-content">
+                    <span className="text-title">{t("PinCode")} :</span> {item?.pincode}
+                  </h6>
+                </li>
+              ) : null}
               <li>
                 <h6 className="text-content mb-0">
                   <span className="text-title">{t("Phone")} :</span> {item?.country_code && `+${item?.country_code}`} {item?.phone}
