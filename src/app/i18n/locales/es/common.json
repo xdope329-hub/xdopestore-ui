@@ -817,5 +817,11 @@
   "ChooseCityFromList": "Elegir una ciudad de la lista",
   "EnterPincodeOptional": "Código postal (opcional)",
   "FreeShipping": "¡Gratis!",
-  "ShippingCalculatedAtAddress": "Se calcula con tu dirección"
+  "ShippingCalculatedAtAddress": "Se calcula con tu dirección",
+  "SelectBillingAddressFirst": "Selecciona una dirección de facturación para realizar tu pedido",
+  "SelectShippingAddressFirst": "Selecciona una dirección de envío para realizar tu pedido",
+  "SelectPaymentMethodFirst": "Elige un método de pago para realizar tu pedido",
+  "SelectDepartmentFirst": "Primero selecciona el departamento para ver sus ciudades",
+  "CompleteRequiredFields": "Completa los campos obligatorios",
+  "EnterCouponCode": "Escribe primero un código de cupón"
 }
