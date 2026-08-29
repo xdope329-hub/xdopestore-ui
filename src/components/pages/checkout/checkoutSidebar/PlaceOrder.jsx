@@ -13,21 +13,27 @@ const PlaceOrder = ({ values, addToCartData, errors }) => {
   const access_token = Cookies.get("uat");
   const router = useRouter();
   const { setOpenAuthModal } = useContext(ThemeOptionContext) || {};
-  const [disable, setDisable] = useState(true);
   const [loading, setLoading] = useState(false);
   // Cart context is used to flush the local cart state after a successful
   // order so the header badge and cart drawer reflect the cleared server cart.
   const { setCartProducts, setCartTotal, refetch: cartRefetch } = useContext(CartContext) || {};
 
-  useEffect(() => {
-    if (!access_token) {
-      setDisable(Object.keys(errors).length > 0);
-    } else {
-      setDisable(!(values["billing_address_id"] && values["payment_method"]));
-    }
-  }, [access_token, values, errors]);
+  // En vez de un botón deshabilitado sin explicación, el clic valida y le
+  // dice al cliente exactamente qué falta para poder realizar el pedido.
+  const missingRequirements = () => {
+    const missing = [];
+    if (!values["billing_address_id"]) missing.push(t("SelectBillingAddressFirst"));
+    if (!addToCartData?.is_digital_only && !values["shipping_address_id"]) missing.push(t("SelectShippingAddressFirst"));
+    if (!values["payment_method"]) missing.push(t("SelectPaymentMethodFirst"));
+    return missing;
+  };
 
   const handleClick = async () => {
+    const missing = missingRequirements();
+    if (missing.length) {
+      ToastNotification("error", missing[0]);
+      return;
+    }
     setLoading(true);
     try {
       const res = await request({ url: "/payment/initialize", method: "post", data: values });
@@ -97,15 +103,9 @@ const PlaceOrder = ({ values, addToCartData, errors }) => {
 
   return (
     <div className="text-end">
-      {addToCartData?.is_digital_only ? (
-        <Btn className="order-btn" onClick={handleClick} disabled={loading || (values["billing_address_id"] && values["payment_method"] ? false : true)}>
-          {loading ? t("Loading") : t("PlaceOrder")}
-        </Btn>
-      ) : (
-        <Btn className="order-btn" onClick={handleClick} disabled={loading || disable}>
-          {loading ? t("Loading") : t("PlaceOrder")}
-        </Btn>
-      )}
+      <Btn className="order-btn" onClick={handleClick} disabled={loading}>
+        {loading ? t("Loading") : t("PlaceOrder")}
+      </Btn>
     </div>
   );
 };

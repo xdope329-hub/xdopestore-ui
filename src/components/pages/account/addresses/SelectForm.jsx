@@ -1,5 +1,7 @@
 import SearchableSelectInput from "@/components/widgets/inputFields/SearchableSelectInput";
 import SimpleInputField from "@/components/widgets/inputFields/SimpleInputField";
+import CityField from "@/components/widgets/inputFields/CityField";
+import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 import { AllCountryCode } from "@/data/CountryCode";
 import Btn from "@/elements/buttons/Btn";
 import { Form, useFormikContext } from "formik";
@@ -8,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import { Col, ModalFooter, Row } from "reactstrap";
 
 const SelectForm = ({ values, isLoading, data, setModal, isFooterDisplay = true }) => {
-  const { setFieldValue } = useFormikContext();
+  const { setFieldValue, errors, submitCount } = useFormikContext();
   // Default the country to Colombia for new addresses once the catalog loads.
   useEffect(() => {
     if (!values?.country_id && data?.length && setFieldValue) {
@@ -17,6 +19,12 @@ const SelectForm = ({ values, isLoading, data, setModal, isFooterDisplay = true 
     }
   }, [data]);
   const { t } = useTranslation("common");
+  // Intento de guardar con campos obligatorios vacíos → aviso claro.
+  useEffect(() => {
+    if (submitCount > 0 && Object.keys(errors || {}).length) {
+      ToastNotification("error", t("CompleteRequiredFields"));
+    }
+  }, [submitCount]); // eslint-disable-line
   return (
     <Form>
       <Row>

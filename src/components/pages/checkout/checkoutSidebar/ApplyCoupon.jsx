@@ -34,7 +34,10 @@ const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values,
     mutate && mutate({ coupon_code: "" });
   };
   const onCouponApplyClick = () => {
-    if (!storeCoupon) return;
+    if (!storeCoupon) {
+      ToastNotification("error", t("EnterCouponCode"));
+      return;
+    }
     setFieldValue("coupon", storeCoupon);
     mutate && mutate({ coupon_code: storeCoupon });
   };

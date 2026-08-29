@@ -6,6 +6,7 @@ import { ShippingAPI } from "@/utils/axiosUtils/API";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 
 const OTHER = "__other__";
 
@@ -85,7 +86,16 @@ const CityField = ({ values, setFieldValue, data }) => {
     );
   }
 
+  const departmentMissing = !values?.state_id;
   return (
+    <div
+      onClickCapture={(e) => {
+        if (departmentMissing) {
+          e.stopPropagation();
+          ToastNotification("error", t("SelectDepartmentFirst"));
+        }
+      }}
+    >
     <SearchableSelectInput
       nameList={[
         {
@@ -104,6 +114,7 @@ const CityField = ({ values, setFieldValue, data }) => {
         },
       ]}
     />
+    </div>
   );
 };
 

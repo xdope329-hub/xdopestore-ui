@@ -1,14 +1,23 @@
-import { Form } from "formik";
+import { Form, useFormikContext } from "formik";
 import { useEffect } from "react";
 import { Col, Input, Label, ModalFooter, Row } from "reactstrap";
 import Btn from "@/elements/buttons/Btn";
 import { useTranslation } from "react-i18next";
 import SearchableSelectInput from "@/utils/commonComponents/inputFields/SearchableSelectInput";
 import SimpleInputField from "@/components/widgets/inputFields/SimpleInputField";
+import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
+import CityField from "@/components/widgets/inputFields/CityField";
 import { AllCountryCode } from "@/data/CountryCode";
 
 const SelectForm = ({ values, setFieldValue, isLoading, data, setModal, isFooterDisplay = true }) => {
   const { t } = useTranslation("common");
+  // Intento de guardar con campos obligatorios vacíos → aviso claro.
+  const { errors, submitCount } = useFormikContext();
+  useEffect(() => {
+    if (submitCount > 0 && Object.keys(errors || {}).length) {
+      ToastNotification("error", t("CompleteRequiredFields"));
+    }
+  }, [submitCount]); // eslint-disable-line
   // Default the country to Colombia for new addresses once the catalog loads.
   useEffect(() => {
     if (!values?.country_id && data?.length && setFieldValue) {

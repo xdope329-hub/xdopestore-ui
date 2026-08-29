@@ -785,5 +785,11 @@
   "ChooseCityFromList": "Choose a city from the list",
   "EnterPincodeOptional": "Postal code (optional)",
   "FreeShipping": "Free!",
-  "ShippingCalculatedAtAddress": "Calculated with your address"
+  "ShippingCalculatedAtAddress": "Calculated with your address",
+  "SelectBillingAddressFirst": "Select a billing address to place your order",
+  "SelectShippingAddressFirst": "Select a shipping address to place your order",
+  "SelectPaymentMethodFirst": "Choose a payment method to place your order",
+  "SelectDepartmentFirst": "First select the department to see its cities",
+  "CompleteRequiredFields": "Please complete the required fields",
+  "EnterCouponCode": "Type a coupon code first"
 }
