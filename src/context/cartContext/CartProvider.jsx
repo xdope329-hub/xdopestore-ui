@@ -42,7 +42,7 @@ const CartProvider = (props) => {
     }
   });
   // Delete Cart API Data
-  const { mutate: deleteCart, isLoading: deleteCartLoader } = useDelete(AddToCartAPI, false);
+  const { mutate: deleteCart, isLoading: deleteCartLoader } = useDelete(AddToCartAPI, false, true);
 
   // Replace Cart API
   const { mutate: replaceCartMutate, isLoading: replaceCartLoader } = useCreate(ReplaceCartAPI, false, false, "No");

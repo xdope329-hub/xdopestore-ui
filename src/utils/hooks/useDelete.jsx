@@ -8,7 +8,9 @@ const useDelete = (url, refetch, deleteMessageNotShow) => {
   return useMutation({
     mutationFn: (deleteId) => request({ url: `${url}/${deleteId}`, method: "delete" }),
     onSuccess: (resData) => {
-      SuccessHandle(resData, false, false, !deleteMessageNotShow ? "Deleted Successfully" : "");
+      // 'No' le indica a SuccessHandle que no muestre NINGÚN toast (una
+      // cadena vacía igual mostraba uno genérico).
+      SuccessHandle(resData, false, false, !deleteMessageNotShow ? "Deleted Successfully" : "No");
       refetch && queryClient.invalidateQueries({ queryKey: [refetch] });
     },
   });

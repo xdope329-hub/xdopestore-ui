@@ -829,5 +829,6 @@
   "AlreadyHaveAccount": "¿Ya tienes una cuenta?",
   "GuestCreateAccountTitle": "¿Quieres seguir tu pedido fácilmente?",
   "GuestCreateAccountDescription": "Crea una cuenta con el mismo correo que usaste y este pedido aparecerá en tu historial automáticamente.",
-  "BillingUsesShippingAddress": "Se usará tu dirección de envío para la facturación."
+  "BillingUsesShippingAddress": "Se usará tu dirección de envío para la facturación.",
+  "MercadoPagoMethodsAlt": "Paga seguro con Mercado Pago: Visa, Mastercard, American Express, Diners, Discover, PSE, Efecty, Nequi, DaviPlata, Bancolombia y más"
 }

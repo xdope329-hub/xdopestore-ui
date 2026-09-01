@@ -121,3 +121,13 @@
     }
   }
 }
+
+/* Logos de métodos disponibles bajo la opción Mercado Pago en el checkout. */
+.payment-methods-full {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  background: #fff;
+}

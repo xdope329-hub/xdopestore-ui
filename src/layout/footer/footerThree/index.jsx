@@ -11,10 +11,12 @@ import FooterSocial from "../widgets/FooterSocial";
 import FooterStoreInformation from "../widgets/FooterStoreInformation";
 import FooterUsefulLinks from "../widgets/FooterUsefulLinks";
 import SubFooter from "../widgets/SubFooter";
+import useFooterSections from "../widgets/useFooterSections";
 
 const FooterThree = () => {
   const { themeOption } = useContext(ThemeOptionContext);
   const { t } = useTranslation("common");
+  const { hasCategories, hasUsefulLinks, hasHelpCenter } = useFooterSections();
   const [openClose, setOpenClose] = useState({
     helpCenter: false,
     categories: false,
@@ -53,39 +55,43 @@ const FooterThree = () => {
                 <FooterStoreInformation icon={true} />
               </div>
             </Col>
-            <Col xl="2" lg="3" className="col-md-4 " onClick={() => toggle("categories")}>
-              <div className="sub-title">
-                <div className={`footer-title ${openClose?.categories ? "show" : ""}`}>
-                  <h4>{t("Categories")}</h4>
+            {hasCategories && (
+              <Col xl="2" lg="3" className="col-md-4 " onClick={() => toggle("categories")}>
+                <div className="sub-title">
+                  <div className={`footer-title ${openClose?.categories ? "show" : ""}`}>
+                    <h4>{t("Categories")}</h4>
+                  </div>
+                  <FooterCategories />
                 </div>
-                <FooterCategories />
-              </div>
-            </Col>
-
-            <Col lg="2" md="3" onClick={() => toggle("useFulLinks")}>
-              <div className="sub-title">
-                <div className={`footer-title ${openClose?.useFulLinks ? "show" : ""}`}>
-                  <h4>{t("UsefulLinks")}</h4>
+              </Col>
+            )}
+            {hasUsefulLinks && (
+              <Col lg="2" md="3" onClick={() => toggle("useFulLinks")}>
+                <div className="sub-title">
+                  <div className={`footer-title ${openClose?.useFulLinks ? "show" : ""}`}>
+                    <h4>{t("UsefulLinks")}</h4>
+                  </div>
+                  <FooterUsefulLinks />
                 </div>
-                <FooterUsefulLinks />
-              </div>
-            </Col>
-            <Col xl="2" md="3" onClick={() => toggle("helpCenter")}>
-              <div className="sub-title">
-                <div className={`footer-title ${openClose?.helpCenter ? "show" : ""}`}>
-                  <h4>{t("HelpCenter")}</h4>
+              </Col>
+            )}
+            {hasHelpCenter && (
+              <Col xl="2" md="3" onClick={() => toggle("helpCenter")}>
+                <div className="sub-title">
+                  <div className={`footer-title ${openClose?.helpCenter ? "show" : ""}`}>
+                    <h4>{t("HelpCenter")}</h4>
+                  </div>
+                  <FooterHelpCenter />
                 </div>
-                <FooterHelpCenter />
-              </div>
-            </Col>
+              </Col>
+            )}
             <Col xl="3" lg="4" md="6" onClick={() => toggle("storeInfo")}>
               <div className="sub-title">
                 <div className={`footer-title ${openClose?.storeInfo ? "show" : ""}`}>
                   <h4>{t("FollowUs")}</h4>
                 </div>
                 <div className="footer-content">
-                  <p className="mb-cls-content">{t("NeverMissAnythingFromStoreBySigningUpToOurNewsletter")}.</p>
-                  <FooterNewsLetter style="classic" />
+
                   {themeOption?.footer?.social_media_enable && <FooterSocial />}
                 </div>
               </div>

@@ -797,5 +797,6 @@
   "AlreadyHaveAccount": "Already have an account?",
   "GuestCreateAccountTitle": "Want to track this order easily?",
   "GuestCreateAccountDescription": "Create an account with the same email you used and this order will appear in your history automatically.",
-  "BillingUsesShippingAddress": "Your shipping address will be used for billing."
+  "BillingUsesShippingAddress": "Your shipping address will be used for billing.",
+  "MercadoPagoMethodsAlt": "Pay securely with Mercado Pago: Visa, Mastercard, American Express, Diners, Discover, PSE, Efecty, Nequi, DaviPlata, Bancolombia and more"
 }
