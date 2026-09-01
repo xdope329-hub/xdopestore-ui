@@ -23,23 +23,33 @@ const PaymentSection = ({ values, setFieldValue, }) => {
                 {settingData?.payment_methods?.map((elem, i) => (
                     <Fragment key={i}>
                         {elem?.status && (
-                            <Col xxl={6}>
+                            <Col xs={12} xxl={elem?.name === 'mercadopago' ? 12 : 6}>
                                 <div className='payment-option'>
                                     <div className='payment-category w-100'>
-                                        <div className='form-check custom-form-check gap-0 hide-check-box w-100'>
-                                            <Input
-                                                className='form-check-input'
-                                                id={elem?.name}
-                                                checked={values?.payment_method === elem.name}
-                                                type='radio'
-                                                name='payment_method'
-                                                onChange={() => {
-                                                    setFieldValue('payment_method', elem.name);
-                                                }}
-                                            />
-                                            <Label className='form-check-label' htmlFor={elem.name}>
-                                                {ModifyString(elem?.name, 'upper')}
-                                            </Label>
+                                        <div className='d-flex align-items-center flex-wrap w-100' style={{ gap: '16px' }}>
+                                            <div className='form-check custom-form-check gap-0 hide-check-box flex-grow-1' style={{ minWidth: '240px' }}>
+                                                <Input
+                                                    className='form-check-input'
+                                                    id={elem?.name}
+                                                    checked={values?.payment_method === elem.name}
+                                                    type='radio'
+                                                    name='payment_method'
+                                                    onChange={() => {
+                                                        setFieldValue('payment_method', elem.name);
+                                                    }}
+                                                />
+                                                <Label className='form-check-label' htmlFor={elem.name}>
+                                                    {ModifyString(elem?.name, 'upper')}
+                                                </Label>
+                                            </div>
+                                            {elem?.name === 'mercadopago' && (
+                                                <img
+                                                    src='/assets/images/payment/mercadopago-methods.jpg'
+                                                    alt={t('MercadoPagoMethodsAlt')}
+                                                    className='payment-methods-full'
+                                                    loading='lazy'
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 </div>

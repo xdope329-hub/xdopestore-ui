@@ -33,7 +33,7 @@ const WishlistProvider = (props) => {
 
   const { data: WishlistApiData, isLoading: WishlistAPILoading, refetch } = useFetchQuery([WishlistAPI], () => request({ url: WishlistAPI }), { enabled: false, refetchOnWindowFocus: false, select: (res) => res?.data });
   const { mutate, isLoading } = useCreate(WishlistAPI, false, false, "AddedToWishlist");
-  const { mutate: deleteWishlist } = useDelete(WishlistAPI, false, false, "ProductDeletedFromWishlist");
+  const { mutate: deleteWishlist } = useDelete(WishlistAPI, false, true);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,6 +115,7 @@ const WishlistProvider = (props) => {
         return next;
       });
       deleteWishlist(wishlistId, { onSuccess: () => refetch() });
+      ToastNotification("success", "ProductDeletedFromWishlist");
     } else if (!Cookies.get("uat")) {
       setWishlistProducts((prev) => {
         const next = prev.filter((item) => getWishlistProductId(item) !== productId);

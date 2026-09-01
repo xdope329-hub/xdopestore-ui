@@ -8,6 +8,11 @@ import { useTranslation } from "react-i18next";
 import { Col, Container, FormGroup, Row } from "reactstrap";
 
 const FooterNewsLetter = ({ style }) => {
+  // Boletín deshabilitado: no hay backend de newsletter conectado, así que
+  // la sección se oculta en todos los layouts. Para reactivarla, elimina
+  // este return y conecta el formulario a un servicio real.
+  return null;
+
   const { t } = useTranslation("common");
   const { mutate, isLoading } = useCreate(SubscribeAPI, false, false, "SubscribedSuccessfully", (resDta) => {
     if (resDta?.status == 200 || resDta?.status == 201) {
