@@ -823,5 +823,11 @@
   "SelectPaymentMethodFirst": "Elige un método de pago para realizar tu pedido",
   "SelectDepartmentFirst": "Primero selecciona el departamento para ver sus ciudades",
   "CompleteRequiredFields": "Completa los campos obligatorios",
-  "EnterCouponCode": "Escribe primero un código de cupón"
+  "EnterCouponCode": "Escribe primero un código de cupón",
+  "AddYourFirstAddress": "Agrega tu dirección de entrega",
+  "AddYourFirstAddressDescription": "La necesitamos para calcular tu envío y entregarte el pedido.",
+  "AlreadyHaveAccount": "¿Ya tienes una cuenta?",
+  "GuestCreateAccountTitle": "¿Quieres seguir tu pedido fácilmente?",
+  "GuestCreateAccountDescription": "Crea una cuenta con el mismo correo que usaste y este pedido aparecerá en tu historial automáticamente.",
+  "BillingUsesShippingAddress": "Se usará tu dirección de envío para la facturación."
 }

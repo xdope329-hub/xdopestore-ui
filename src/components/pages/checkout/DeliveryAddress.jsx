@@ -79,8 +79,12 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
                   ))}
                 </Row>
               ) : (
-                <div className='empty-box'>
-                  <h2>{t('NoaddressFound')}</h2>
+                <div className='empty-box text-center py-3'>
+                  <h2 className='mb-2'>{t('AddYourFirstAddress')}</h2>
+                  <p className='text-content mb-3' style={{ fontSize: '14px' }}>{t('AddYourFirstAddressDescription')}</p>
+                  <a className='btn btn-theme d-inline-flex align-items-center' onClick={() => setModal(type)}>
+                    <RiAddLine className='me-1' /> {t('AddAddress')}
+                  </a>
                 </div>
               )}
             </>

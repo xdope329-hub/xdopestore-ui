@@ -17,14 +17,15 @@ const PaymentOptions = ({ values, setFieldValue }) => {
   const { t } = useTranslation("common");
   const { settingData } = useContext(SettingContext);
   const [initial, setInitial] = useState("");
-  // Pre-select the first ACTIVE payment method from settings (never a hidden
-  // one — previously this hardcoded "cod", which broke once COD was disabled).
+  // Preselección: Mercado Pago si está activo; si no, el primer método
+  // activo (nunca uno oculto).
   useEffect(() => {
     const methods = settingData?.payment_methods || [];
-    const firstActiveIndex = methods.findIndex((m) => m?.status);
-    if (firstActiveIndex !== -1) {
-      setFieldValue("payment_method", methods[firstActiveIndex].name);
-      setInitial(firstActiveIndex);
+    let idx = methods.findIndex((m) => m?.status && m?.name === "mercadopago");
+    if (idx === -1) idx = methods.findIndex((m) => m?.status);
+    if (idx !== -1) {
+      setFieldValue("payment_method", methods[idx].name);
+      setInitial(idx);
     }
   }, [settingData?.payment_methods]);
   return (

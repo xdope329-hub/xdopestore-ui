@@ -791,5 +791,11 @@
   "SelectPaymentMethodFirst": "Choose a payment method to place your order",
   "SelectDepartmentFirst": "First select the department to see its cities",
   "CompleteRequiredFields": "Please complete the required fields",
-  "EnterCouponCode": "Type a coupon code first"
+  "EnterCouponCode": "Type a coupon code first",
+  "AddYourFirstAddress": "Add your delivery address",
+  "AddYourFirstAddressDescription": "We need it to calculate your shipping and deliver your order.",
+  "AlreadyHaveAccount": "Already have an account?",
+  "GuestCreateAccountTitle": "Want to track this order easily?",
+  "GuestCreateAccountDescription": "Create an account with the same email you used and this order will appear in your history automatically.",
+  "BillingUsesShippingAddress": "Your shipping address will be used for billing."
 }

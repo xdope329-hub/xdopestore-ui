@@ -1,5 +1,6 @@
 "use client";
 import request from "@/utils/axiosUtils";
+import Cookies from "js-cookie";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,6 +12,8 @@ const OrderSuccess = () => {
   const orderId = searchParams.get("id");
   const [status, setStatus] = useState("loading");
   const [orderNumber, setOrderNumber] = useState(null);
+  const [isGuest, setIsGuest] = useState(false);
+  useEffect(() => { setIsGuest(!Cookies.get("uat")); }, []);
 
   useEffect(() => {
     if (!orderId) { setStatus("error"); return; }
@@ -48,6 +51,15 @@ const OrderSuccess = () => {
                   {orderNumber ? `${t("order_number") || "Número de pedido"}: #${orderNumber}` : ""}
                 </p>
                 <p>{t("order_success_msg") || "Tu pedido fue recibido y está siendo procesado."}</p>
+                {isGuest && (
+                  <div className="theme-card p-3 mt-3">
+                    <p className="mb-2 fw-semibold">{t("GuestCreateAccountTitle")}</p>
+                    <p className="text-muted mb-3" style={{ fontSize: "14px" }}>{t("GuestCreateAccountDescription")}</p>
+                    <Link href="/auth/register" className="btn btn-outline">
+                      {t("CreateAccount")}
+                    </Link>
+                  </div>
+                )}
               </>
             ) : (
               <>
