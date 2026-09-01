@@ -191,7 +191,7 @@ const CheckoutContent = () => {
                       </div>
                     </div>
                   </Col>
-                  <CheckoutSidebar addToCartData={addToCartData} values={values} setFieldValue={setFieldValue} errors={errors} sessionToken={accessToken} onSessionRestored={() => setAccessToken(Cookies.get("uat"))} />
+                  <CheckoutSidebar addToCartData={addToCartData} values={values} setFieldValue={setFieldValue} errors={errors} sessionToken={accessToken} />
                 </Row>
               </Form>
             )}
