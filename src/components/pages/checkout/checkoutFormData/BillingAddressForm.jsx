@@ -1,12 +1,13 @@
-import CityField from "@/components/widgets/inputFields/CityField";
-import SimpleInputField from "@/components/widgets/inputFields/SimpleInputField";
-import { AllCountryCode } from "@/data/CountryCode";
-import SearchableSelectInput from "@/utils/commonComponents/inputFields/SearchableSelectInput";
+import AddressFields from "@/components/widgets/addressForm/AddressFields";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RiArrowDownSLine, RiArrowUpSLine } from "react-icons/ri";
-import { Col, Input, Label, Row } from "reactstrap";
+import { Input, Label, Row } from "reactstrap";
 
+// Dirección de facturación del checkout de invitados. Los campos viven en
+// el componente compartido AddressFields (prefix="billing_address"); aquí
+// solo queda lo propio de facturación: la casilla "misma dirección de
+// envío" y su sincronización en vivo.
 const BillingAddressForm = ({ values, setFieldValue, errors, data }) => {
   const { t } = useTranslation("common");
   const same = Boolean(values.billing_address?.same_shipping);
@@ -79,59 +80,7 @@ const BillingAddressForm = ({ values, setFieldValue, errors, data }) => {
       )}
       {open && !same && (
         <Row className="g-md-4 g-sm-3 g-2 checkout-form mt-0">
-          <SimpleInputField
-            nameList={[
-              { name: "billing_address.title", placeholder: t("EnterTitle"), toplabel: "Title", colprops: { md: 12 }, require: "true" },
-              { name: "billing_address.street", placeholder: t("EnterAddress"), toplabel: "Address", colprops: { xs: 12 }, require: "true" },
-            ]}
-          />
-          <SearchableSelectInput
-            nameList={[
-              { name: "billing_address.country_id", require: "true", title: "Country", toplabel: "Country", colprops: { md: 6 }, inputprops: { name: "billing_address.country_id", id: "billing_address.country_id", options: data, defaultOption: t("SelectCountry") } },
-              {
-                name: "billing_address.state_id", require: "true", title: "State", toplabel: "State", colprops: { md: 6 },
-                inputprops: {
-                  name: "billing_address.state_id",
-                  id: "billing_address.state_id",
-                  options: values?.billing_address?.country_id ? data?.filter((country) => Number(country.id) === Number(values?.billing_address?.country_id))?.[0]?.["state"] : [],
-                  defaultOption: t("SelectState"),
-                },
-                disabled: values?.billing_address?.country_id ? false : true,
-              },
-            ]}
-          />
-          <CityField
-            values={values}
-            setFieldValue={setFieldValue}
-            data={data}
-            name="billing_address.city"
-            countryIdPath="billing_address.country_id"
-            stateIdPath="billing_address.state_id"
-            colprops={{ md: 6 }}
-          />
-          <SimpleInputField
-            nameList={[{ name: "billing_address.pincode", placeholder: t("EnterPincodeOptional"), toplabel: "Pincode", colprops: { md: 6 } }]}
-          />
-          <Col xs={12} className="phone-field">
-            <div className="form-box position-relative">
-              <div className="country-input">
-                <SimpleInputField nameList={[{ name: "billing_address.phone", type: "number", placeholder: t("EnterPhoneNumber"), require: "true", toplabel: "Phone", colprops: { xs: 12 }, colclass: "country-input-box" }]} />
-                <SearchableSelectInput
-                  nameList={[
-                    {
-                      name: "billing_address.country_code",
-                      notitle: "true",
-                      inputprops: {
-                        name: "billing_address.country_code",
-                        id: "billing_address.country_code",
-                        options: AllCountryCode,
-                      },
-                    },
-                  ]}
-                />
-              </div>
-            </div>
-          </Col>
+          <AddressFields values={values} setFieldValue={setFieldValue} data={data} prefix="billing_address" halfCol={{ md: 6 }} />
         </Row>
       )}
     </div>

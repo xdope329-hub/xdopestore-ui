@@ -1,6 +1,6 @@
 import request from "@/utils/axiosUtils";
 import { CountryAPI } from "@/utils/axiosUtils/API";
-import { YupObject, nameSchema, phoneSchema } from "@/utils/validation/ValidationSchema";
+import { YupObject, addressFieldsSchema } from "@/utils/validation/ValidationSchema";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";;
 import { Formik } from "formik";
 import { useRouter } from "next/navigation";
@@ -35,14 +35,7 @@ const AddAddressForm = ({ mutate, isLoading, type, editAddress, setEditAddress, 
         // New addresses default to "save as default"; editing keeps the saved value.
         is_default: editAddress?.id ? Boolean(editAddress?.is_default) : true,
       }}
-      validationSchema={YupObject({
-        title: nameSchema,
-        street: nameSchema,
-        city: nameSchema,
-        country_id: nameSchema,
-        state_id: nameSchema,
-        phone: phoneSchema,
-      })}
+      validationSchema={YupObject({ ...addressFieldsSchema })}
       onSubmit={(values) => {
         if (editAddress) {
           values["_method"] = method ? method : "PUT";

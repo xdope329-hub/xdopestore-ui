@@ -16,6 +16,7 @@ import NewsLetterModal from './newsLetterModal'
 import RecentPurchase from './recentPurchase'
 import TapTop from './tapTop'
 import WhatsAppButton from './whatsappButton'
+import AnnouncementBar from './announcementBar'
 
 const SubLayout = ({ children }) => {
   const isTabActive = TabFocusChecker()
@@ -119,6 +120,8 @@ const SubLayout = ({ children }) => {
 
   return (
     <>
+      {/* Cinta de anuncios: sobre el header en todas las páginas */}
+      <AnnouncementBar />
       <Headers />
       {/* Bottom navigation is available on every page, product pages included
           (the product page's floating checkout pill is offset above it). */}

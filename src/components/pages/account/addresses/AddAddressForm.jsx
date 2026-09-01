@@ -1,6 +1,6 @@
 import request from "@/utils/axiosUtils";
 import { CountryAPI } from "@/utils/axiosUtils/API";
-import { YupObject, nameSchema, phoneSchema } from "@/utils/validation/ValidationSchema";
+import { YupObject, addressFieldsSchema } from "@/utils/validation/ValidationSchema";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";;
 import { Formik } from "formik";
 import { useTranslation } from "react-i18next";
@@ -29,14 +29,7 @@ const AddAddressForm = ({ mutate, isLoading, type, editAddress, setModal, isFoot
         country_code: editAddress ? editAddress?.country_code : "57",
         is_default: editAddress ? Boolean(editAddress?.is_default) : false,
       }}
-      validationSchema={YupObject({
-        title: nameSchema,
-        street: nameSchema,
-        city: nameSchema,
-        country_id: nameSchema,
-        state_id: nameSchema,
-        phone: phoneSchema,
-      })}
+      validationSchema={YupObject({ ...addressFieldsSchema })}
       onSubmit={(values) => {
         if (editAddress) {
           values["_method"] = method ? method : "PUT";

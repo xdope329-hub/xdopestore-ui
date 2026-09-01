@@ -1,23 +1,16 @@
-import SearchableSelectInput from "@/components/widgets/inputFields/SearchableSelectInput";
-import SimpleInputField from "@/components/widgets/inputFields/SimpleInputField";
-import CityField from "@/components/widgets/inputFields/CityField";
-import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
-import { AllCountryCode } from "@/data/CountryCode";
+import AddressFields from "@/components/widgets/addressForm/AddressFields";
 import Btn from "@/elements/buttons/Btn";
+import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 import { Form, useFormikContext } from "formik";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Col, ModalFooter, Row } from "reactstrap";
 
+// Formulario de dirección de cuenta → direcciones guardadas. Los campos
+// viven en el componente compartido AddressFields; aquí solo queda el
+// footer del modal.
 const SelectForm = ({ values, isLoading, data, setModal, isFooterDisplay = true }) => {
   const { setFieldValue, errors, submitCount } = useFormikContext();
-  // Default the country to Colombia for new addresses once the catalog loads.
-  useEffect(() => {
-    if (!values?.country_id && data?.length && setFieldValue) {
-      const colombia = data.find((c) => c?.name === "Colombia") || data[0];
-      colombia && setFieldValue("country_id", colombia.id);
-    }
-  }, [data]);
   const { t } = useTranslation("common");
   // Intento de guardar con campos obligatorios vacíos → aviso claro.
   useEffect(() => {
@@ -27,69 +20,8 @@ const SelectForm = ({ values, isLoading, data, setModal, isFooterDisplay = true 
   }, [submitCount]); // eslint-disable-line
   return (
     <Form>
-      <Row>
-        <SimpleInputField
-          nameList={[
-            { name: "street", placeholder: t("EnterAddress"), toplabel: "Address", colprops: { xs: 12 }, require: "true" },
-            { name: "title", placeholder: t("EnterTitle"), toplabel: "Title", colprops: { xs: 12 }, require: "true" },
-          ]}
-        />
-        <Col xs="12" className="phone-field">
-          <div className="country-input position-relative">
-            <SimpleInputField nameList={[{ name: "phone", type: "number", placeholder: t("EnterPhoneNumber"), require: "true", toplabel: "Phone", colclass: "country-input-box" }]} />
-            <SearchableSelectInput
-              nameList={[
-                {
-                  name: "country_code",
-                  notitle: "true",
-                  inputprops: {
-                    name: "country_code",
-                    id: "country_code",
-                    options: AllCountryCode,
-                  },
-                },
-              ]}
-            />
-          </div>
-        </Col>
-        <SearchableSelectInput
-          nameList={[
-            {
-              name: "country_id",
-              require: "true",
-              title: "Country",
-              toplabel: "Country",
-              colprops: { xxl: 6, lg: 12, sm: 6 },
-              inputprops: {
-                name: "country_id",
-                id: "country_id",
-                options: data,
-                defaultOption: t("SelectCountry"),
-              },
-            },
-            {
-              name: "state_id",
-              require: "true",
-              title: "State",
-              toplabel: "State",
-              colprops: { xxl: 6, lg: 12, sm: 6 },
-              inputprops: {
-                name: "state_id",
-                id: "state_id",
-                options: values?.["country_id"] ? data?.filter((country) => Number(country.id) === Number(values?.["country_id"]))?.[0]?.["state"] : [],
-                defaultOption: t("SelectState"),
-              },
-              disabled: values?.["country_id"] ? false : true,
-            },
-          ]}
-        />
-        <CityField values={values} setFieldValue={setFieldValue} data={data} />
-        <SimpleInputField
-          nameList={[
-            { name: "pincode", placeholder: t("EnterPincodeOptional"), toplabel: "Pincode", colprops: { xxl: 6, lg: 12, sm: 6 } },
-          ]}
-        />
-
+      <Row className="g-3">
+        <AddressFields values={values} setFieldValue={setFieldValue} data={data} halfCol={{ xxl: 6, lg: 12, sm: 6 }} />
         <Col xs="12">
           {isFooterDisplay && (
             <ModalFooter className="ms-auto justify-content-end save-back-button mt-0">

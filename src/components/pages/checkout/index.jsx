@@ -8,7 +8,7 @@ import request from "@/utils/axiosUtils";
 import { AddToCartAPI, AddressAPI } from "@/utils/axiosUtils/API";
 import Breadcrumbs from "@/utils/commonComponents/breadcrumb";
 import useCreate from "@/utils/hooks/useCreate";
-import { emailSchema, idCreateAccount, nameSchema, phoneSchema } from "@/utils/validation/ValidationSchema";
+import { addressObjectSchema, emailSchema, idCreateAccount, nameSchema, phoneSchema } from "@/utils/validation/ValidationSchema";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";;
 import { Form, Formik } from "formik";
 import Cookies from "js-cookie";
@@ -69,15 +69,10 @@ const CheckoutContent = () => {
     }
   }, [addToCartLoader, accessToken]);
 
-  const addressSchema = Yup.object().shape({
-    title: nameSchema,
-    street: nameSchema,
-    city: nameSchema,
-    country_code: nameSchema,
-    phone: nameSchema,
-    country_id: nameSchema,
-    state_id: nameSchema,
-  });
+  // Validación de dirección compartida (mismas reglas que el modal y la
+  // página de cuenta): título, dirección, ciudad, teléfono con formato,
+  // código postal numérico opcional, país y departamento.
+  const addressSchema = addressObjectSchema;
 
   if (themeLoad) return <Loader />;
   return (
