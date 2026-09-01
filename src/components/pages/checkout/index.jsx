@@ -40,6 +40,21 @@ const CheckoutContent = () => {
     setAccessToken(Cookies.get("uat"));
   }, [openAuthModal]);
 
+  // La sesión puede restaurarse en silencio DESPUÉS de montar la página (el
+  // refresh automático tras un 401, o un login en otra pestaña). Re-leer la
+  // cookie al volver el foco mantiene la vista de checkout sincronizada con
+  // la sesión real, para no mostrar el formulario de invitado a un usuario
+  // que ya está autenticado.
+  useEffect(() => {
+    const syncAuth = () => setAccessToken(Cookies.get("uat"));
+    window.addEventListener("focus", syncAuth);
+    document.addEventListener("visibilitychange", syncAuth);
+    return () => {
+      window.removeEventListener("focus", syncAuth);
+      document.removeEventListener("visibilitychange", syncAuth);
+    };
+  }, []);
+
   const { data: addressData, refetch: refetchAddresses } = useFetchQuery(
     [AddressAPI],
     () => request({ url: AddressAPI }, router),
@@ -85,6 +100,8 @@ const CheckoutContent = () => {
               products: [],
               shipping_address_id: "",
               billing_address_id: "",
+              // Direcciones locales del invitado (tarjetas del checkout)
+              guest_addresses: [],
               points_amount: "",
               wallet_balance: "",
               coupon: "",
@@ -146,7 +163,7 @@ const CheckoutContent = () => {
                               </a>
                             </div>
                             <ul>
-                              <CheckoutForm values={values} setFieldValue={setFieldValue} errors={errors} />
+                              <CheckoutForm values={values} setFieldValue={setFieldValue} errors={errors} modal={modal} setModal={setModal} />
                             </ul>
                           </div>
                         )}
@@ -174,7 +191,7 @@ const CheckoutContent = () => {
                       </div>
                     </div>
                   </Col>
-                  <CheckoutSidebar addToCartData={addToCartData} values={values} setFieldValue={setFieldValue} errors={errors} />
+                  <CheckoutSidebar addToCartData={addToCartData} values={values} setFieldValue={setFieldValue} errors={errors} sessionToken={accessToken} onSessionRestored={() => setAccessToken(Cookies.get("uat"))} />
                 </Row>
               </Form>
             )}

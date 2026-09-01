@@ -8,7 +8,7 @@ import ApplyCoupon from "./ApplyCoupon";
 import PlaceOrder from "./PlaceOrder";
 import PointWallet from "./PointWallet";
 
-const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeCoupon, setStoreCoupon, errorCoupon, appliedCoupon, setAppliedCoupon, errors }) => {
+const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeCoupon, setStoreCoupon, errorCoupon, appliedCoupon, setAppliedCoupon, errors, sessionToken, onSessionRestored }) => {
   const { convertCurrency } = useContext(SettingContext);
   const { cartProducts, cartTotal } = useContext(CartContext);
   const { t } = useTranslation("common");
@@ -72,7 +72,7 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
                   <span className="count">{convertCurrency(total)}</span>
                 </li>
               </ul>
-              <PlaceOrder values={values} errors={errors} />
+              <PlaceOrder values={values} errors={errors} sessionToken={sessionToken} onSessionRestored={onSessionRestored} />
             </div>
           </div>
         </div>

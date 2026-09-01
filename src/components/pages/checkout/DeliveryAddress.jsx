@@ -9,7 +9,7 @@ import AddAddressForm from './common/AddAddressForm';
 import CheckoutCard from './common/CheckoutCard';
 import ShowAddress from './ShowAddress';
 
-const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setModal, setFieldValue, values, refetchAddresses }) => {
+const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setModal, setFieldValue, values, refetchAddresses, guest = false }) => {
   const { t } = useTranslation('common');
 
   const selectedId = values?.[`${type}_address_id`];
@@ -31,6 +31,7 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
   // the "Default" badge and keeps every other place (account → Saved Address,
   // future checkout sessions, the inline-address pre-selection above) in sync.
   useEffect(() => {
+    if (guest) return; // invitado: no hay direcciones de cuenta que promover
     if (type !== 'billing') return;
     if (!selectedId) return;
     if (!Array.isArray(address) || address.length === 0) return;
