@@ -1,14 +1,14 @@
+import AddressFields from "@/components/widgets/addressForm/AddressFields";
+import Btn from "@/elements/buttons/Btn";
+import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 import { Form, useFormikContext } from "formik";
 import { useEffect } from "react";
-import { Col, Input, Label, ModalFooter, Row } from "reactstrap";
-import Btn from "@/elements/buttons/Btn";
 import { useTranslation } from "react-i18next";
-import SearchableSelectInput from "@/utils/commonComponents/inputFields/SearchableSelectInput";
-import SimpleInputField from "@/components/widgets/inputFields/SimpleInputField";
-import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
-import CityField from "@/components/widgets/inputFields/CityField";
-import { AllCountryCode } from "@/data/CountryCode";
+import { Col, Input, Label, ModalFooter, Row } from "reactstrap";
 
+// Modal de dirección del checkout (usuario logueado). Los campos viven en
+// el componente compartido AddressFields; aquí solo queda lo propio del
+// modal: aviso de campos obligatorios, checkbox "predeterminada" y footer.
 const SelectForm = ({ values, setFieldValue, isLoading, data, setModal, isFooterDisplay = true }) => {
   const { t } = useTranslation("common");
   // Intento de guardar con campos obligatorios vacíos → aviso claro.
@@ -18,79 +18,10 @@ const SelectForm = ({ values, setFieldValue, isLoading, data, setModal, isFooter
       ToastNotification("error", t("CompleteRequiredFields"));
     }
   }, [submitCount]); // eslint-disable-line
-  // Default the country to Colombia for new addresses once the catalog loads.
-  useEffect(() => {
-    if (!values?.country_id && data?.length && setFieldValue) {
-      const colombia = data.find((c) => c?.name === "Colombia") || data[0];
-      colombia && setFieldValue("country_id", colombia.id);
-    }
-  }, [data]);
   return (
     <Form>
       <Row className="g-3">
-        <SimpleInputField
-          nameList={[
-            { name: "street", placeholder: t("EnterAddress"), toplabel: "Address", colprops: { xs: 12 }, require: "true" },
-            { name: "title", placeholder: t("AddressLabelPlaceholder"), toplabel: "AddressLabel", colprops: { xs: 12 }, require: "true" },
-          ]}
-        />
-        <Col xs='12'>
-          <div className="country-input position-relative phone-field">
-            <SimpleInputField nameList={[{ name: "phone", type: "number", placeholder: t("EnterPhoneNumber"), require: "true", toplabel: "Phone", colclass: "country-input-box" }]} />
-            <SearchableSelectInput
-              nameList={[
-                {
-                  toplabel: "Country",
-                  name: "country_code",
-                  notitle: "true",
-                  inputprops: {
-                    name: "country_code",
-                    id: "country_code",
-                    options: AllCountryCode,
-                  },
-                },
-              ]}
-            />
-          </div>
-        </Col>
-
-        <SearchableSelectInput
-          nameList={[
-            {
-              name: "country_id",
-              require: "true",
-              title: "Country",
-              label: "Country",
-              colprops: { sm: 6 },
-              inputprops: {
-                name: "country_id",
-                id: "country_id",
-                options: data,
-                defaultOption: t("SelectCountry"),
-              },
-            },
-            {
-              name: "state_id",
-              require: "true",
-              title: "State",
-              label: "State",
-              colprops: { sm: 6 },
-              inputprops: {
-                name: "state_id",
-                id: "state_id",
-                options: values?.["country_id"] ? data?.filter((country) => Number(country.id) === Number(values?.["country_id"]))?.[0]?.["state"] : [],
-                defaultOption: t("SelectState"),
-              },
-              disabled: values?.["country_id"] ? false : true,
-            },
-          ]}
-        />
-        <CityField values={values} setFieldValue={setFieldValue} data={data} />
-        <SimpleInputField
-          nameList={[
-            { name: "pincode", placeholder: t("EnterPincodeOptional"), toplabel: "Pincode", colprops: { xxl: 6, lg: 12, sm: 6 } },
-          ]}
-        />
+        <AddressFields values={values} setFieldValue={setFieldValue} data={data} />
 
         <Col xs={12}>
           <div className="form-box form-checkbox">

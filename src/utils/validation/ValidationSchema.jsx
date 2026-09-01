@@ -60,7 +60,12 @@ export const discountSchema = Yup.number().min(0).max(100);
 export const requiredSchema = Yup.mixed().required();
 export const StatusSchema = Yup.boolean().required();
 
-export const phoneSchema = Yup.string().required()
+// Teléfono: obligatorio, solo dígitos (7 a 15). Los mensajes son claves de
+// traducción en locales/*/common.json (evitar la palabra "field": el
+// handleModifier de ModifiedErrorMessage recorta el mensaje en ella).
+export const phoneSchema = Yup.string()
+  .required("Phone is a required")
+  .matches(/^[0-9]{7,15}$/, "Phone is invalid")
 
 export const ifIsApplyAll = Yup.array().when("is_apply_all", {
   is: (val) => !val,
@@ -86,3 +91,38 @@ export const variationSchema = Yup.array().of(Yup.object().shape({
   quantity: nameSchema,
   status: nameSchema
 }))
+
+// ── Dirección: validación compartida ─────────────────────────────────────
+// Un único conjunto de reglas para TODOS los formularios de dirección
+// (modal del checkout, checkout de invitados envío/facturación y cuenta →
+// direcciones). Cambiar una regla aquí aplica en todos lados, igual que
+// los campos viven una sola vez en AddressFields.
+export const addressTitleSchema = Yup.string().trim()
+  .required("Title is a required")
+  .min(2, "Title is too short")
+  .max(100, "Title is too long");
+export const streetSchema = Yup.string().trim()
+  .required("Street is a required")
+  .min(5, "Street is too short")
+  .max(200, "Street is too long");
+export const citySchema = Yup.string().trim().required("City is a required");
+// Código postal: opcional, pero si se escribe debe ser numérico (4 a 10 dígitos).
+export const pincodeSchema = Yup.string().nullable()
+  .matches(/^[0-9]{4,10}$/, { message: "Pincode is invalid", excludeEmptyString: true });
+export const countryCodeSchema = Yup.string().required("Country code is a required");
+export const countryIdSchema = Yup.string().required("Country id is a required");
+export const stateIdSchema = Yup.string().required("State id is a required");
+
+export const addressFieldsSchema = {
+  title: addressTitleSchema,
+  street: streetSchema,
+  city: citySchema,
+  pincode: pincodeSchema,
+  phone: phoneSchema,
+  country_code: countryCodeSchema,
+  country_id: countryIdSchema,
+  state_id: stateIdSchema,
+};
+
+// Versión objeto, para direcciones anidadas (checkout de invitados).
+export const addressObjectSchema = Yup.object().shape(addressFieldsSchema);

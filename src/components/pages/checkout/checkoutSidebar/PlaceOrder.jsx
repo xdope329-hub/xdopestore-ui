@@ -4,6 +4,7 @@ import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
 import request from "@/utils/axiosUtils";
 import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
+import { setNestedObjectValues, useFormikContext } from "formik";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import React, { useContext, useEffect, useState } from "react";
@@ -21,6 +22,10 @@ const PlaceOrder = ({ values, addToCartData, errors }) => {
   const { settingData } = useContext(SettingContext) || {};
   const guestCheckout = Boolean(settingData?.activation?.guest_checkout);
   const isGuest = !access_token;
+  // Contexto de Formik del checkout: se usa solo para marcar los campos
+  // como "touched" y que los errores de validación se pinten en rojo bajo
+  // cada campo cuando el invitado intenta pedir con datos incompletos.
+  const formik = useFormikContext();
 
   // En vez de un botón deshabilitado sin explicación, el clic valida y le
   // dice al cliente exactamente qué falta para poder realizar el pedido.
@@ -29,7 +34,12 @@ const PlaceOrder = ({ values, addToCartData, errors }) => {
     if (isGuest) {
       // Invitado: los datos van inline — la validación de Formik marca lo
       // que falte (nombre, correo, teléfono, direcciones).
-      if (Object.keys(errors || {}).length) missing.push(t("CompleteRequiredFields"));
+      if (Object.keys(errors || {}).length) {
+        // Marca todos los campos con error como tocados para que cada uno
+        // muestre su mensaje debajo, además del aviso general.
+        formik && formik.setTouched(setNestedObjectValues(errors, true), false);
+        missing.push(t("CompleteRequiredFields"));
+      }
     } else {
       if (!values["billing_address_id"]) missing.push(t("SelectBillingAddressFirst"));
       if (!addToCartData?.is_digital_only && !values["shipping_address_id"]) missing.push(t("SelectShippingAddressFirst"));
