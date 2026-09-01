@@ -37,6 +37,22 @@ export function clearSession() {
 
 // Shared in-flight refresh promise. If ten requests all get 401 at the same
 // time we still only make ONE /refresh call, not ten.
+// "Invitado es invitado": si al ABRIR la tienda no hay token de acceso, la
+// sesión está vencida y el visitante es un invitado — se descarta el token
+// de renovación para que ningún 401 posterior resucite la sesión a mitad de
+// visita (p. ej. durante el checkout de invitado). La renovación silenciosa
+// solo mantiene viva una sesión ACTIVA (con token de acceso presente al
+// cargar); nunca crea una desde cero.
+export function dropStaleRefreshToken() {
+  try {
+    if (!Cookies.get(ACCESS_COOKIE) && Cookies.get(REFRESH_COOKIE)) {
+      Cookies.remove(REFRESH_COOKIE, { path: "/" });
+      return true;
+    }
+  } catch { /* cookies inaccesibles (SSR) — no hay nada que limpiar */ }
+  return false;
+}
+
 let refreshInFlight = null;
 
 async function doRefresh() {
