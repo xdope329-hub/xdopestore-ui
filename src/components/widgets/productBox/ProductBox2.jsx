@@ -13,6 +13,11 @@ const ProductBox2 = ({ productState, setProductState }) => {
   const { t } = useTranslation("common");
 
   const { convertCurrency } = useContext(SettingContext);
+  // Descuento efectivo: el de la variante seleccionada si la hay (igual que
+  // la línea de precio). null/undefined → 0, así que no cuenta como oferta.
+  const discount = Number(
+    (productState?.selectedVariation ? productState?.selectedVariation?.discount : productState?.product?.discount) || 0
+  );
   return (
     <div className={`basic-product theme-product-1 ${productState?.product?.stock_status === "out_of_stock" ? "sold-out" : ""}`}>
       <div className="overflow-hidden">
@@ -59,16 +64,20 @@ const ProductBox2 = ({ productState, setProductState }) => {
               ) : null}
             </h4>
           </div>
-          <ul className="offer-panel">
-            {[1, 2, 3].map((_, index) => (
-              <li key={index}>
+          {/* Panel de oferta: SOLO con un descuento real (> 0). Antes se
+              renderizaba siempre —y tres veces, con [1,2,3]— así que un
+              producto sin descuento mostraba "Oferta por tiempo limitado:
+              % Off" con el porcentaje vacío. */}
+          {discount > 0 && (
+            <ul className="offer-panel">
+              <li>
                 <span className="offer-icon">
                   <RiDiscountPercentFill />
                 </span>{" "}
-                {t("LimitedTimeOffer")}: {productState?.product?.discount}% {t("Off")}
+                {t("LimitedTimeOffer")}: {discount}% {t("Off")}
               </li>
-            ))}
-          </ul>
+            </ul>
+          )}
         </div>
       </div>
     </div>

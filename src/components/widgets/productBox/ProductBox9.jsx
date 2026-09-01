@@ -36,7 +36,7 @@ const ProductBox9 = ({ productState, setProductState }) => {
           </Link>
           <h4 className="price">
             {convertCurrency(productState?.product?.sale_price)}{" "}
-            {productState?.product?.discount && (
+            {Number(productState?.product?.discount) > 0 && (
               <>
                 {productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}
                 <span className="discounted-price">
