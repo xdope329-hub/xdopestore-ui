@@ -9,7 +9,7 @@ import { Col } from "reactstrap";
 import BillingSummary from "./BillingSummary";
 import SidebarProduct from "./SidebarProduct";
 
-const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, sessionToken, onSessionRestored }) => {
+const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, sessionToken }) => {
   const [storeCoupon, setStoreCoupon] = useState("");
   const { cartProducts, isLoading: CartLoading, deleteCartLoader, cartTotal } = useContext(CartContext);
   const [errorCoupon, setErrorCoupon] = useState("");
@@ -84,7 +84,7 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
         {cartProducts?.length > 0 ? (
           <div className="checkout-right-box">
             <SidebarProduct values={values} setFieldValue={setFieldValue} />
-            <BillingSummary values={values} errors={errors} setFieldValue={setFieldValue} data={resData} errorCoupon={errorCoupon} appliedCoupon={appliedCoupon} setAppliedCoupon={setAppliedCoupon} storeCoupon={storeCoupon} setStoreCoupon={setStoreCoupon} isLoading={isLoading} addToCartData={addToCartData} mutate={mutate} sessionToken={sessionToken} onSessionRestored={onSessionRestored} />
+            <BillingSummary values={values} errors={errors} setFieldValue={setFieldValue} data={resData} errorCoupon={errorCoupon} appliedCoupon={appliedCoupon} setAppliedCoupon={setAppliedCoupon} storeCoupon={storeCoupon} setStoreCoupon={setStoreCoupon} isLoading={isLoading} addToCartData={addToCartData} mutate={mutate} sessionToken={sessionToken} />
           </div>
         ) : (
           <NoDataFound customClass="no-data-added" height={156} width={180} imageUrl={`/assets/svg/empty-items.svg`} title="EmptyCart" />

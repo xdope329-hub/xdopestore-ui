@@ -5,12 +5,11 @@ import ThemeOptionContext from "@/context/themeOptionsContext";
 import request from "@/utils/axiosUtils";
 import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 import { setNestedObjectValues, useFormikContext } from "formik";
-import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import React, { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const PlaceOrder = ({ values, addToCartData, errors, sessionToken, onSessionRestored }) => {
+const PlaceOrder = ({ values, addToCartData, errors, sessionToken }) => {
   const { t } = useTranslation("common");
   // La MISMA fuente de verdad que decidió qué checkout se mostró (formulario
   // de invitado vs direcciones guardadas): el estado del checkout, no una
@@ -53,17 +52,6 @@ const PlaceOrder = ({ values, addToCartData, errors, sessionToken, onSessionRest
   };
 
   const handleClick = async () => {
-    // Guardia de sesión restaurada: si la vista es de invitado pero el
-    // navegador ya tiene una sesión válida (refresh silencioso tras un 401,
-    // o login en otra pestaña), pedir como invitado armaría el pedido con el
-    // carrito del servidor — no con lo que el cliente ve. Sincronizamos la
-    // vista al flujo logueado y le explicamos, en vez de enviar un pedido
-    // inconsistente.
-    if (isGuest && Cookies.get("uat")) {
-      onSessionRestored && onSessionRestored();
-      ToastNotification("error", t("SessionRestoredCheckout"));
-      return;
-    }
     const missing = missingRequirements();
     if (missing.length) {
       ToastNotification("error", missing[0]);
