@@ -7,13 +7,26 @@ export async function middleware(request) {
   const urlSearchParams = new URLSearchParams(search);
   const params = Object.fromEntries(urlSearchParams.entries());
 
-  let myHeaders = new Headers();
-  myHeaders.append("Authorization", `Bearer ${request.cookies.get("uat")?.value}`);
-  let requestOptions = {
-    method: "GET",
-    headers: myHeaders,
-  };
-  let settingData = await (await fetch(process.env.API_PROD_URL + "/settings", requestOptions))?.json();
+  const path0 = request.nextUrl.pathname;
+
+  // Los settings solo se necesitan para UNA decisión (checkout de invitados),
+  // así que solo se consultan en ese caso — y NUNCA pueden tumbar el sitio:
+  // si la API está fría/reiniciando (p. ej. Render), fallamos abierto y la
+  // página decide el resto. Un middleware que hace fetch sin try/catch en
+  // cada request convierte cualquier parpadeo de la API en un 500 global
+  // (MIDDLEWARE_INVOCATION_FAILED).
+  let settingData = null;
+  if (path0 === "/checkout" && !request.cookies.has("uat") && process.env.API_PROD_URL) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch(process.env.API_PROD_URL + "/settings", { method: "GET", signal: controller.signal });
+      clearTimeout(timer);
+      if (res.ok) settingData = await res.json();
+    } catch (_) {
+      // API no disponible — se permite continuar; el checkout maneja el resto.
+    }
+  }
   const protectedRoutes = [`/account/dashboard`, `/account/notification`, `/account/point`, `/account/refund`, `/account/order`, `/account/addresses`];
 
   const path = request.nextUrl.pathname;
@@ -25,11 +38,13 @@ export async function middleware(request) {
       headers: myHeaders,
     };
 
-    let response = await fetch(process.env.API_PROD_URL + "/settings", requestOptions);
-    if (!response.ok) {
-      throw new Error(`Fetch failed with status ${response.status}`);
+    let data = null;
+    try {
+      const response = await fetch(process.env.API_PROD_URL + "/settings", requestOptions);
+      if (response.ok) data = await response.json();
+    } catch (_) {
+      // API no disponible — no se puede confirmar mantenimiento; continuar.
     }
-    let data = await response.json();
 
     if (data?.values?.maintenance?.maintenance_mode && path !== `/maintenance`) {
       return NextResponse.redirect(new URL(`/maintenance`, request.url));
@@ -56,7 +71,10 @@ export async function middleware(request) {
   }
 
   if (path == `/checkout` && !request.cookies.has("uat")) {
-    if (settingData?.values?.activation?.guest_checkout) {
+    // Sin settings (API caída) se falla ABIERTO: dejar entrar al checkout es
+    // mejor que redirigir a login por un parpadeo del servidor.
+    const guestAllowed = settingData ? Boolean(settingData?.values?.activation?.guest_checkout) : true;
+    if (guestAllowed) {
       if (request.cookies.get("cartData") == "digital") {
         return NextResponse.redirect(new URL(`/auth/login`, request.url));
       }

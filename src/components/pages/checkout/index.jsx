@@ -113,7 +113,7 @@ const CheckoutContent = () => {
                 state_id: "",
               },
               billing_address: {
-                same_shipping: false,
+                same_shipping: true,
                 title: "",
                 street: "",
                 city: "",
@@ -140,7 +140,22 @@ const CheckoutContent = () => {
                   <Col lg="7">
                     <div className="left-sidebar-checkout">
                       <div className="checkout-detail-box">
-                        {!accessToken && (
+                        {!accessToken && settingData?.activation?.guest_checkout && (
+                          <div className="checkout-form-section">
+                            {/* Compra como invitado: datos de contacto + direcciones
+                                inline. Iniciar sesión sigue disponible como atajo. */}
+                            <div className="guest-login-hint mb-3">
+                              <span className="text-content">{t("AlreadyHaveAccount")}</span>{" "}
+                              <a className="theme-color fw-semibold" style={{ cursor: "pointer" }} onClick={() => setOpenAuthModal(true)}>
+                                {t("Login")}
+                              </a>
+                            </div>
+                            <ul>
+                              <CheckoutForm values={values} setFieldValue={setFieldValue} errors={errors} />
+                            </ul>
+                          </div>
+                        )}
+                        {!accessToken && !settingData?.activation?.guest_checkout && (
                           <div className="checkout-form-section">
                             <div className="checkout-login-required theme-card text-center p-4">
                               <h4 className="mb-2">{t("LoginToContinue")}</h4>

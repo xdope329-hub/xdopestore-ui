@@ -98,3 +98,26 @@
     background: #e5e5e5;
   }
 }
+
+/* Mobile cart drawer: "Ver carrito" / "Finalizar compra" must sit right
+   below the products, not pinned to the bottom of the full-height panel
+   (the theme uses position:absolute; bottom:0 which leaves a big gap when
+   the cart has few items). On phones the block flows after the list. */
+@media (max-width: 767px) {
+  .add_to_cart {
+    .cart_total {
+      position: static;
+      max-width: 100%;
+      padding: 12px 0 16px;
+      margin-top: 4px;
+      border-top: 1px solid #ececec;
+    }
+
+    .cart-inner .cart_media {
+      /* Let the content define the height; the drawer itself still scrolls. */
+      height: auto;
+      max-height: calc(100vh - 90px);
+      overflow: auto;
+    }
+  }
+}

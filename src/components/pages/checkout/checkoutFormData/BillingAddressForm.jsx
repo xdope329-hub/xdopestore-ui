@@ -1,28 +1,43 @@
+import CityField from "@/components/widgets/inputFields/CityField";
 import SimpleInputField from "@/components/widgets/inputFields/SimpleInputField";
 import { AllCountryCode } from "@/data/CountryCode";
 import SearchableSelectInput from "@/utils/commonComponents/inputFields/SearchableSelectInput";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { RiArrowDownSLine, RiArrowUpSLine } from "react-icons/ri";
 import { Col, Input, Label, Row } from "reactstrap";
 
 const BillingAddressForm = ({ values, setFieldValue, errors, data }) => {
   const { t } = useTranslation("common");
+  const same = Boolean(values.billing_address?.same_shipping);
+  // Colapsada mientras "misma dirección de envío" esté activa (por defecto).
+  const [open, setOpen] = useState(!same);
+
+  // Sincronización EN VIVO: mientras same_shipping esté activo, cualquier
+  // cambio en la dirección de envío se refleja de inmediato en facturación
+  // (no solo al marcar la casilla).
+  const ship = values.shipping_address || {};
   useEffect(() => {
-    if (values.billing_address.same_shipping) {
+    if (!same) return;
+    setFieldValue("billing_address", {
+      ...values.billing_address,
+      same_shipping: true,
+      title: ship.title,
+      street: ship.street,
+      country_id: ship.country_id,
+      state_id: ship.state_id,
+      city: ship.city,
+      pincode: ship.pincode,
+      country_code: ship.country_code,
+      phone: ship.phone,
+    });
+  }, [same, ship.title, ship.street, ship.country_id, ship.state_id, ship.city, ship.pincode, ship.country_code, ship.phone]); // eslint-disable-line
+
+  const toggleSame = (checked) => {
+    setFieldValue("billing_address.same_shipping", checked);
+    setOpen(!checked);
+    if (!checked) {
       setFieldValue("billing_address", {
-        ...values.billing_address,
-        title: values.shipping_address.title,
-        street: values.shipping_address.street,
-        country_id: values.shipping_address.country_id,
-        state_id: values.shipping_address.state_id,
-        city: values.shipping_address.city,
-        pincode: values.shipping_address.pincode,
-        country_code: values.shipping_address.country_code,
-        phone: values.shipping_address.phone,
-      });
-    } else {
-      setFieldValue("billing_address", {
-        ...values.billing_address,
         same_shipping: false,
         title: "",
         street: "",
@@ -30,86 +45,95 @@ const BillingAddressForm = ({ values, setFieldValue, errors, data }) => {
         state_id: "",
         city: "",
         pincode: "",
-        country_code: "",
+        country_code: "57",
         phone: "",
       });
     }
-  }, [values.billing_address.same_shipping, setFieldValue]); // Only `initialValues.billing_address.same_shipping`
+  };
 
   return (
     <div className="checkbox-main-box">
-      <div className="checkout-title1">
-        <h2>{t(`BillingDetails`)}</h2>
+      <div
+        className="checkout-title1 d-flex justify-content-between align-items-center"
+        style={{ cursor: "pointer" }}
+        onClick={() => setOpen((p) => !p)}
+      >
+        <h2 className="mb-0">{t(`BillingDetails`)}</h2>
+        {open ? <RiArrowUpSLine size={22} /> : <RiArrowDownSLine size={22} />}
       </div>
-      <Row className="g-md-4 g-sm-3 g-2 checkout-form">
-        {!errors?.shipping_address && (
-          <Col xs={12}>
-            <div className="mb-3 form-box form-checkbox">
-              <Input
-                className="checkbox_animated check-box"
-                type="checkbox"
-                name="billing_address.same_shipping"
-                onChange={(e) => {
-                  setFieldValue("billing_address.same_shipping", e.target.checked);
-                }}
-                checked={values.billing_address.same_shipping}
-              />
-              <Label className="form-check-label" htmlFor="flexCheckDefault">
-                {t("SameAsShippingAddress")}
-              </Label>
+      <div className="mt-2 mb-1 form-box form-checkbox">
+        <Input
+          className="checkbox_animated check-box"
+          type="checkbox"
+          id="billing-same-shipping"
+          name="billing_address.same_shipping"
+          onChange={(e) => toggleSame(e.target.checked)}
+          checked={same}
+        />
+        <Label className="form-check-label" htmlFor="billing-same-shipping">
+          {t("SameAsShippingAddress")}
+        </Label>
+      </div>
+      {same && !open && (
+        <p className="text-content mb-0" style={{ fontSize: "13px" }}>{t("BillingUsesShippingAddress")}</p>
+      )}
+      {open && !same && (
+        <Row className="g-md-4 g-sm-3 g-2 checkout-form mt-0">
+          <SimpleInputField
+            nameList={[
+              { name: "billing_address.title", placeholder: t("EnterTitle"), toplabel: "Title", colprops: { md: 12 }, require: "true" },
+              { name: "billing_address.street", placeholder: t("EnterAddress"), toplabel: "Address", colprops: { xs: 12 }, require: "true" },
+            ]}
+          />
+          <SearchableSelectInput
+            nameList={[
+              { name: "billing_address.country_id", require: "true", title: "Country", toplabel: "Country", colprops: { md: 6 }, inputprops: { name: "billing_address.country_id", id: "billing_address.country_id", options: data, defaultOption: t("SelectCountry") } },
+              {
+                name: "billing_address.state_id", require: "true", title: "State", toplabel: "State", colprops: { md: 6 },
+                inputprops: {
+                  name: "billing_address.state_id",
+                  id: "billing_address.state_id",
+                  options: values?.billing_address?.country_id ? data?.filter((country) => Number(country.id) === Number(values?.billing_address?.country_id))?.[0]?.["state"] : [],
+                  defaultOption: t("SelectState"),
+                },
+                disabled: values?.billing_address?.country_id ? false : true,
+              },
+            ]}
+          />
+          <CityField
+            values={values}
+            setFieldValue={setFieldValue}
+            data={data}
+            name="billing_address.city"
+            countryIdPath="billing_address.country_id"
+            stateIdPath="billing_address.state_id"
+            colprops={{ md: 6 }}
+          />
+          <SimpleInputField
+            nameList={[{ name: "billing_address.pincode", placeholder: t("EnterPincodeOptional"), toplabel: "Pincode", colprops: { md: 6 } }]}
+          />
+          <Col xs={12} className="phone-field">
+            <div className="form-box position-relative">
+              <div className="country-input">
+                <SimpleInputField nameList={[{ name: "billing_address.phone", type: "number", placeholder: t("EnterPhoneNumber"), require: "true", toplabel: "Phone", colprops: { xs: 12 }, colclass: "country-input-box" }]} />
+                <SearchableSelectInput
+                  nameList={[
+                    {
+                      name: "billing_address.country_code",
+                      notitle: "true",
+                      inputprops: {
+                        name: "billing_address.country_code",
+                        id: "billing_address.country_code",
+                        options: AllCountryCode,
+                      },
+                    },
+                  ]}
+                />
+              </div>
             </div>
           </Col>
-        )}
-
-        <SimpleInputField
-          nameList={[
-            { name: "billing_address.title", placeholder: t("EnterTitle"), toplabel: "Title", colprops: { md: 12 }, require: "true" },
-            { name: "billing_address.street", placeholder: t("EnterAddress"), toplabel: "Address", colprops: { xs: 12 }, require: "true" },
-          ]}
-        />
-        <SearchableSelectInput
-          nameList={[
-            { name: "billing_address.country_id", require: "true", title: "Country", toplabel: "Country", colprops: { md: 6 }, inputprops: { name: "billing_address.country_id", id: "billing_address.country_id", options: data, defaultOption: t("SelectState"), }, },
-            {
-              name: "billing_address.state_id", require: "true", title: "State", toplabel: "State", colprops: { md: 6 },
-              inputprops: {
-                name: "billing_address.state_id",
-                id: "billing_address.state_id",
-                // States must follow the billing country, not the shipping country.
-                options: values?.billing_address?.country_id ? data?.filter((country) => Number(country.id) === Number(values?.billing_address?.country_id))?.[0]?.["state"] : [],
-                defaultOption: t("SelectState"),
-              },
-              disabled: values?.billing_address?.country_id ? false : true,
-            },
-          ]}
-        />
-        <SimpleInputField
-          nameList={[
-            { name: "billing_address.city", placeholder: t("EnterCity"), toplabel: "City", colprops: { xxl: 6, lg: 12, sm: 6 }, require: "true" },
-            { name: "billing_address.pincode", placeholder: t("EnterPincodeOptional"), toplabel: "Pincode", colprops: { xxl: 6, lg: 12, sm: 6 } },
-          ]}
-        />
-          <Col xs={12} className="phone-field">
-          <div className="form-box position-relative">
-            <div className="country-input">
-              <SimpleInputField nameList={[{ name: "billing_address?.phone", type: "number", placeholder: t("EnterPhoneNumber"), require: "true", toplabel: "Phone", colprops: { xs: 12 }, colclass: "country-input-box" }]} />
-              <SearchableSelectInput
-                nameList={[
-                  {
-                    name: "billing_address?.country_code",
-                    notitle: "true",
-                    inputprops: {
-                      name: "billing_address?.country_code",
-                      id: "billing_address?.country_code",
-                      options: AllCountryCode,
-                    },
-                  },
-                ]}
-              />
-            </div>
-          </div>
-        </Col>
-      </Row>
+        </Row>
+      )}
     </div>
   );
 };
