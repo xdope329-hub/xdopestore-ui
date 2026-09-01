@@ -9,13 +9,14 @@ import { Col } from "reactstrap";
 import BillingSummary from "./BillingSummary";
 import SidebarProduct from "./SidebarProduct";
 
-const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData }) => {
+const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, sessionToken, onSessionRestored }) => {
   const [storeCoupon, setStoreCoupon] = useState("");
   const { cartProducts, isLoading: CartLoading, deleteCartLoader, cartTotal } = useContext(CartContext);
   const [errorCoupon, setErrorCoupon] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const { settingData } = useContext(SettingContext);
-  const access_token = Cookies.get("uat");
+  // Misma fuente de verdad que la página de checkout (ver PlaceOrder.jsx).
+  const access_token = sessionToken;
   const [resData, setResData] = useState({});
 
   const { isLoading, mutate } = useCreate(
@@ -83,7 +84,7 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData }) => {
         {cartProducts?.length > 0 ? (
           <div className="checkout-right-box">
             <SidebarProduct values={values} setFieldValue={setFieldValue} />
-            <BillingSummary values={values} errors={errors} setFieldValue={setFieldValue} data={resData} errorCoupon={errorCoupon} appliedCoupon={appliedCoupon} setAppliedCoupon={setAppliedCoupon} storeCoupon={storeCoupon} setStoreCoupon={setStoreCoupon} isLoading={isLoading} addToCartData={addToCartData} mutate={mutate} />
+            <BillingSummary values={values} errors={errors} setFieldValue={setFieldValue} data={resData} errorCoupon={errorCoupon} appliedCoupon={appliedCoupon} setAppliedCoupon={setAppliedCoupon} storeCoupon={storeCoupon} setStoreCoupon={setStoreCoupon} isLoading={isLoading} addToCartData={addToCartData} mutate={mutate} sessionToken={sessionToken} onSessionRestored={onSessionRestored} />
           </div>
         ) : (
           <NoDataFound customClass="no-data-added" height={156} width={180} imageUrl={`/assets/svg/empty-items.svg`} title="EmptyCart" />

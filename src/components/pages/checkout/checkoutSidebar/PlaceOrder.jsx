@@ -10,9 +10,14 @@ import { useRouter } from "next/navigation";
 import React, { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const PlaceOrder = ({ values, addToCartData, errors }) => {
+const PlaceOrder = ({ values, addToCartData, errors, sessionToken, onSessionRestored }) => {
   const { t } = useTranslation("common");
-  const access_token = Cookies.get("uat");
+  // La MISMA fuente de verdad que decidió qué checkout se mostró (formulario
+  // de invitado vs direcciones guardadas): el estado del checkout, no una
+  // lectura directa de la cookie. Leer la cookie aquí hacía que el botón
+  // exigiera "billing_address_id" (flujo logueado) a un usuario que estaba
+  // viendo y llenando el formulario de invitado.
+  const access_token = sessionToken;
   const router = useRouter();
   const { setOpenAuthModal } = useContext(ThemeOptionContext) || {};
   const [loading, setLoading] = useState(false);
@@ -31,24 +36,34 @@ const PlaceOrder = ({ values, addToCartData, errors }) => {
   // dice al cliente exactamente qué falta para poder realizar el pedido.
   const missingRequirements = () => {
     const missing = [];
-    if (isGuest) {
-      // Invitado: los datos van inline — la validación de Formik marca lo
-      // que falte (nombre, correo, teléfono, direcciones).
-      if (Object.keys(errors || {}).length) {
-        // Marca todos los campos con error como tocados para que cada uno
-        // muestre su mensaje debajo, además del aviso general.
-        formik && formik.setTouched(setNestedObjectValues(errors, true), false);
-        missing.push(t("CompleteRequiredFields"));
-      }
-    } else {
-      if (!values["billing_address_id"]) missing.push(t("SelectBillingAddressFirst"));
-      if (!addToCartData?.is_digital_only && !values["shipping_address_id"]) missing.push(t("SelectShippingAddressFirst"));
+    // Invitado y logueado usan la MISMA experiencia de direcciones
+    // (tarjetas + modal), así que las mismas verificaciones aplican a ambos:
+    // el invitado selecciona tarjetas locales, el logueado tarjetas guardadas.
+    if (!values["billing_address_id"]) missing.push(t("SelectBillingAddressFirst"));
+    if (!addToCartData?.is_digital_only && !values["shipping_address_id"]) missing.push(t("SelectShippingAddressFirst"));
+    if (isGuest && missing.length === 0 && Object.keys(errors || {}).length) {
+      // Datos de contacto del invitado (nombre, correo, teléfono):
+      // marca los campos con error como tocados para que cada uno muestre
+      // su mensaje debajo, además del aviso general.
+      formik && formik.setTouched(setNestedObjectValues(errors, true), false);
+      missing.push(t("CompleteRequiredFields"));
     }
     if (!values["payment_method"]) missing.push(t("SelectPaymentMethodFirst"));
     return missing;
   };
 
   const handleClick = async () => {
+    // Guardia de sesión restaurada: si la vista es de invitado pero el
+    // navegador ya tiene una sesión válida (refresh silencioso tras un 401,
+    // o login en otra pestaña), pedir como invitado armaría el pedido con el
+    // carrito del servidor — no con lo que el cliente ve. Sincronizamos la
+    // vista al flujo logueado y le explicamos, en vez de enviar un pedido
+    // inconsistente.
+    if (isGuest && Cookies.get("uat")) {
+      onSessionRestored && onSessionRestored();
+      ToastNotification("error", t("SessionRestoredCheckout"));
+      return;
+    }
     const missing = missingRequirements();
     if (missing.length) {
       ToastNotification("error", missing[0]);
@@ -58,7 +73,12 @@ const PlaceOrder = ({ values, addToCartData, errors }) => {
     try {
       // Invitados: el carrito vive en el navegador — se envían los ids y el
       // servidor reconstruye precios desde la base de datos.
-      const payload = isGuest ? { ...values, products: cartProducts } : values;
+      // Invitado: se envían las direcciones inline (shipping_address /
+      // billing_address); los ids locales de las tarjetas y la lista local
+      // no significan nada para el API, así que no viajan.
+      const payload = isGuest
+        ? { ...values, products: cartProducts, shipping_address_id: undefined, billing_address_id: undefined, guest_addresses: undefined }
+        : values;
       const res = await request({ url: "/payment/initialize", method: "post", data: payload });
       const ok = res?.status === 200 || res?.status === 201;
 
