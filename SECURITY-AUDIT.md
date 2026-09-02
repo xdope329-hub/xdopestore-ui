@@ -19,7 +19,7 @@ The storefront's business logic is in good shape: prices are rebuilt server-side
 
 **Security score: 38/100 before → 76/100 after the applied fixes.** The remaining gap is architectural (tokens still readable by JavaScript until a backend-for-frontend issues `HttpOnly` cookies; CSP still needs `'unsafe-inline'` until nonces are wired) plus items outside this repository (production DB dumps in `_to_delete/`, the test account possibly existing in production).
 
-Verification after fixes: `npm run test:unit` → 63/63 pass (49 before; 14 new security tests); `npm audit` (after `npm audit fix`) → 0 critical, 3 remaining advisories, all in the postcss/brace-expansion build-tool chain pinned by Next; `next build` (production) → success for every route, middleware 34.8 kB.
+Verification after fixes: `npm run test:unit` → 63/63 pass (49 before; 14 new security tests); `npm audit --audit-level=high` → 0 vulnerabilities (after upgrades, `npm audit fix` and two scoped `overrides`, see §8); `next build` (production) → success for every route, middleware 34.8 kB.
 
 ---
 
@@ -259,7 +259,16 @@ In `app/layout.js`: `const nonce = (await headers()).get("x-nonce")` and pass `n
 | js-cookie | 3.0.5 | 3.0.8 | cookie-attribute injection fix |
 | dompurify | — | 3.4.14 | new, HTML sanitising |
 
-Remaining `npm audit` output after the upgrade and `npm audit fix`: 0 critical, 2 high, 1 moderate — `postcss` 8.4.31 and `brace-expansion` pinned by Next's own dependency tree (build-time only; nothing ships to the browser). Add an `overrides` entry for `postcss` only if your build tooling permits (Next pins it deliberately); otherwise it clears with the Next 16 upgrade.
+After the upgrade and `npm audit fix`, two high advisories remained in packages pinned by other dependencies: `postcss` 8.4.31 (exact pin inside Next) and `brace-expansion` 1.1.12 (under `eslint@8 → minimatch@3`). Both are build-time only, but they fail the CI gate, so `package.json` now carries npm `overrides` that force the patched releases:
+
+```json
+"overrides": {
+  "postcss": "^8.5.26",
+  "brace-expansion@^1.0.0": "1.1.18"
+}
+```
+
+The `brace-expansion` override is scoped to the 1.x line so `minimatch@10` keeps its own 5.x. `postcss` 8.5 is a semver-minor, API-compatible release; the production build was re-run with it. Result: `npm audit --audit-level=high` → 0 vulnerabilities. Revisit the `postcss` override when moving to Next 16, which ships a patched version itself.
 
 Policy: pin exact versions for the framework, keep `npm ci` everywhere, enable Dependabot/Renovate with weekly grouping, and block merges on `npm audit --audit-level=high` (already in the new workflow).
 

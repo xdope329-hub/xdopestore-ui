@@ -52,5 +52,9 @@
     "eslint-config-next": "^15.5.25",
     "file-loader": "^6.2.0",
     "sass": "1.77.6"
+  },
+  "overrides": {
+    "postcss": "^8.5.26",
+    "brace-expansion@^1.0.0": "1.1.18"
   }
 }
