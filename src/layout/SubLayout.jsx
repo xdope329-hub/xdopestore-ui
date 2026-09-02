@@ -1,6 +1,6 @@
 import AuthModal from '@/components/auth/authModal'
 import ThemeOptionContext from '@/context/themeOptionsContext'
-import request from '@/utils/axiosUtils'
+import request, { sideCookieOptions } from '@/utils/axiosUtils'
 import TabFocusChecker from '@/utils/customFunctions/TabFocus'
 import { ToastNotification } from '@/utils/customFunctions/ToastNotification'
 import Cookies from 'js-cookie'
@@ -67,10 +67,7 @@ const SubLayout = ({ children }) => {
   //  Setting the current url in cookies for redirection of protected routes
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      Cookies.set(
-        'currentPath',
-        window.location.pathname + window.location.search
-      )
+      Cookies.set('currentPath', window.location.pathname + window.location.search, sideCookieOptions(60))
     }
   }, [pathName, path])
 

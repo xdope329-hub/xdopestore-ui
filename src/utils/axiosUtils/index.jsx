@@ -5,13 +5,20 @@ const getBaseURL = () => process.env.API_PROD_URL || "http://localhost:5000";
 
 // Toda la lógica de sesión vive en session.js (pura y testeable); aquí solo
 // se conecta con js-cookie y el localStorage del navegador.
-const session = createSessionStore(Cookies, () => (typeof window !== "undefined" ? window.localStorage : null));
+const session = createSessionStore(
+  Cookies,
+  () => (typeof window !== "undefined" ? window.localStorage : null),
+  { secure: typeof window !== "undefined" && window.location?.protocol === "https:" }
+);
 
 export const getAccessToken = session.getAccessToken;
 export const getRefreshToken = session.getRefreshToken;
 export const saveSession = session.saveSession;
 export const clearSession = session.clearSession;
 export const dropStaleRefreshToken = session.dropStaleRefreshToken;
+export const sideCookieOptions = session.sideCookieOptions;
+export const saveAccountSummary = session.saveAccountSummary;
+export const getAccountSummary = session.getAccountSummary;
 export { ACCESS_COOKIE, REFRESH_COOKIE, isAuthEndpoint, shouldAttemptRefresh };
 
 // Shared in-flight refresh promise. If ten requests all get 401 at the same

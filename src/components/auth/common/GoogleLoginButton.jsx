@@ -1,7 +1,8 @@
 "use client";
 import CartContext from "@/context/cartContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
-import { saveSession } from "@/utils/axiosUtils";
+import { saveAccountSummary, saveSession } from "@/utils/axiosUtils";
+import { safeRedirectPath } from "@/utils/security/safeRedirect";
 import syncLocalCart from "@/utils/customFunctions/SyncLocalCart";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
@@ -48,8 +49,7 @@ const GoogleLoginButton = ({ onError }) => {
       }
 
       saveSession(data || {});
-      Cookies.set("account", JSON.stringify(data?.data || {}));
-      localStorage.setItem("account", JSON.stringify(data?.data || {}));
+      saveAccountSummary(data?.data);
 
       // Merge any guest cart into the authenticated cart before navigating.
       await syncLocalCart();
@@ -58,8 +58,8 @@ const GoogleLoginButton = ({ onError }) => {
       setOpenAuthModal && setOpenAuthModal(false);
       const callbackUrl = Cookies.get("CallBackUrl");
       if (callbackUrl) {
-        Cookies.remove("CallBackUrl");
-        router.push(callbackUrl);
+        Cookies.remove("CallBackUrl", { path: "/" });
+        router.push(safeRedirectPath(callbackUrl, "/"));
       } else {
         router.refresh();
       }

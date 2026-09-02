@@ -2,7 +2,8 @@
 import ThemeOptionContext from '@/context/themeOptionsContext'
 import WishlistContext from '@/context/wishlistContext'
 import { useHeaderScroll } from '@/utils/hooks/HeaderScroll'
-import { logout } from '@/utils/axiosUtils'
+import { getAccountSummary, logout } from '@/utils/axiosUtils'
+import { safeHttpUrl } from '@/utils/security/safeUrl'
 import Cookies from 'js-cookie'
 import { usePathname, useRouter } from 'next/navigation'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
@@ -13,6 +14,10 @@ import HeaderLogo from '../widgets/HeaderLogo'
 import MainHeaderMenu from '../widgets/mainHeaderMenu'
 import TopBar from '../widgets/TopBar'
 import { useTranslation } from 'react-i18next'
+
+// Dashboard shortcut target. Build-time public value; the link is hidden
+// when unset (the old code pointed at a hard-coded http://localhost:3001).
+const ADMIN_URL = safeHttpUrl(process.env.NEXT_PUBLIC_ADMIN_URL)
 
 const HeaderOne = () => {
   const { themeOption, setOpenAuthModal, openAuthModal, mobileSideBar, setMobileSideBar } = useContext(ThemeOptionContext)
@@ -57,12 +62,9 @@ const HeaderOne = () => {
   const [isAdmin, setIsAdmin] = useState(false)
   useEffect(() => {
     setIsAuthenticated(!!Cookies.get('uat'))
-    try {
-      const account = JSON.parse(Cookies.get('account') || '{}')
-      setIsAdmin(account?.role?.name === 'admin')
-    } catch {
-      setIsAdmin(false)
-    }
+    // Cosmetic only (shows the dashboard shortcut); real authorization is
+    // enforced by the API on every request.
+    setIsAdmin(getAccountSummary()?.role?.name === 'admin')
   }, [openAuthModal])
 
   const handleProfileClick = (e) => {
@@ -148,9 +150,9 @@ const HeaderOne = () => {
                             <RiUserLine />
                           </a>
                         </li>
-                        {isAuthenticated && isAdmin && (
+                        {isAuthenticated && isAdmin && ADMIN_URL && (
                           <li className="onhover-div">
-                            <a href="http://localhost:3001" target="_blank" title={t("AdminPanel")}>
+                            <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer" title={t("AdminPanel")}>
                               <RiDashboardLine />
                             </a>
                           </li>

@@ -3,7 +3,7 @@ import AccountContext from "@/context/accountContext";
 import { UpdateProfileAPI, UpdateProfilePasswordAPI } from "@/utils/axiosUtils/API";
 import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 import useCreate from "@/utils/hooks/useCreate";
-import { YupObject, nameSchema, passwordConfirmationSchema, passwordSchema } from "@/utils/validation/ValidationSchema";
+import { YupObject, nameSchema, newPasswordSchema, passwordConfirmationSchema } from "@/utils/validation/ValidationSchema";
 import { Form, Formik } from "formik";
 import { useContext } from "react";
 import EmailPasswordForm from "./EmailPasswordForm";
@@ -48,7 +48,7 @@ const EmailPasswordModal = ({ modal, setModal }) => {
             country_code: nameSchema,
             phone: nameSchema,
             current_password: modal == "password" && nameSchema,
-            password: modal == "password" && passwordSchema,
+            password: modal == "password" && newPasswordSchema,
             password_confirmation: modal == "password" && passwordConfirmationSchema,
           })}
           onSubmit={(values,{resetForm}) => {

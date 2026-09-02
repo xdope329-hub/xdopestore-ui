@@ -5,8 +5,9 @@ import ThemeOptionContext from "@/context/themeOptionsContext";
 import { AllCountryCode } from "@/data/CountryCode";
 import Btn from "@/elements/buttons/Btn";
 import syncLocalCart from "@/utils/customFunctions/SyncLocalCart";
-import { saveSession } from "@/utils/axiosUtils";
-import { YupObject, emailSchema, nameSchema, passwordConfirmationSchema, passwordSchema, phoneSchema, recaptchaSchema } from "@/utils/validation/ValidationSchema";
+import { saveAccountSummary, saveSession } from "@/utils/axiosUtils";
+import { safeRedirectPath } from "@/utils/security/safeRedirect";
+import { YupObject, emailSchema, nameSchema, passwordConfirmationSchema, newPasswordSchema, phoneSchema, recaptchaSchema } from "@/utils/validation/ValidationSchema";
 import CaptchaField, { RECAPTCHA_SITE_KEY } from "@/components/auth/common/CaptchaField";
 import GoogleLoginButton from "@/components/auth/common/GoogleLoginButton";
 import { ErrorMessage, Field, Form, Formik } from "formik";
@@ -58,8 +59,7 @@ const RegisterForm = () => {
         // Store both access + refresh via shared helper.
         saveSession(data || {});
         if (data?.access_token || data?.token) {
-          Cookies.set("account", JSON.stringify(data?.data || {}));
-          localStorage.setItem("account", JSON.stringify(data?.data || {}));
+          saveAccountSummary(data?.data);
           // Carry guest cart items over to the brand-new account.
           await syncLocalCart();
           cartRefetch && cartRefetch();
@@ -67,8 +67,8 @@ const RegisterForm = () => {
         setOpenAuthModal && setOpenAuthModal(false);
         const callbackUrl = Cookies.get("CallBackUrl");
         if (callbackUrl) {
-          Cookies.remove("CallBackUrl");
-          router.push(callbackUrl);
+          Cookies.remove("CallBackUrl", { path: "/" });
+          router.push(safeRedirectPath(callbackUrl, "/"));
         } else {
           router.refresh();
         }
@@ -99,7 +99,7 @@ const RegisterForm = () => {
       validationSchema={YupObject({
         name: nameSchema,
         email: emailSchema,
-        password: passwordSchema,
+        password: newPasswordSchema,
         password_confirmation: passwordConfirmationSchema,
         phone: phoneSchema,
         ...(RECAPTCHA_SITE_KEY ? { recaptcha: recaptchaSchema } : {}),

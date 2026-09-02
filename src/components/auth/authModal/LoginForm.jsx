@@ -4,7 +4,8 @@ import { Href } from "@/utils/constants";
 import CartContext from "@/context/cartContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
 import syncLocalCart from "@/utils/customFunctions/SyncLocalCart";
-import { saveSession } from "@/utils/axiosUtils";
+import { saveAccountSummary, saveSession } from "@/utils/axiosUtils";
+import { safeRedirectPath } from "@/utils/security/safeRedirect";
 import { YupObject, emailSchema, passwordSchema, recaptchaSchema } from "@/utils/validation/ValidationSchema";
 import CaptchaField, { RECAPTCHA_SITE_KEY } from "@/components/auth/common/CaptchaField";
 import GoogleLoginButton from "@/components/auth/common/GoogleLoginButton";
@@ -46,8 +47,8 @@ const LoginForm = ({ setState }) => {
         // Store both access + refresh via the shared helper so this modal
         // and the page-based login stay in lock-step.
         saveSession(data || {});
-        Cookies.set("account", JSON.stringify(data?.data || {}));
-        localStorage.setItem("account", JSON.stringify(data?.data || {}));
+        // Only a small, non-sensitive summary is kept client-side (never the tokens).
+        saveAccountSummary(data?.data);
 
         // Merge the guest cart into the now-authenticated user's cart
         // before we close the modal / navigate, so items persist.
@@ -57,8 +58,9 @@ const LoginForm = ({ setState }) => {
         setOpenAuthModal && setOpenAuthModal(false);
         const callbackUrl = Cookies.get("CallBackUrl");
         if (callbackUrl) {
-          Cookies.remove("CallBackUrl");
-          router.push(callbackUrl);
+          Cookies.remove("CallBackUrl", { path: "/" });
+          // Cookie values are untrusted: only same-origin paths are followed.
+          router.push(safeRedirectPath(callbackUrl, "/"));
         } else {
           router.refresh();
         }

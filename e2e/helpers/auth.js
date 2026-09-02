@@ -3,8 +3,15 @@
  */
 
 const BASE_API = process.env.API_URL || "http://localhost:5000";
-const TEST_EMAIL = process.env.TEST_EMAIL || "consumer@xdope.com";
-const TEST_PASSWORD = process.env.TEST_PASSWORD || "Consumer@123";
+// Default test credentials exist ONLY for a local API (seeded e2e database).
+// Against any other environment they must come from the environment, so a
+// password that lives in the repository never doubles as a real account.
+const IS_LOCAL_API = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(BASE_API);
+const TEST_EMAIL = process.env.TEST_EMAIL || (IS_LOCAL_API ? "consumer@xdope.com" : "");
+const TEST_PASSWORD = process.env.TEST_PASSWORD || (IS_LOCAL_API ? "Consumer@123" : "");
+if (!TEST_EMAIL || !TEST_PASSWORD) {
+  throw new Error("TEST_EMAIL and TEST_PASSWORD must be set when API_URL is not a localhost API");
+}
 const TEST_NAME = "Test Consumer";
 
 /**

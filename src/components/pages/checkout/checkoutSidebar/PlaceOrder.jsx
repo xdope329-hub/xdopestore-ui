@@ -115,14 +115,15 @@ const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "
         res?.data?.message ||
         (res?.status ? `Request failed with status ${res.status}` : "Could not place the order");
       ToastNotification("error", apiMessage);
-      if (typeof console !== "undefined") {
+      // Response bodies can carry addresses / contact data: dev-only breadcrumb.
+      if (process.env.NODE_ENV !== "production") {
         console.warn("[PlaceOrder] unexpected response:", { status: res?.status, body: res?.data });
       }
     } catch (err) {
       // Real exception (network drop, etc.). Same idea — toast + warn, no
       // overlay-triggering console.error.
       ToastNotification("error", err?.message || "Could not place the order");
-      if (typeof console !== "undefined") {
+      if (process.env.NODE_ENV !== "production") {
         console.warn("[PlaceOrder] exception:", err);
       }
     } finally {

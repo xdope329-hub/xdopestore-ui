@@ -2,6 +2,9 @@
   "name": "my-app",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
@@ -15,16 +18,16 @@
   "dependencies": {
     "@tanstack/react-query": "^5.66.9",
     "accept-language": "^3.0.18",
-    "axios": "^1.8.4",
     "bootstrap": "^5.3.2",
+    "dompurify": "^3.4.14",
     "font-awesome": "^4.7.0",
     "formik": "^2.4.6",
     "i18next": "^23.11.2",
     "i18next-browser-languagedetector": "^8.0.2",
     "i18next-resources-to-backend": "^1.2.1",
     "intl-tel-input": "^20.1.0",
-    "js-cookie": "^3.0.5",
-    "next": "^15.5.0",
+    "js-cookie": "^3.0.8",
+    "next": "^15.5.25",
     "nextjs-toploader": "^3.7.15",
     "prettier": "^3.6.2",
     "react": "^19.0.0",
@@ -39,15 +42,19 @@
     "reactstrap": "^9.2.3",
     "remixicon": "^4.2.0",
     "slick-carousel": "^1.8.1",
-    "swiper": "^11.1.1",
+    "swiper": "^14.2.0",
     "themify-icons": "^1.0.0",
     "yup": "^1.6.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "eslint": "^8",
-    "eslint-config-next": "^15.5.0",
+    "eslint-config-next": "^15.5.25",
     "file-loader": "^6.2.0",
     "sass": "1.77.6"
+  },
+  "overrides": {
+    "postcss": "^8.5.26",
+    "brace-expansion@^1.0.0": "1.1.18"
   }
 }

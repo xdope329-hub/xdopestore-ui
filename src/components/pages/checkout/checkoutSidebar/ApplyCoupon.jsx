@@ -25,7 +25,9 @@ const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values,
   // GET /coupon exige sesión: para un invitado devolvía 401 en cada visita
   // al checkout (y ese 401 era el que disparaba la renovación silenciosa de
   // la sesión anterior). El invitado sigue pudiendo escribir su código.
-  const { data: couponData } = useFetchQuery([CouponAPI], () => request({ url: CouponAPI, params: { status: 1 } }, router), {
+  // Vista de cliente (cupones vigentes, sin límites de uso ni contadores);
+  // el catálogo completo de /coupon es solo para administradores.
+  const { data: couponData } = useFetchQuery([`${CouponAPI}/public`], () => request({ url: `${CouponAPI}/public` }, router), {
     enabled: Boolean(sessionToken),
     refetchOnWindowFocus: false,
     select: (res) => res?.data?.data ?? [],

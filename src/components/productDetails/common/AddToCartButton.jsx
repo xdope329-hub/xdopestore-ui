@@ -1,14 +1,12 @@
 import Btn from "@/elements/buttons/Btn";
 import { useTranslation } from "react-i18next";
 import { RiShoppingCartLine } from "react-icons/ri";
+import { openExternal } from "@/utils/security/safeUrl";
 
 const AddToCartButton = ({ productState, addToCart, isLoading, buyNow, extraOption }) => {
   const { t } = useTranslation("common");
-  const externalProductLink = (link) => {
-    if (link) {
-      window.open(link, "_blank");
-    }
-  };
+  // CMS-provided URL: only http(s) is opened, and never with a window handle.
+  const externalProductLink = (link) => openExternal(link);
   return (
     <div className="product-buy-btn-group">
       {!productState?.product?.is_external ? (
@@ -47,7 +45,7 @@ const AddToCartButton = ({ productState, addToCart, isLoading, buyNow, extraOpti
           ) : null}
         </>
       ) : (
-        <Btn className="btn-md bg-theme scroll-button" onClick={externalProductLink(productState.product.external_url)}>
+        <Btn className="btn-md bg-theme scroll-button" onClick={() => externalProductLink(productState?.product?.external_url)}>
           {productState?.product?.external_button_text ? productState?.product?.external_button_text : t("BuyNow")}
         </Btn>
       )}
