@@ -1882,3 +1882,163 @@
     }
   }
 }
+
+/* ==========================================================================
+   Selector de variantes en la miniatura (ProductBox2 / product_box_two)
+   Talla, color y cualquier otro atributo configurado en el admin. Mientras
+   la seleccion no este completa el boton de carrito queda deshabilitado.
+   ========================================================================== */
+.product-box-variants {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .variant-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .variant-label {
+    font-size: 12px;
+    line-height: 1;
+    color: $grey;
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+
+  ul.variant-options {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      margin: 0;
+      padding: 0;
+      background-color: transparent;
+      line-height: 1;
+    }
+  }
+
+  button.variant-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.2s ease;
+  }
+
+  /* --- chips de texto (talla) --- */
+  .variant-text {
+    display: inline-block;
+    min-width: 28px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: $dark-font;
+    text-align: center;
+    border: 1px solid $round-border;
+    background-color: $white;
+    transition: all 0.2s ease;
+  }
+
+  li.active button.variant-option .variant-text {
+    color: var(--theme-color);
+    border-color: var(--theme-color);
+    font-weight: 600;
+  }
+
+  /* --- swatches de color --- */
+  .variant-swatch {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border-radius: 100%;
+    border: 1px solid $round-border;
+  }
+
+  li.active button.variant-option .variant-swatch {
+    outline: 1px solid var(--theme-color);
+    outline-offset: 2px;
+  }
+
+  /* --- miniaturas de variante --- */
+  .variant-thumb {
+    width: calc(20px + 15 * (100vw - 320px) / 1600);
+    height: calc(25px + 15 * (100vw - 320px) / 1600);
+    padding: 2px;
+    object-fit: cover;
+    border: 1px solid $round-border;
+  }
+
+  li.active button.variant-option .variant-thumb {
+    border-color: var(--theme-color);
+  }
+
+  /* --- combinaciones sin stock --- */
+  li.disabled {
+    button.variant-option {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .variant-text {
+      text-decoration: line-through;
+      background-color: $top-header;
+    }
+  }
+
+  &.size-panel {
+    margin-top: 10px;
+  }
+}
+
+/* El panel de color de la tarjeta ya estiliza `ul li` de forma generica: aqui
+   se devuelve el control al swatch para que no se deforme. */
+.basic-product {
+  .color-panel {
+    .product-box-variants {
+      ul.variant-options {
+        li {
+          width: auto;
+          height: auto;
+          border-radius: 0;
+          margin-left: 0;
+        }
+      }
+    }
+  }
+}
+
+/* Icono de carrito bloqueado hasta elegir talla y color. */
+.basic-product {
+  .cart-info {
+    button.variant-required {
+      cursor: not-allowed;
+
+      i {
+        color: $grey-light;
+      }
+    }
+  }
+
+  &.theme-product-1 {
+    .cart-info {
+      button.variant-required {
+        i {
+          color: $grey-light;
+        }
+      }
+    }
+  }
+}

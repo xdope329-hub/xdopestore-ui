@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { RiAddLine, RiDeleteBinLine, RiSubtractLine } from "react-icons/ri";
 import { Input } from "reactstrap";
 
-const CartButton = ({ productState, text, classes, iconClass = true, quantity = false, selectedVariation }) => {
+const CartButton = ({ productState, text, classes, iconClass = true, quantity = false, selectedVariation, disabled = false, disabledLabel }) => {
   const { cartProducts, handleIncDec } = useContext(CartContext);
   const { cartCanvas, setCartCanvas } = useContext(ThemeOptionContext);
   const [variationModal, setVariationModal] = useState("");
@@ -46,7 +46,11 @@ const CartButton = ({ productState, text, classes, iconClass = true, quantity = 
         <>
           {quantity ? (
             <>
-              {productState?.product?.stock_status === "in_stock" ? (
+              {disabled ? (
+                <button id={`add-to-cart${productState?.product?.id}`} type="button" className="add-button add_cart" title={disabledLabel} disabled>
+                  {disabledLabel || text}
+                </button>
+              ) : productState?.product?.stock_status === "in_stock" ? (
                 <button
                   id={`add-to-cart${productState?.product?.id}`}
                   className="add-button add_cart"
@@ -91,6 +95,13 @@ const CartButton = ({ productState, text, classes, iconClass = true, quantity = 
                 </div>
               )}
             </>
+          ) : disabled ? (
+            // Producto con variantes cuya talla/color aun no se ha elegido en
+            // la miniatura: se muestra el icono pero sin poder pulsarlo.
+            <button type="button" id={`select-variant-${productState?.product?.id}`} className={`btn btn-transparent variant-required ${classes ? classes : ""}`} title={disabledLabel} aria-label={disabledLabel} disabled>
+              <i className="ri-shopping-cart-line"></i>
+              {text ? <span> {text}</span> : null}
+            </button>
           ) : productState?.product?.stock_status == "in_stock" ? (
             <Btn
               color="transparent"
