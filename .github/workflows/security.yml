@@ -16,9 +16,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Node 22: `node --test "src/**/*.test.mjs"` relies on glob support in the
+      # test runner, which only exists from Node 21 onwards (Node 20 treats the
+      # pattern as a literal file name and fails with "Could not find").
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       # Reproducible install: fails if package-lock.json drifts from package.json.
