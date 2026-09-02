@@ -60,7 +60,11 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
     // stores the input under `coupon`. Forward the currently-applied coupon
     // (preferring the local `storeCoupon` state, which is the source of truth
     // for "what the user just applied") on every recompute.
-    const couponCode = extra.coupon_code !== undefined ? extra.coupon_code : storeCoupon || values["coupon"] || "";
+    // Solo el cupón APLICADO (storeCoupon). El texto del campo (values.coupon)
+    // puede ser un código a medio escribir o inválido: enviarlo al cambiar
+    // método de pago o dirección pintaba "cupón inválido" sin que el cliente
+    // hubiera pulsado Aplicar.
+    const couponCode = extra.coupon_code !== undefined ? extra.coupon_code : storeCoupon || "";
     // Ciudad de entrega para el cálculo de envío por zonas: invitados la
     // llevan inline; con sesión el servidor la resuelve por el address_id.
     const city = values["shipping_address"]?.city || values["billing_address"]?.city || "";
