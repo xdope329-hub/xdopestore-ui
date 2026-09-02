@@ -36,8 +36,13 @@ export const getMissingRequirements = ({ values = {}, errors = {}, isGuest = fal
  *    van inline (shipping_address / billing_address) y los ids/lista local
  *    de tarjetas no significan nada para el API.
  */
-export const buildInitializePayload = ({ values = {}, isGuest = false, cartProducts = [] } = {}) => {
-  const { password, guest_addresses, ...payload } = values;
+export const buildInitializePayload = ({ values = {}, isGuest = false, cartProducts = [], couponCode = "" } = {}) => {
+  // `coupon` es el TEXTO del campo (puede ser un código escrito y nunca
+  // aplicado, o inválido); al pedido solo viaja el cupón APLICADO como
+  // `coupon_code`. Antes el API leía el texto y rechazaba el pago con
+  // "cupón inválido" aunque el cliente nunca lo hubiera aplicado.
+  const { password, guest_addresses, coupon, ...payload } = values;
+  payload.coupon_code = couponCode || "";
   if (!isGuest) return payload;
   GUEST_LOCAL_KEYS.forEach((key) => { delete payload[key]; });
   return { ...payload, products: cartProducts || [] };

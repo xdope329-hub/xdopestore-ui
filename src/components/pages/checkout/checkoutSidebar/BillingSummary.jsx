@@ -72,7 +72,7 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
                   <span className="count">{convertCurrency(total)}</span>
                 </li>
               </ul>
-              <PlaceOrder values={values} errors={errors} sessionToken={sessionToken} addToCartData={addToCartData} />
+              <PlaceOrder values={values} errors={errors} sessionToken={sessionToken} addToCartData={addToCartData} appliedCouponCode={appliedCoupon === "applied" ? storeCoupon : ""} />
             </div>
           </div>
         </div>

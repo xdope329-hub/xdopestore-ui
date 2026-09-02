@@ -74,6 +74,17 @@ test("payload con sesión: conserva los ids de dirección y tampoco envía contr
   assert.deepEqual(payload.products, []);
 });
 
+test("un cupón escrito pero no aplicado nunca viaja al pago; el aplicado va como coupon_code", () => {
+  const values = { ...ready, coupon: "INVALIDO999" };
+  const withoutApplied = buildInitializePayload({ values, isGuest: false });
+  assert.equal("coupon" in withoutApplied, false);
+  assert.equal(withoutApplied.coupon_code, "");
+
+  const withApplied = buildInitializePayload({ values, isGuest: true, cartProducts: [], couponCode: "BIENVENIDO15" });
+  assert.equal("coupon" in withApplied, false);
+  assert.equal(withApplied.coupon_code, "BIENVENIDO15");
+});
+
 test("registro en segundo plano solo cuando se pidió crear cuenta con contraseña", () => {
   assert.equal(getGuestRegistrationPayload({ create_account: false, password: "Secreta123" }), null);
   assert.equal(getGuestRegistrationPayload({ create_account: true, password: "" }), null);
