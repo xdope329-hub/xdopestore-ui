@@ -1,23 +1,35 @@
 import SettingContext from "@/context/settingContext";
 import Link from "next/link";
-import React, { useContext } from "react";
+import React, { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { RiDiscountPercentFill, RiStarSFill } from "react-icons/ri";
 import { placeHolderImage } from "../Placeholder";
 import CartButton from "./widgets/CartButton";
 import WishlistButton from "./widgets/hoverButton/WishlistButton";
-import ProductBoxVariantAttribute from "./widgets/ProductBoxVariantAttributes";
+import ProductBoxVariantSelector from "./widgets/ProductBoxVariantSelector";
 import ProductHoverButton from "./widgets/ProductHoverButton";
+import useProductBoxVariants from "./widgets/useProductBoxVariants";
 
 const ProductBox2 = ({ productState, setProductState }) => {
   const { t } = useTranslation("common");
 
   const { convertCurrency } = useContext(SettingContext);
+
+  // Selección de variantes dentro de la miniatura. Arranca vacía a propósito:
+  // hasta que el usuario elija todas las opciones (talla y color) el botón de
+  // carrito permanece deshabilitado.
+  const { attributes, hasVariants, isComplete, isSelected, isDisabled, select } = useProductBoxVariants(productState, setProductState);
+
+  // Los swatches de color/imagen van junto a la marca; el resto de atributos
+  // (talla y cualquier otro configurado en el admin) debajo del precio.
+  const swatchAttributes = useMemo(() => attributes.filter((attribute) => attribute?.style === "color" || attribute?.style === "image"), [attributes]);
+  const optionAttributes = useMemo(() => attributes.filter((attribute) => attribute?.style !== "color" && attribute?.style !== "image"), [attributes]);
+
+  const needsSelection = hasVariants && !isComplete;
+
   // Descuento efectivo: el de la variante seleccionada si la hay (igual que
   // la línea de precio). null/undefined → 0, así que no cuenta como oferta.
-  const discount = Number(
-    (productState?.selectedVariation ? productState?.selectedVariation?.discount : productState?.product?.discount) || 0
-  );
+  const discount = Number((productState?.selectedVariation ? productState?.selectedVariation?.discount : productState?.product?.discount) || 0);
   return (
     <div className={`basic-product theme-product-1 ${productState?.product?.stock_status === "out_of_stock" ? "sold-out" : ""}`}>
       <div className="overflow-hidden">
@@ -37,7 +49,7 @@ const ProductBox2 = ({ productState, setProductState }) => {
           </div>
           <div className="cart-info">
             <WishlistButton customAnchor={true} productstate={productState?.product} />
-            <CartButton productState={productState} selectedVariation={productState.selectedVariation} />
+            <CartButton productState={productState} selectedVariation={productState.selectedVariation} disabled={needsSelection} disabledLabel={t("SelectVariantFirst")} />
             <ProductHoverButton productstate={productState?.product} actionsToHide={"wishlist"} />
           </div>
         </div>
@@ -48,7 +60,7 @@ const ProductBox2 = ({ productState, setProductState }) => {
                 {productState?.product?.brand?.name}
               </a>
               <div className="color-panel">
-                <ProductBoxVariantAttribute showVariableType={["color", "image"]} productState={productState} setProductState={setProductState} />
+                <ProductBoxVariantSelector attributes={swatchAttributes} isSelected={isSelected} isDisabled={isDisabled} onSelect={select} />
               </div>
             </div>
             <a href={`/product/${productState?.product?.slug}`}>
@@ -63,6 +75,7 @@ const ProductBox2 = ({ productState, setProductState }) => {
                 </>
               ) : null}
             </h4>
+            <ProductBoxVariantSelector attributes={optionAttributes} isSelected={isSelected} isDisabled={isDisabled} onSelect={select} showLabel={true} className="size-panel" />
           </div>
           {/* Panel de oferta: SOLO con un descuento real (> 0). Antes se
               renderizaba siempre —y tres veces, con [1,2,3]— así que un
