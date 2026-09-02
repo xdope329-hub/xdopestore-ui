@@ -7,9 +7,13 @@ const DeliverySection = ({ values, setFieldValue }) => {
     const { t } = useTranslation( 'common');
     const { settingData } = useContext(SettingContext);
     const [defaultDe, setDefaultDe] = useState(0);
+    // Preselección: la opción "estándar" (la que se pinta marcada). Antes se
+    // guardaba la descripción de "mismo día" aunque la marcada fuera la
+    // estándar, y el pedido del invitado viajaba con la entrega equivocada.
     useEffect(() => {
         if (settingData?.delivery?.default?.title && settingData?.delivery?.default?.description) {
-            setFieldValue('delivery_description', `${settingData?.delivery?.same_day?.title} | ${settingData?.delivery?.same_day?.description}`);
+            setFieldValue('delivery_description', `${settingData?.delivery?.default?.title} | ${settingData?.delivery?.default?.description}`);
+            setFieldValue('isTimeSlot', false);
             setDefaultDe(1);
         }
     }, [settingData]);

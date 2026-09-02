@@ -2,6 +2,7 @@
 import ThemeOptionContext from '@/context/themeOptionsContext'
 import WishlistContext from '@/context/wishlistContext'
 import { useHeaderScroll } from '@/utils/hooks/HeaderScroll'
+import { logout } from '@/utils/axiosUtils'
 import Cookies from 'js-cookie'
 import { usePathname, useRouter } from 'next/navigation'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
@@ -74,10 +75,10 @@ const HeaderOne = () => {
   }
   const handleLogout = (e) => {
     e.preventDefault()
-    Cookies.remove('uat', { path: '/' })
-    Cookies.remove('account')
-    Cookies.remove('ue')
-    localStorage.clear()
+    // Cierre de sesión compartido: revoca el refresh en el servidor y borra
+    // AMBOS tokens. Quitar solo `uat` dejaba vivo `urt`, y el siguiente 401
+    // (p. ej. en un checkout de invitado) volvía a iniciar sesión solo.
+    logout()
     setIsAuthenticated(false)
     router.push('/')
     router.refresh()

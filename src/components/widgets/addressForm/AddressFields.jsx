@@ -45,7 +45,9 @@ const AddressFields = ({ values, setFieldValue, data, prefix = "", halfCol = { s
       />
       <Col xs="12">
         <div className="country-input position-relative phone-field">
-          <SimpleInputField nameList={[{ name: `${p}phone`, type: "number", placeholder: t("EnterPhoneNumber"), require: "true", toplabel: "Phone", colclass: "country-input-box" }]} />
+          {/* type="tel": conserva ceros a la izquierda, rechaza "e"/"+"/"-" y
+              entrega texto al esquema (solo dígitos, 7 a 15). */}
+          <SimpleInputField nameList={[{ name: `${p}phone`, type: "tel", inputMode: "numeric", placeholder: t("EnterPhoneNumber"), require: "true", toplabel: "Phone", colclass: "country-input-box" }]} />
           <SearchableSelectInput
             nameList={[
               {

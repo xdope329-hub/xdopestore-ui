@@ -1,7 +1,5 @@
 import AccountContext from "@/context/accountContext";
-import request, { clearSession } from "@/utils/axiosUtils";
-import { LogoutAPI } from "@/utils/axiosUtils/API";
-import Cookies from "js-cookie";
+import { logout } from "@/utils/axiosUtils";
 import { useRouter } from "next/navigation";
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -23,20 +21,11 @@ const NavTabTitles = ({ classes = {}, activeTab, setActiveTab, titleList, isLogo
   };
 
   const handleLogout = async () => {
-    // Revoke the refresh token server-side so it can't be re-used even if it
-    // leaks after logout. We send the raw token from the cookie in the body;
-    // the API hashes it, marks the row revoked, and returns 200 either way.
-    const refresh = Cookies.get("urt");
-    if (refresh) {
-      // Fire-and-forget; don't block logout UX on the network call.
-      request({ url: LogoutAPI, method: "post", data: { refresh_token: refresh } }).catch(() => {});
-    }
-    // Local cleanup: both cookies + local storage + context.
-    clearSession();
+    // Cierre de sesión compartido con el header: revoca el refresh en el
+    // servidor (sin bloquear la UI) y borra ambos tokens, cookies auxiliares
+    // y el localStorage de la cuenta.
+    logout();
     setAccountData();
-    Cookies.remove("ue");
-    Cookies.remove("account");
-    Cookies.remove("CookieAccept");
     setModal(false);
     router.push(`/`);
   };

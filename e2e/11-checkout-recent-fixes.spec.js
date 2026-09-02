@@ -177,9 +177,10 @@ test.describe("Checkout — recent fixes", () => {
     const toast = page.locator('.Toastify__toast, [class*="toast"], .toast-message').first();
     await expect(toast).toBeVisible({ timeout: 8000 });
 
-    // Next.js dev overlay must NOT have rendered. Its DOM marker is
-    // `nextjs-portal` / `__next-build-watcher` — and it sets an iframe.
-    const nextOverlay = page.locator("nextjs-portal, [data-nextjs-dialog-overlay]");
+    // Next.js dev overlay must NOT have rendered. Since Next 15.4 the
+    // `nextjs-portal` element is always mounted in dev (it hosts the dev
+    // tools button), so look for an actual error dialog inside it instead.
+    const nextOverlay = page.locator('nextjs-portal [role="dialog"], nextjs-portal [data-nextjs-dialog], [data-nextjs-dialog-overlay]');
     expect(await nextOverlay.count()).toBe(0);
 
     // We tolerate informational console.warn but not console.error from our

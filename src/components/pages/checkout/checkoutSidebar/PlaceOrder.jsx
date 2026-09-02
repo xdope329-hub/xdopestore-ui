@@ -6,10 +6,11 @@ import request from "@/utils/axiosUtils";
 import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 import { setNestedObjectValues, useFormikContext } from "formik";
 import { useRouter } from "next/navigation";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { buildInitializePayload, getGuestRegistrationPayload, getMissingRequirements } from "./placeOrderRules";
 
-const PlaceOrder = ({ values, addToCartData, errors, sessionToken }) => {
+const PlaceOrder = ({ values, addToCartData, sessionToken }) => {
   const { t } = useTranslation("common");
   // La MISMA fuente de verdad que decidió qué checkout se mostró (formulario
   // de invitado vs direcciones guardadas): el estado del checkout, no una
@@ -26,49 +27,55 @@ const PlaceOrder = ({ values, addToCartData, errors, sessionToken }) => {
   const { settingData } = useContext(SettingContext) || {};
   const guestCheckout = Boolean(settingData?.activation?.guest_checkout);
   const isGuest = !access_token;
-  // Contexto de Formik del checkout: se usa solo para marcar los campos
-  // como "touched" y que los errores de validación se pinten en rojo bajo
-  // cada campo cuando el invitado intenta pedir con datos incompletos.
+  const requiresShipping = !addToCartData?.is_digital_only;
+  // Contexto de Formik del checkout: valida bajo demanda y marca los campos
+  // como "touched" para que los errores se pinten en rojo bajo cada campo
+  // cuando el invitado intenta pedir con datos incompletos.
   const formik = useFormikContext();
 
   // En vez de un botón deshabilitado sin explicación, el clic valida y le
   // dice al cliente exactamente qué falta para poder realizar el pedido.
-  const missingRequirements = () => {
-    const missing = [];
-    // Invitado y logueado usan la MISMA experiencia de direcciones
-    // (tarjetas + modal), así que las mismas verificaciones aplican a ambos:
-    // el invitado selecciona tarjetas locales, el logueado tarjetas guardadas.
-    if (!values["billing_address_id"]) missing.push(t("SelectBillingAddressFirst"));
-    if (!addToCartData?.is_digital_only && !values["shipping_address_id"]) missing.push(t("SelectShippingAddressFirst"));
-    if (isGuest && missing.length === 0 && Object.keys(errors || {}).length) {
-      // Datos de contacto del invitado (nombre, correo, teléfono):
-      // marca los campos con error como tocados para que cada uno muestre
-      // su mensaje debajo, además del aviso general.
-      formik && formik.setTouched(setNestedObjectValues(errors, true), false);
-      missing.push(t("CompleteRequiredFields"));
+  const findMissingRequirements = async () => {
+    // Validación FRESCA: no se confía en el snapshot `errors` de Formik, que
+    // puede estar vacío si todavía no corrió ninguna validación (el invitado
+    // nunca tocó los campos) y dejaba pasar un pedido sin nombre ni correo.
+    let fieldErrors = {};
+    if (isGuest && formik) {
+      fieldErrors = (await formik.validateForm()) || {};
     }
-    if (!values["payment_method"]) missing.push(t("SelectPaymentMethodFirst"));
+    const { missing, hasFieldErrors } = getMissingRequirements({ values, errors: fieldErrors, isGuest, requiresShipping, t });
+    if (hasFieldErrors && formik) {
+      formik.setTouched(setNestedObjectValues(fieldErrors, true), false);
+    }
     return missing;
   };
 
   const handleClick = async () => {
-    const missing = missingRequirements();
-    if (missing.length) {
-      ToastNotification("error", missing[0]);
-      return;
-    }
     setLoading(true);
     try {
-      // Invitados: el carrito vive en el navegador — se envían los ids y el
-      // servidor reconstruye precios desde la base de datos.
-      // Invitado: se envían las direcciones inline (shipping_address /
-      // billing_address); los ids locales de las tarjetas y la lista local
-      // no significan nada para el API, así que no viajan.
-      const payload = isGuest
-        ? { ...values, products: cartProducts, shipping_address_id: undefined, billing_address_id: undefined, guest_addresses: undefined }
-        : values;
+      const missing = await findMissingRequirements();
+      if (missing.length) {
+        ToastNotification("error", missing[0]);
+        return;
+      }
+
+      // Nunca viaja la contraseña; el invitado manda productos + direcciones
+      // inline (ver placeOrderRules.js).
+      const payload = buildInitializePayload({ values, isGuest, cartProducts });
       const res = await request({ url: "/payment/initialize", method: "post", data: payload });
       const ok = res?.status === 200 || res?.status === 201;
+
+      // Invitado que marcó "crear cuenta": se registra en segundo plano ANTES
+      // de redirigir a la pasarela (con Mercado Pago la redirección destruye
+      // la página y el registro nunca ocurría). El servidor adopta sus
+      // pedidos por el correo; si el correo ya existe se ignora en silencio
+      // (el pedido no depende de esto).
+      const registration = ok && isGuest ? getGuestRegistrationPayload(values) : null;
+      if (registration) {
+        try {
+          await request({ url: "/register", method: "post", data: registration });
+        } catch (_) { /* no bloquea el pedido */ }
+      }
 
       if (ok && res?.data?.redirect_url) {
         // Gateway-redirect flow (MercadoPago, etc.): the server keeps the
@@ -79,15 +86,6 @@ const PlaceOrder = ({ values, addToCartData, errors, sessionToken }) => {
         // up. If it fails, the user comes back and their items are still here.
         window.location.href = res.data.redirect_url;
         return;
-      }
-
-      // Invitado que marcó "crear cuenta": se registra en segundo plano; el
-      // servidor adopta sus pedidos por el correo. Si el correo ya existe,
-      // se ignora silenciosamente (el pedido no depende de esto).
-      if (ok && isGuest && values["create_account"] && values["password"]) {
-        try {
-          await request({ url: "/register", method: "post", data: { name: values.name, email: values.email, password: values.password, phone: values.phone, country_code: values.country_code } });
-        } catch (_) { /* no bloquea el pedido */ }
       }
 
       if (ok && res?.data?.order_id) {

@@ -8,7 +8,7 @@ import request from "@/utils/axiosUtils";
 import { AddToCartAPI, AddressAPI } from "@/utils/axiosUtils/API";
 import Breadcrumbs from "@/utils/commonComponents/breadcrumb";
 import useCreate from "@/utils/hooks/useCreate";
-import { addressObjectSchema, emailSchema, idCreateAccount, nameSchema, phoneSchema } from "@/utils/validation/ValidationSchema";
+import { buildCheckoutValidationSchema } from "@/utils/validation/ValidationSchema";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";;
 import { Form, Formik } from "formik";
 import Cookies from "js-cookie";
@@ -16,7 +16,6 @@ import { useRouter } from "next/navigation";
 import { Fragment, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Col, Row } from "reactstrap";
-import * as Yup from "yup";
 import CheckoutForm from "./CheckoutForm";
 import CheckoutSidebar from "./checkoutSidebar";
 import DeliveryAddress from "./DeliveryAddress";
@@ -84,10 +83,11 @@ const CheckoutContent = () => {
     }
   }, [addToCartLoader, accessToken]);
 
-  // Validación de dirección compartida (mismas reglas que el modal y la
-  // página de cuenta): título, dirección, ciudad, teléfono con formato,
-  // código postal numérico opcional, país y departamento.
-  const addressSchema = addressObjectSchema;
+  // Reglas según quién compra (ver checkoutSchema.js): el invitado valida
+  // contacto + direcciones inline; con sesión no hay campos de invitado que
+  // validar. Carrito solo digital → sin dirección de envío.
+  const isGuest = !accessToken;
+  const validationSchema = buildCheckoutValidationSchema({ isGuest, requiresShipping: !addToCartData?.is_digital_only });
 
   if (themeLoad) return <Loader />;
   return (
@@ -136,15 +136,12 @@ const CheckoutContent = () => {
                 state_id: "",
               },
             }}
-            validationSchema={Yup.object().shape({
-              name: nameSchema,
-              email: emailSchema,
-              phone: phoneSchema,
-              password: idCreateAccount,
-              shipping_address: addressSchema,
-              billing_address: addressSchema,
-            })}
-            onSubmit={mutate}
+            validationSchema={validationSchema}
+            // El único camino para pedir es el botón "Realizar pedido"
+            // (PlaceOrder). Antes, Enter en cualquier campo enviaba el
+            // formulario y disparaba POST /address con los valores del
+            // checkout (401 para el invitado, dirección basura con sesión).
+            onSubmit={() => {}}
           >
             {({ values, setFieldValue, errors }) => (
               <Form className="checkout-form">

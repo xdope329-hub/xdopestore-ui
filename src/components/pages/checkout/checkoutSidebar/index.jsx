@@ -3,7 +3,6 @@ import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import { CheckoutAPI } from "@/utils/axiosUtils/API";
 import useCreate from "@/utils/hooks/useCreate";
-import Cookies from "js-cookie";
 import React, { useContext, useEffect, useState } from "react";
 import { Col } from "reactstrap";
 import BillingSummary from "./BillingSummary";
@@ -30,7 +29,11 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
         setErrorCoupon("");
         storeCoupon !== "" && setAppliedCoupon("applied");
       } else {
-        setErrorCoupon(resDta?.response?.data?.message);
+        // request() devuelve { data, status, ok }: el mensaje del API vive en
+        // resDta.data (antes se leía de un `.response` inexistente y el error
+        // de cupón se perdía).
+        setErrorCoupon(resDta?.data?.message || resDta?.response?.data?.message || "");
+        setAppliedCoupon(null);
       }
     },
     false,
@@ -46,6 +49,27 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
     }
   );
 
+  const isGuestCheckout = Boolean(settingData?.activation?.guest_checkout) && !access_token;
+
+  // POST /checkout con TODO el contexto del pedido. Es la ÚNICA forma de
+  // hablar con /checkout desde el sidebar (también para aplicar/quitar un
+  // cupón): así el invitado siempre manda sus productos y la ciudad, y el
+  // cupón aplicado se conserva al cambiar método de pago o dirección.
+  const recompute = (extra = {}) => {
+    // The /checkout endpoint reads `coupon_code` from the body, but Formik
+    // stores the input under `coupon`. Forward the currently-applied coupon
+    // (preferring the local `storeCoupon` state, which is the source of truth
+    // for "what the user just applied") on every recompute.
+    const couponCode = extra.coupon_code !== undefined ? extra.coupon_code : storeCoupon || values["coupon"] || "";
+    // Ciudad de entrega para el cálculo de envío por zonas: invitados la
+    // llevan inline; con sesión el servidor la resuelve por el address_id.
+    const city = values["shipping_address"]?.city || values["billing_address"]?.city || "";
+    // Invitados: el carrito vive en el navegador — se envían los ids y el
+    // servidor reconstruye precios desde la base de datos.
+    const products = isGuestCheckout ? { products: cartProducts } : {};
+    mutate({ ...values, ...products, ...extra, coupon_code: couponCode, city });
+  };
+
   // Submitting data on Checkout
   useEffect(() => {
     // Don't auto-fire /checkout while the cart is still loading or is empty —
@@ -54,29 +78,18 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
     if (CartLoading || deleteCartLoader) return;
     if (!cartProducts?.length) return;
 
-    // The /checkout endpoint reads `coupon_code` from the body, but Formik
-    // stores the input under `coupon`. Forward the currently-applied coupon
-    // (preferring the local `storeCoupon` state, which is the source of truth
-    // for "what the user just applied") on every recompute, so changing the
-    // payment method / address never silently drops the discount.
-    const recompute = (extra = {}) => {
-      const couponCode = storeCoupon || values["coupon"] || "";
-      // Ciudad de entrega para el cálculo de envío por zonas: invitados la
-      // llevan inline; con sesión el servidor la resuelve por el address_id.
-      const city = values["shipping_address"]?.city || values["billing_address"]?.city || "";
-      mutate({ ...values, ...extra, coupon_code: couponCode, city });
-    };
-
-    if (settingData?.activation?.guest_checkout && !access_token) {
+    if (isGuestCheckout) {
       if (values["delivery_description"] && values["payment_method"]) {
-        recompute({ products: cartProducts });
+        recompute();
       }
     } else {
       if (access_token && values["billing_address_id"] && values["shipping_address_id"] && values["delivery_description"] && values["payment_method"]) {
         recompute();
       }
     }
-  }, [CartLoading, deleteCartLoader, cartTotal, cartProducts?.length, errors, values["points_amount"], values["wallet_balance"], values["billing_address_id"], values["delivery_description"], values["payment_method"], values["shipping_address_id"], values["delivery_interval"], storeCoupon, values["shipping_address"]?.city, values["billing_address"]?.city]);
+    // storeCoupon NO es disparador: aplicar/quitar el cupón ya llama a
+    // recompute() explícitamente (un solo POST por clic, no dos).
+  }, [CartLoading, deleteCartLoader, cartTotal, cartProducts?.length, errors, values["points_amount"], values["wallet_balance"], values["billing_address_id"], values["delivery_description"], values["payment_method"], values["shipping_address_id"], values["delivery_interval"], values["shipping_address"]?.city, values["billing_address"]?.city]);
 
   return (
     <>
@@ -84,7 +97,7 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
         {cartProducts?.length > 0 ? (
           <div className="checkout-right-box">
             <SidebarProduct values={values} setFieldValue={setFieldValue} />
-            <BillingSummary values={values} errors={errors} setFieldValue={setFieldValue} data={resData} errorCoupon={errorCoupon} appliedCoupon={appliedCoupon} setAppliedCoupon={setAppliedCoupon} storeCoupon={storeCoupon} setStoreCoupon={setStoreCoupon} isLoading={isLoading} addToCartData={addToCartData} mutate={mutate} sessionToken={sessionToken} />
+            <BillingSummary values={values} errors={errors} setFieldValue={setFieldValue} data={resData} errorCoupon={errorCoupon} appliedCoupon={appliedCoupon} setAppliedCoupon={setAppliedCoupon} storeCoupon={storeCoupon} setStoreCoupon={setStoreCoupon} isLoading={isLoading} addToCartData={addToCartData} mutate={recompute} sessionToken={sessionToken} />
           </div>
         ) : (
           <NoDataFound customClass="no-data-added" height={156} width={180} imageUrl={`/assets/svg/empty-items.svg`} title="EmptyCart" />
