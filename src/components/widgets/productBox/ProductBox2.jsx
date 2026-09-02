@@ -8,9 +8,12 @@ import CartButton from "./widgets/CartButton";
 import WishlistButton from "./widgets/hoverButton/WishlistButton";
 import ProductBoxVariantSelector from "./widgets/ProductBoxVariantSelector";
 import ProductHoverButton from "./widgets/ProductHoverButton";
+import ProductImage from "./widgets/ProductImage";
 import useProductBoxVariants from "./widgets/useProductBoxVariants";
 
-const ProductBox2 = ({ productState, setProductState }) => {
+// `priority`: tarjetas visibles al abrir la página (la foto se pide de
+// inmediato); el resto carga en diferido al acercarse.
+const ProductBox2 = ({ productState, setProductState, priority = false }) => {
   const { t } = useTranslation("common");
 
   const { convertCurrency } = useContext(SettingContext);
@@ -18,7 +21,11 @@ const ProductBox2 = ({ productState, setProductState }) => {
   // Selección de variantes dentro de la miniatura. Arranca vacía a propósito:
   // hasta que el usuario elija todas las opciones (talla y color) el botón de
   // carrito permanece deshabilitado.
-  const { attributes, hasVariants, isComplete, isSelected, isDisabled, select } = useProductBoxVariants(productState, setProductState);
+  const { attributes, hasVariants, isComplete, isSelected, isDisabled, select, previewImage } = useProductBoxVariants(productState, setProductState);
+
+  // Foto de la tarjeta: la de la variación elegida (aunque la selección esté
+  // incompleta: solo color, por ejemplo) y, si no hay, la miniatura del producto.
+  const cardImage = previewImage?.original_url || productState?.product?.product_thumbnail?.original_url || placeHolderImage;
 
   // Los swatches de color/imagen van junto a la marca; el resto de atributos
   // (talla y cualquier otro configurado en el admin) debajo del precio.
@@ -41,7 +48,7 @@ const ProductBox2 = ({ productState, setProductState }) => {
           ) : null}
 
           <Link href={`/product/${productState?.product?.slug}`}>
-            <img src={productState?.selectedVariation?.variation_image ? productState?.selectedVariation.variation_image.original_url : productState?.product?.product_thumbnail?.original_url ? productState?.product?.product_thumbnail?.original_url : placeHolderImage} className="img-fluid bg-img" alt={productState?.product?.name} />
+            <ProductImage src={cardImage} alt={productState?.product?.name} priority={priority} />
           </Link>
           <div className="rating-label">
             <RiStarSFill />

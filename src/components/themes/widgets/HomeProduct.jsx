@@ -110,7 +110,8 @@ const HomeProduct = ({ type, style, slider = false, productIds, product_box_styl
                 {products?.map((product, index) => (
                   <div key={index}>
                     <div className={classForVertical}>
-                      <ProductBox product={product} style={style} />
+                      {/* Las primeras diapositivas están a la vista: foto inmediata. */}
+                      <ProductBox product={product} style={style} priority={index < 4} />
                     </div>
                   </div>
                 ))}
@@ -124,7 +125,9 @@ const HomeProduct = ({ type, style, slider = false, productIds, product_box_styl
             <Row className={rowClass ? rowClass : "row-cols-xl-4 row-cols-md-3 row-cols-2 g-sm-4 g-3 m-0"}>
               {products?.map((product, index) => (
                 <div key={index} className={classForVertical}>
-                  <ProductBox product={product} style={style} />
+                  {/* Primera fila (hasta 4 columnas) a la vista: foto inmediata;
+                      el resto carga en diferido al hacer scroll. */}
+                  <ProductBox product={product} style={style} priority={index < 4} />
                 </div>
               ))}
             </Row>

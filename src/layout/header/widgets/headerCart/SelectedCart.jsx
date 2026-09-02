@@ -1,6 +1,7 @@
 import HandleQuantity from "@/components/cart/HandleQuantity";
 import Avatar from "@/components/widgets/Avatar";
 import { placeHolderImage } from "@/components/widgets/Placeholder";
+import { getCartLineImage } from "@/utils/customFunctions/cartLineImage";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
@@ -48,7 +49,7 @@ const SelectedCart = ({ modal, setSelectedVariation, setModal }) => {
             <li className="product-box-contain" key={i}>
               <div className="media">
                 <Link href={`/product/${elem?.product?.slug}`}>
-                  <Avatar customClass={""} data={elem?.variation?.variation_image ?? elem?.product?.product_thumbnail} placeHolder={placeHolderImage} name={elem?.product?.name} height={72} width={87} />
+                  <Avatar customClass={""} data={getCartLineImage(elem)} placeHolder={placeHolderImage} name={elem?.product?.name} height={72} width={87} />
                 </Link>
                 <div className="media-body">
                   <Link href={`/product/${elem?.product?.slug}`}>

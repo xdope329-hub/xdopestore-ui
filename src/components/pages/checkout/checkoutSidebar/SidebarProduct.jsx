@@ -1,5 +1,6 @@
 import HandleQuantity from "@/components/cart/HandleQuantity";
 import { placeHolderImage } from "@/components/widgets/Placeholder";
+import { getCartLineImageUrl } from "@/utils/customFunctions/cartLineImage";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import Image from "next/image";
@@ -39,7 +40,7 @@ const SidebarProduct = ({ values }) => {
             <li key={i}>
               {item && (
                 <div className="cart-image">
-                  <Image src={item?.variation && item?.variation?.variation_image ? item?.variation?.variation_image?.original_url : item?.product?.product_thumbnail ? item?.product?.product_thumbnail?.original_url : placeHolderImage} className="img-fluid" alt={item?.product?.name || "product"} width={70} height={70} />
+                  <Image src={getCartLineImageUrl(item, placeHolderImage)} className="img-fluid" alt={item?.product?.name || "product"} width={70} height={70} />
                 </div>
               )}
               <div className="cart-content">
