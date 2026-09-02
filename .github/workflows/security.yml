@@ -1,0 +1,46 @@
+name: UI security checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Reproducible install: fails if package-lock.json drifts from package.json.
+      - run: npm ci --legacy-peer-deps
+
+      # NOTE: `npm run lint` is not wired yet - the repo has no ESLint config and
+      # enabling next/core-web-vitals surfaces pre-existing rules-of-hooks
+      # violations that would fail `next build`. Add it once those are fixed.
+
+      - name: Unit tests (session, checkout rules, security utils)
+        run: npm run test:unit
+
+      - name: Dependency audit (blocks high / critical advisories)
+        run: npm audit --audit-level=high
+
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Production build
+        run: npm run build
+        env:
+          API_PROD_URL: ${{ vars.API_PROD_URL || 'https://xdope-api.onrender.com' }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://xdopestore.vercel.app' }}

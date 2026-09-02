@@ -5,6 +5,7 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RiAddLine, RiDeleteBinLine, RiSubtractLine } from "react-icons/ri";
 import { Input } from "reactstrap";
+import { openExternal } from "@/utils/security/safeUrl";
 
 const CartButton = ({ productState, text, classes, iconClass = true, quantity = false, selectedVariation, disabled = false, disabledLabel }) => {
   const { cartProducts, handleIncDec } = useContext(CartContext);
@@ -34,11 +35,8 @@ const CartButton = ({ productState, text, classes, iconClass = true, quantity = 
     }
   }, [getSelectedVariant]);
 
-  const externalProductLink = (link) => {
-    if (link) {
-      window.open(link, "_blank");
-    }
-  };
+  // CMS-provided URL: only http(s) is opened, and never with a window handle.
+  const externalProductLink = (link) => openExternal(link);
 
   return (
     <>
@@ -109,7 +107,7 @@ const CartButton = ({ productState, text, classes, iconClass = true, quantity = 
               className={`${classes ? classes : ""}  ${productQty > 0 ? "active" : ""}`}
               iconClass={iconClass ? iconClass : <RiAddLine />}
               onClick={() => {
-                productState?.product?.external_url ? window.open(productState?.product?.external_url, "_blank") : setCartCanvas(true);
+                productState?.product?.external_url ? openExternal(productState?.product?.external_url) : setCartCanvas(true);
                 handleIncDec(1, productState?.product, productQty, setProductQty, setIsOpen, productState);
                 productState?.product?.type === "classified" ? setVariationModal(productState?.product?.id) : setCartCanvas(!cartCanvas);
               }}

@@ -1,6 +1,7 @@
 import "../index.scss";
 import { I18nProvider } from "./i18n/i18n-context";
 import { detectLanguage } from "./i18n/server";
+import { serializeJsonLd } from "@/utils/security/jsonLd";
 
 export async function generateMetadata() {
   const themeOption = await fetch(`${process.env.API_PROD_URL}/themeOptions`)
@@ -97,7 +98,8 @@ export default async function RootLayout({ children }) {
           <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            // serializeJsonLd escapes "<" so CMS SEO text can never close this script element.
+            dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
           />
         </head>
         <body suppressHydrationWarning={true} style={bodyStyle}>{children}</body>

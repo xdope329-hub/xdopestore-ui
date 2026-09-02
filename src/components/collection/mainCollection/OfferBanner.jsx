@@ -1,3 +1,4 @@
+import { safeHref } from "@/utils/security/safeUrl";
 import ProductIdsContext from "@/context/productIdsContext";
 import RatioImage from "@/utils/RatioImage";
 import Link from "next/link";
@@ -12,7 +13,7 @@ const OfferBanner = ({ classes = {}, imgUrl, ratioImage, customRatioClass = "", 
   return (
     <div className={`${classes?.customClass ? classes?.customClass : ""}`}>
       {elem?.redirect_link?.link_type === "external_url" ? (
-        <Link href={elem?.redirect_link?.link || "/"} target="_blank">
+        <Link href={safeHref(elem?.redirect_link?.link, "/")} target="_blank" rel="noopener noreferrer">
           <div className={`${classes?.customHoverClass ? classes?.customHoverClass : "home-contain hover-effect"}`}>{ratioImage ? <RatioImage src={imgUrl} className={`bg-img ${customRatioClass}`} alt="banner" /> : <img src={imgUrl} className={`img-fluid ${customRatioClass}`} alt="banner" />}</div>
         </Link>
       ) : elem?.redirect_link?.link_type === "collection" ? (

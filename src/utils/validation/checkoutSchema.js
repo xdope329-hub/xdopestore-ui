@@ -63,12 +63,18 @@ export const guestEmailSchema = Yup.string().trim()
   .email("Enter Valid Email");
 
 // Contraseña de "crear cuenta" durante el checkout: las MISMAS reglas que
-// el registro (8 a 20 caracteres). Antes solo se exigía "no vacía", y el
+// el registro (8 a 128 caracteres, con letra y número). Antes solo se exigía "no vacía", y el
 // registro en segundo plano fallaba en silencio con contraseñas cortas: el
 // cliente creía tener cuenta y no la tenía.
 export const createAccountPasswordSchema = Yup.string().when("create_account", {
   is: true,
-  then: (schema) => schema.required("Password is a required").min(8, "Password is too short").max(20, "Password is too long"),
+  then: (schema) =>
+    schema
+      .required("Password is a required")
+      .min(8, "Password is too short")
+      .max(128, "Password is too long")
+      .matches(/[A-Za-z]/, "Password needs a letter and a number")
+      .matches(/[0-9]/, "Password needs a letter and a number"),
   otherwise: (schema) => schema.notRequired(),
 });
 

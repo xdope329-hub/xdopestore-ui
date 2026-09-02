@@ -1,4 +1,5 @@
 "use client";
+import { safeHref } from "@/utils/security/safeUrl";
 import { homeBannerSettings } from "@/data/sliderSetting/SliderSetting";
 import { ImagePath, storageURL } from "@/utils/constants";
 import useIsMobile from "@/utils/hooks/useIsMobile";
@@ -37,7 +38,7 @@ const SliderSlide = ({ banner, height, width, isMobile }) => {
   const href = banner?.redirect_link?.link
     ? banner.redirect_link.link_type === "collection"
       ? `/category/${banner.redirect_link.link}`
-      : banner.redirect_link.link
+      : safeHref(banner.redirect_link.link, "/collections")
     : "/collections";
 
   return (

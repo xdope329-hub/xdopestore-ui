@@ -4,11 +4,11 @@ import { RiFlashlightLine } from "react-icons/ri";
 
 const TitleBox = ({ title, type, textWhite, space = true, classes, title_class }) => {
   const { t } = useTranslation("common");
-  const getTitle = (value) => {
-    const text = value.split(" ");
-    const firstWord = text.slice(0, 3).join(" ");
-    const remainingWord = text.slice(3).join(" ");
-    return {__html:`<h4>${firstWord} <span class="gradient-text">${remainingWord}</span></h4>`};
+  // Rendered as JSX, not innerHTML: the title comes from the CMS and must be
+  // treated as text, never as markup.
+  const splitTitle = (value) => {
+    const text = String(value || "").split(" ");
+    return { firstWord: text.slice(0, 3).join(" "), remainingWord: text.slice(3).join(" ") };
   };
 
   return (
@@ -174,7 +174,11 @@ const TitleBox = ({ title, type, textWhite, space = true, classes, title_class }
 
       {type == "single_product" && (
         <div className="title1 title7">
-          <div dangerouslySetInnerHTML={getTitle(title?.title || "")}></div>
+          <div>
+            <h4>
+              {splitTitle(title?.title).firstWord} <span className="gradient-text">{splitTitle(title?.title).remainingWord}</span>
+            </h4>
+          </div>
         </div>
       )}
 

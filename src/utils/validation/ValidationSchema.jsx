@@ -3,7 +3,14 @@ import * as Yup from "yup";
 export const YupObject = (schemaObject) => Yup.object().shape(schemaObject);
 
 export const emailSchema = Yup.string().email("Enter Valid Email").required("Email is required");
-export const passwordSchema = Yup.string().min(8, "Too Short!").max(20, "Too Long!").required();
+// Login: only length is checked (existing accounts may pre-date the policy).
+// The old 20-character cap locked out anyone with a longer password.
+export const passwordSchema = Yup.string().min(8, "Password is too short").max(128, "Password is too long").required("Password is a required");
+// New passwords (register, change password): the same policy the API
+// enforces - 8 to 128 characters with at least one letter and one number.
+export const newPasswordSchema = passwordSchema
+  .matches(/[A-Za-z]/, "Password needs a letter and a number")
+  .matches(/[0-9]/, "Password needs a letter and a number");
 export const nameSchema = Yup.string().required();
 export const recaptchaSchema = Yup.string().required("Please complete the captcha");
 export const descriptionSchema = Yup.string().required().min(10, "The description must be at least 10 characters.");

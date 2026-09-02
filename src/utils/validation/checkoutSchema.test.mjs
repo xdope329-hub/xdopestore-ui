@@ -76,7 +76,9 @@ test("contraseña: solo cuenta al marcar 'crear cuenta' y con las reglas del reg
   assert.equal((await errorsOf(guestSchema, validGuest({ create_account: false, password: "" }))).password, undefined);
   assert.equal((await errorsOf(guestSchema, validGuest({ create_account: true, password: "" }))).password, "Password is a required");
   assert.equal((await errorsOf(guestSchema, validGuest({ create_account: true, password: "abc" }))).password, "Password is too short");
-  assert.equal((await errorsOf(guestSchema, validGuest({ create_account: true, password: "a".repeat(21) }))).password, "Password is too long");
+  assert.equal((await errorsOf(guestSchema, validGuest({ create_account: true, password: "a1".repeat(65) }))).password, "Password is too long");
+  assert.equal((await errorsOf(guestSchema, validGuest({ create_account: true, password: "abcdefgh" }))).password, "Password needs a letter and a number");
+  assert.equal((await errorsOf(guestSchema, validGuest({ create_account: true, password: "12345678" }))).password, "Password needs a letter and a number");
   assert.equal((await errorsOf(guestSchema, validGuest({ create_account: true, password: "Secreta123" }))).password, undefined);
 });
 

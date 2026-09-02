@@ -52,6 +52,15 @@ const DetailsTable = ({ data }) => {
                           </td>
                           <td>
                             <h6>{product?.pivot?.variation ? product?.pivot?.variation?.name : product?.name}</h6>
+                            {/* Variante comprada (Color, Talla…) y SKU, guardados en el pedido. */}
+                            {product?.variation_attributes?.length > 0 && (
+                              <div className="text-content" style={{ fontSize: "13px" }}>
+                                {product.variation_attributes.map((attr, i) => (
+                                  <span key={i} className="me-2"><strong>{attr?.name}:</strong> {attr?.value}</span>
+                                ))}
+                              </div>
+                            )}
+                            {product?.sku && <div className="text-content" style={{ fontSize: "13px" }}><strong>SKU:</strong> {product.sku}</div>}
                           </td>
                           <td>
                             <h6>{convertCurrency(product?.pivot?.single_price)}</h6>
@@ -63,7 +72,7 @@ const DetailsTable = ({ data }) => {
                             <h6>{convertCurrency(product?.pivot?.subtotal)}</h6>
                           </td>
                           <td>
-                            {data.payment_status && product?.is_return === 1 && data.payment_status && data.payment_status === "COMPLETED" && data.order_status && data.order_status.slug == "delivered" && !product?.pivot?.refund_status ? (
+                            {product?.is_return === 1 && ["completed", "paid"].includes(String(data?.payment_status || "").toLowerCase()) && data.order_status && data.order_status.slug == "delivered" && !product?.pivot?.refund_status ? (
                               <a className="btn btn-solid" href={Href} onClick={() => onModalOpen(product)}>
                                 {t("Refund")}
                               </a>

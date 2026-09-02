@@ -6,7 +6,8 @@ import { useMutation } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { useContext } from "react";
-import request, { saveSession } from "../axiosUtils";
+import request, { saveAccountSummary, saveSession } from "../axiosUtils";
+import { safeRedirectPath } from "../security/safeRedirect";
 import { LoginAPI } from "../axiosUtils/API";
 import syncLocalCart from "../customFunctions/SyncLocalCart";
 import { YupObject, emailSchema, passwordSchema, recaptchaSchema } from "../validation/ValidationSchema";
@@ -23,10 +24,10 @@ const LoginHandle = async (responseData, router, refetch, CallBackUrl, cartRefet
     // Save the whole session (access + refresh) in one place. saveSession
     // normalises the key names the API returns and drops both cookies.
     saveSession(responseData.data || {});
-    if (typeof window !== "undefined") {
-      Cookies.set("account", JSON.stringify(responseData.data));
-      localStorage.setItem("account", JSON.stringify(responseData.data));
-    }
+    // Only a small, non-sensitive summary is kept client-side. The previous
+    // code copied the whole login body - tokens included - into a readable
+    // cookie and localStorage.
+    saveAccountSummary(responseData.data?.data);
 
     // Push any guest cart items to the user's server-side cart BEFORE we
     // refetch / navigate, so the merged cart shows up correctly.
@@ -38,7 +39,8 @@ const LoginHandle = async (responseData, router, refetch, CallBackUrl, cartRefet
     const wishListID = Cookies.get("wishListID");
     wishListID ? addToWishlist({ id: wishListID }) : null;
     Cookies.remove("wishListID");
-    router.push(`${CallBackUrl}`);
+    Cookies.remove("CallBackUrl", { path: "/" });
+    router.push(CallBackUrl);
   } else {
     const msg = responseData?.response?.data?.message || "InvalidCredentials";
     setShowBoxMessage && setShowBoxMessage(msg);
@@ -48,7 +50,8 @@ const LoginHandle = async (responseData, router, refetch, CallBackUrl, cartRefet
 const useHandleLogin = (setShowBoxMessage) => {
   const { setOpenAuthModal } = useContext(ThemeOptionContext);
   const { addToWishlist } = useContext(WishlistContext);
-  const CallBackUrl = Cookies.get("CallBackUrl") ? Cookies.get("CallBackUrl") : "/account/dashboard";
+  // Cookie values are untrusted: only same-origin paths are followed.
+  const CallBackUrl = safeRedirectPath(Cookies.get("CallBackUrl"), "/account/dashboard");
   const { refetch } = useContext(AccountContext);
   const { refetch: cartRefetch } = useContext(CartContext);
   const router = useRouter();

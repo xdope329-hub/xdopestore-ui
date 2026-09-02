@@ -1,6 +1,5 @@
 import request from "@/utils/axiosUtils";
 import { AddToCartAPI, ClearCart, ReplaceCartAPI } from "@/utils/axiosUtils/API";
-import getCookie from "@/utils/customFunctions/GetCookie";
 import syncLocalCart from "@/utils/customFunctions/SyncLocalCart";
 import { getCartProductId, getCartVariationId, isSameCartLine } from "@/utils/customFunctions/CartItemIdentity";
 import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
@@ -150,19 +149,10 @@ const CartProvider = (props) => {
   };
 
   const fetchReplaceCartData = async (obj) => {
-    try {
-      const res = await fetch(`${process.env.API_PROD_URL}/replace/cart`, {
-        method: "put",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getCookie("uat")}`,
-        },
-
-        body: JSON.stringify(obj),
-      });
-      let result = await res.json();
-      return result?.items;
-    } catch (err) {}
+    // Goes through the shared request layer: bearer token, silent refresh on
+    // 401 and JSON handling live in one place instead of a raw fetch here.
+    const res = await request({ url: ReplaceCartAPI, method: "put", data: obj });
+    return res?.ok ? res?.data?.items : undefined;
   };
   const handleIncDec = async (qty, productObj, isProductQty, setIsProductQty, isOpenFun, cloneVariation) => {
     const updatedQty = (isProductQty ? isProductQty : 0) + qty;

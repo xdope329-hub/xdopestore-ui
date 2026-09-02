@@ -3,6 +3,7 @@ import Btn from "@/elements/buttons/Btn";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { RiShoppingCartLine } from "react-icons/ri";
+import { openExternal } from "@/utils/security/safeUrl";
 
 const AddToCartDigital = ({ productState }) => {
   const { t } = useTranslation("common");
@@ -12,11 +13,8 @@ const AddToCartDigital = ({ productState }) => {
     handleIncDec(productState?.productQty, productState?.product, false, false, false, productState);
   };
 
-  const externalProductLink = (link) => {
-    if (link) {
-      window.open(link, "_blank");
-    }
-  };
+  // CMS-provided URL: only http(s) is opened, and never with a window handle.
+  const externalProductLink = (link) => openExternal(link);
   return (
     <div className="dynamic-checkout">
       {!productState?.product?.is_external ? (
@@ -34,7 +32,7 @@ const AddToCartDigital = ({ productState }) => {
           )}
         </>
       ) : (
-        <Btn className="btn btn-md bg-theme scroll-button" onClick={externalProductLink(productState.product.external_url)} loading={Number(isLoading)}>
+        <Btn className="btn btn-md bg-theme scroll-button" onClick={() => externalProductLink(productState?.product?.external_url)} loading={Number(isLoading)}>
           {productState?.product?.external_button_text ? productState?.product?.external_button_text : t("BuyNow")}
         </Btn>
       )}

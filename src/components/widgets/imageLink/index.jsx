@@ -1,3 +1,4 @@
+import { safeHref } from "@/utils/security/safeUrl";
 import ProductIdsContext from "@/context/productIdsContext";
 import { Href, getMediaSrc, storageURL } from "@/utils/constants";
 import useIsMobile from "@/utils/hooks/useIsMobile";
@@ -27,11 +28,11 @@ const ImageLink = ({ classes = {}, imgUrl, placeholder, link, height, width, hom
   return (
     <>
       {imgUrl?.redirect_link?.link_type === "external_url" ? (
-        <Link className="h-100" href={imgUrl?.redirect_link?.link || "/"} target="_blank">
+        <Link className="h-100" href={safeHref(imgUrl?.redirect_link?.link, "/")} target="_blank" rel="noopener noreferrer">
           {bgImage ? <div className={`bg-size ${classes}`} style={{ backgroundImage: "url(" + (resolveImg(imgUrl, placeholder, isMobile)) + ")" }}></div> : <Image src={resolveImg(imgUrl, placeholder, isMobile)} className="bg-img w-100 img-fluid" alt="banner" height={height} width={width} unoptimized style={{ objectFit: "cover", width: "100%", height: "100%" }} />}
         </Link>
       ) : imgUrl?.redirect_link?.link_type === "collection" && !homeBanner ? (
-        <Link className="h-100" href={imgUrl?.redirect_link?.link || Href} target="_blank">
+        <Link className="h-100" href={safeHref(imgUrl?.redirect_link?.link, Href)} target="_blank" rel="noopener noreferrer">
           {bgImage ? <div className={`bg-size ${classes}`} style={{ backgroundImage: "url(" + (resolveImg(imgUrl, placeholder, isMobile)) + ")" }}></div> : <Image src={resolveImg(imgUrl, placeholder, isMobile)} className="bg-img w-100 img-fluid" alt="banner" height={height} width={width} unoptimized style={{ objectFit: "cover", width: "100%", height: "100%" }} />}
         </Link>
       ) : imgUrl?.redirect_link?.link_type === "collection" && homeBanner ? (

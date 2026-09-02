@@ -5,6 +5,7 @@ import { PageAPI } from "@/utils/axiosUtils/API";
 import Breadcrumbs from "@/utils/commonComponents/breadcrumb";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";
 import Loader from "@/layout/loader";
+import { trustedHtml } from "@/utils/security/sanitizeHtml";
 import { useTranslation } from "react-i18next";
 
 // Legal pages (Terms & Conditions, Privacy Policy).
@@ -37,7 +38,7 @@ const LegalPage = ({ slug, fallback }) => {
       <WrapperComponent classes={{ sectionClass: "legal-section section-b-space", fluidClass: "container", colClass: "col-sm-12" }}>
         <div className="legal-content">
           {adminPage?.content ? (
-            <div dangerouslySetInnerHTML={{ __html: adminPage.content }} />
+            <div dangerouslySetInnerHTML={trustedHtml(adminPage.content)} />
           ) : (
             <>
               <p className="legal-updated text-content">{staticPage?.updated}</p>

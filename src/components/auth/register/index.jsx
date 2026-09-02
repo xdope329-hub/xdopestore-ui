@@ -3,12 +3,11 @@ import Btn from "@/elements/buttons/Btn";
 import CartContext from "@/context/cartContext";
 import Breadcrumbs from "@/utils/commonComponents/breadcrumb";
 import syncLocalCart from "@/utils/customFunctions/SyncLocalCart";
-import { saveSession } from "@/utils/axiosUtils";
-import { YupObject, emailSchema, nameSchema, passwordConfirmationSchema, passwordSchema, recaptchaSchema } from "@/utils/validation/ValidationSchema";
+import { saveAccountSummary, saveSession } from "@/utils/axiosUtils";
+import { YupObject, emailSchema, nameSchema, passwordConfirmationSchema, newPasswordSchema, recaptchaSchema } from "@/utils/validation/ValidationSchema";
 import CaptchaField, { RECAPTCHA_SITE_KEY } from "@/components/auth/common/CaptchaField";
 import GoogleLoginButton from "@/components/auth/common/GoogleLoginButton";
 import { ErrorMessage, Field, Form, Formik } from "formik";
-import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { useContext, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -50,8 +49,7 @@ const RegisterContainer = () => {
         // Store both access + refresh via shared helper.
         saveSession(data || {});
         if (data?.access_token || data?.token) {
-          Cookies.set("account", JSON.stringify(data?.data || {}));
-          localStorage.setItem("account", JSON.stringify(data?.data || {}));
+          saveAccountSummary(data?.data);
           // Persist guest cart items into the new account before navigating.
           await syncLocalCart();
           cartRefetch && cartRefetch();
@@ -95,7 +93,7 @@ const RegisterContainer = () => {
                   validationSchema={YupObject({
                     name: nameSchema,
                     email: emailSchema,
-                    password: passwordSchema,
+                    password: newPasswordSchema,
                     password_confirmation: passwordConfirmationSchema,
                     ...(RECAPTCHA_SITE_KEY ? { recaptcha: recaptchaSchema } : {}),
                   })}

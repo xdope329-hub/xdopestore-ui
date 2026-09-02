@@ -1,3 +1,4 @@
+import { safeHref } from "@/utils/security/safeUrl";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
@@ -15,7 +16,7 @@ const LinkBox = ({ menu }) => {
               {menu.badge_text && <label className={`menu-label ${menu?.badge_color?menu?.badge_color:''}`}>{menu?.badge_text}</label>}
             </Link>
           ) : (
-            <Link href={menu?.path} className="dropdown-item" target="_blank">
+            <Link href={safeHref(menu?.path, "/")} className="dropdown-item" target="_blank" rel="noopener noreferrer">
               {t(menu?.title)}
               {menu?.badge_text && <label className={`menu-label ${menu?.badge_color?menu?.badge_color:''}`}>{menu?.badge_text}</label>}
             </Link>

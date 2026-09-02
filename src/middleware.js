@@ -1,104 +1,89 @@
 import { NextResponse } from "next/server";
+import { safeRedirectPath } from "@/utils/security/safeRedirect";
+
+const ACCESS_COOKIE = "uat";
+const PROTECTED_ROUTES = new Set([
+  "/account/dashboard",
+  "/account/notification",
+  "/account/point",
+  "/account/refund",
+  "/account/order",
+  "/account/addresses",
+]);
+
+// Los settings solo se necesitan para dos decisiones (mantenimiento y
+// checkout de invitados) y NUNCA pueden tumbar el sitio: si la API está
+// fría/reiniciando (p. ej. Render), fallamos abierto y la página decide el
+// resto. Un middleware que hace fetch sin try/catch en cada request convierte
+// cualquier parpadeo de la API en un 500 global (MIDDLEWARE_INVOCATION_FAILED).
+const fetchPublicSettings = async () => {
+  if (!process.env.API_PROD_URL) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3000);
+  try {
+    const res = await fetch(`${process.env.API_PROD_URL}/settings`, { method: "GET", signal: controller.signal });
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+const redirect = (request, path) => NextResponse.redirect(new URL(path, request.url));
 
 export async function middleware(request) {
-  const {
-    nextUrl: { search },
-  } = request;
-  const urlSearchParams = new URLSearchParams(search);
-  const params = Object.fromEntries(urlSearchParams.entries());
-
-  const path0 = request.nextUrl.pathname;
-
-  // Los settings solo se necesitan para UNA decisión (checkout de invitados),
-  // así que solo se consultan en ese caso — y NUNCA pueden tumbar el sitio:
-  // si la API está fría/reiniciando (p. ej. Render), fallamos abierto y la
-  // página decide el resto. Un middleware que hace fetch sin try/catch en
-  // cada request convierte cualquier parpadeo de la API en un 500 global
-  // (MIDDLEWARE_INVOCATION_FAILED).
-  let settingData = null;
-  if (path0 === "/checkout" && !request.cookies.has("uat") && process.env.API_PROD_URL) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch(process.env.API_PROD_URL + "/settings", { method: "GET", signal: controller.signal });
-      clearTimeout(timer);
-      if (res.ok) settingData = await res.json();
-    } catch (_) {
-      // API no disponible — se permite continuar; el checkout maneja el resto.
-    }
-  }
-  const protectedRoutes = [`/account/dashboard`, `/account/notification`, `/account/point`, `/account/refund`, `/account/order`, `/account/addresses`];
-
   const path = request.nextUrl.pathname;
-  if (request.cookies.has("maintenance") && path !== `/maintenance`) {
-    let myHeaders = new Headers();
-    myHeaders.append("Authorization", `Bearer ${request.cookies.get("uat")?.value}`);
-    let requestOptions = {
-      method: "GET",
-      headers: myHeaders,
-    };
+  const hasSession = request.cookies.has(ACCESS_COOKIE);
 
-    let data = null;
-    try {
-      const response = await fetch(process.env.API_PROD_URL + "/settings", requestOptions);
-      if (response.ok) data = await response.json();
-    } catch (_) {
-      // API no disponible — no se puede confirmar mantenimiento; continuar.
-    }
-
-    if (data?.values?.maintenance?.maintenance_mode && path !== `/maintenance`) {
-      return NextResponse.redirect(new URL(`/maintenance`, request.url));
-    } else {
-      if (request.cookies.get("maintenance")) {
-        return NextResponse.next();
-      } else {
-        const response = NextResponse.next();
-        response.cookies.delete("maintenance");
-        return NextResponse.redirect(new URL(`/`, request.url));
-      }
-    }
+  // ── Maintenance mode ─────────────────────────────────────────────────
+  if (request.cookies.has("maintenance") && path !== "/maintenance") {
+    const settings = await fetchPublicSettings();
+    if (settings?.values?.maintenance?.maintenance_mode) return redirect(request, "/maintenance");
+    // Stale flag (mode switched off, or API unreachable): drop it and go on.
+    const response = NextResponse.next();
+    response.cookies.delete("maintenance");
+    return response;
   }
+  if (!request.cookies.has("maintenance") && path === "/maintenance") return redirect(request, "/");
 
-  if (protectedRoutes.includes(path) && !request.cookies.has("uat")) {
-    const redirectTo = request?.cookies?.get("currentPath")?.value || "/";
-    const response = NextResponse.redirect(new URL(redirectTo, request.url));
-    response.cookies.set("showAuthToast", "true", { httpOnly: false });
+  // ── Account area needs a session cookie (the API re-checks every call) ──
+  if (PROTECTED_ROUTES.has(path) && !hasSession) {
+    // `currentPath` is a client-written cookie: only same-origin paths are
+    // honoured (open-redirect hardening) and never a protected route (loop).
+    const wanted = safeRedirectPath(request.cookies.get("currentPath")?.value, "/");
+    const target = PROTECTED_ROUTES.has(wanted.split("?")[0]) ? "/" : wanted;
+    const response = redirect(request, target);
+    response.cookies.set("showAuthToast", "true", {
+      httpOnly: false,
+      sameSite: "lax",
+      secure: request.nextUrl.protocol === "https:",
+      path: "/",
+      maxAge: 60,
+    });
     return response;
   }
 
-  if (!request.cookies.has("maintenance") && path == `/maintenance`) {
-    return NextResponse.redirect(new URL(`/`, request.url));
-  }
-
-  if (path == `/checkout` && !request.cookies.has("uat")) {
+  // ── Guest checkout ───────────────────────────────────────────────────
+  if (path === "/checkout" && !hasSession) {
+    const settings = await fetchPublicSettings();
     // Sin settings (API caída) se falla ABIERTO: dejar entrar al checkout es
     // mejor que redirigir a login por un parpadeo del servidor.
-    const guestAllowed = settingData ? Boolean(settingData?.values?.activation?.guest_checkout) : true;
-    if (guestAllowed) {
-      if (request.cookies.get("cartData") == "digital") {
-        return NextResponse.redirect(new URL(`/auth/login`, request.url));
-      }
-    } else {
-      return NextResponse.redirect(new URL(`/auth/login`, request.url));
-    }
+    const guestAllowed = settings ? Boolean(settings?.values?.activation?.guest_checkout) : true;
+    if (!guestAllowed) return redirect(request, "/auth/login");
+    // Carritos solo digitales exigen cuenta (antes la comparación era contra
+    // el objeto cookie, no su valor, y esta regla nunca se aplicaba).
+    if (request.cookies.get("cartData")?.value === "digital") return redirect(request, "/auth/login");
   }
 
-  if (path == `/auth/login` && request.cookies.has("uat")) {
-    return NextResponse.redirect(new URL(`/`, request.url));
+  // ── Auth pages ───────────────────────────────────────────────────────
+  if (path === "/auth/login" && hasSession) return redirect(request, "/");
+  if (path === "/auth/otp-verification" && !request.cookies.has("ue")) return redirect(request, "/auth/login");
+  if (path === "/auth/update-password" && (!request.cookies.has("uo") || !request.cookies.has("ue"))) {
+    return redirect(request, "/auth/login");
   }
 
-  if (path != `/auth/login`) {
-    if (path == `/auth/otp-verification` && !request.cookies.has("ue")) {
-      return NextResponse.redirect(new URL(`/auth/login`, request.url));
-    }
-    if (path == `/auth/update-password` && (!request.cookies.has("uo") || !request.cookies.has("ue"))) {
-      return NextResponse.redirect(new URL(`/auth/login`, request.url));
-    }
-  }
-
-  if (request.headers.get("x-redirected")) {
-    return NextResponse.next();
-  }
+  return NextResponse.next();
 }
 
 export const config = {
