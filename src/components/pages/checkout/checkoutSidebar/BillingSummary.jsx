@@ -8,7 +8,7 @@ import ApplyCoupon from "./ApplyCoupon";
 import PlaceOrder from "./PlaceOrder";
 import PointWallet from "./PointWallet";
 
-const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeCoupon, setStoreCoupon, errorCoupon, appliedCoupon, setAppliedCoupon, errors, sessionToken }) => {
+const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeCoupon, setStoreCoupon, errorCoupon, appliedCoupon, setAppliedCoupon, errors, sessionToken, addToCartData }) => {
   const { convertCurrency } = useContext(SettingContext);
   const { cartProducts, cartTotal } = useContext(CartContext);
   const { t } = useTranslation("common");
@@ -33,7 +33,7 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
         <div className="order-box">
           <div className="title-box">
             <h4>{t("BillingSummary")}</h4>
-            <ApplyCoupon values={values} setFieldValue={setFieldValue} data={data} storeCoupon={storeCoupon} setStoreCoupon={setStoreCoupon} errorCoupon={errorCoupon} appliedCoupon={appliedCoupon} setAppliedCoupon={setAppliedCoupon} mutate={mutate} isLoading={isLoading} />
+            <ApplyCoupon values={values} setFieldValue={setFieldValue} data={data} storeCoupon={storeCoupon} setStoreCoupon={setStoreCoupon} errorCoupon={errorCoupon} appliedCoupon={appliedCoupon} setAppliedCoupon={setAppliedCoupon} mutate={mutate} isLoading={isLoading} sessionToken={sessionToken} />
           </div>
           <div>
             <div className="custom-box-loader">
@@ -72,7 +72,7 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
                   <span className="count">{convertCurrency(total)}</span>
                 </li>
               </ul>
-              <PlaceOrder values={values} errors={errors} sessionToken={sessionToken} />
+              <PlaceOrder values={values} errors={errors} sessionToken={sessionToken} addToCartData={addToCartData} />
             </div>
           </div>
         </div>

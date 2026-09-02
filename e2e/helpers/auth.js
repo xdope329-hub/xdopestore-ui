@@ -25,11 +25,27 @@ async function dismissNewsletterModal(page) {
   ]);
 }
 
+// The API rate-limits /login (10 attempts / 15 min per IP). Logging in once
+// per test blew past that after ~10 tests and every later test failed with
+// 429. Cache the session for the life of the worker process; access tokens
+// last 15 min, so refresh the cache a bit before that.
+const SESSION_CACHE_TTL_MS = 10 * 60 * 1000;
+let cachedSession = null;
+
 /**
  * Ensures the test user exists. Tries to login; if 401 registers first then logs in.
  * Returns the token string.
  */
 async function ensureTestUser(page) {
+  if (cachedSession && Date.now() - cachedSession.at < SESSION_CACHE_TTL_MS) {
+    return { token: cachedSession.token, body: cachedSession.body };
+  }
+  const session = await loginOrRegister(page);
+  cachedSession = { ...session, at: Date.now() };
+  return session;
+}
+
+async function loginOrRegister(page) {
   const loginRes = await page.request.post(`${BASE_API}/login`, {
     data: { email: TEST_EMAIL, password: TEST_PASSWORD },
     headers: { "Content-Type": "application/json", Accept: "application/json" },

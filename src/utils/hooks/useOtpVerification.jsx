@@ -6,14 +6,15 @@ import { useMutation } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { useContext } from "react";
-import request from "../axiosUtils";
+import request, { saveSession } from "../axiosUtils";
 import { SyncCart, VerifyTokenAPI } from "../axiosUtils/API";
 import useCreate from "./useCreate";
 
 const LoginWithMobileHandle = (responseData, router, refetch, CallBackUrl, mutate, cartRefetch, setShowBoxMessage, addToWishlist, setOpenAuthModal, setState) => {
   setState("login");
   if (responseData.status === 200 || responseData.status === 201) {
-    Cookies.set("uat", responseData.data?.access_token, { path: "/", expires: new Date(Date.now() + 24 * 60 * 6000) });
+    // Mismo guardado de sesión que el login por contraseña (access + refresh).
+    saveSession(responseData.data || {});
     if (typeof window !== "undefined") {
       Cookies.set("account", JSON.stringify(responseData.data));
       localStorage.setItem("account", JSON.stringify(responseData.data));

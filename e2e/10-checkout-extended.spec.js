@@ -98,7 +98,10 @@ test.describe("Checkout Extended", () => {
     if (await couponInput.isVisible()) {
       await couponInput.fill("INVALIDCOUPON999");
       // Submit coupon — look for apply button
-      const applyBtn = page.locator('button:has-text("Apply"), .btn:has-text("Apply"), button[type="button"]:near(input[name="coupon"])').first();
+      // The UI runs in Spanish by default ("Aplicar ahora"), so match the
+      // button by its class first; a text match would otherwise land on the
+      // nearby "Copiar Código" buttons.
+      const applyBtn = page.locator('.apply-button, button:has-text("Apply"), button:has-text("Aplicar")').first();
       if (await applyBtn.isVisible()) {
         await applyBtn.click();
         // Error message should appear

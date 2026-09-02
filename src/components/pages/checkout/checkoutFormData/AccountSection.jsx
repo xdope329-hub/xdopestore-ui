@@ -26,7 +26,10 @@ const AccountSection = ({ values, setFieldValue }) => {
         <Col xs={12} className="phone-field">
           <div className="form-box position-relative">
             <div className="country-input">
-              <SimpleInputField nameList={[{ name: "phone", type: "number", placeholder: t("EnterPhoneNumber"), require: "true", toplabel: "Phone", colprops: { xs: 12 }, colclass: "country-input-box" }]} />
+              {/* type="tel" (no "number"): conserva ceros a la izquierda, no
+                  acepta "e"/"+"/"-", no cambia con la rueda del ratón y el
+                  valor llega como texto al esquema (solo dígitos, 7 a 15). */}
+              <SimpleInputField nameList={[{ name: "phone", type: "tel", inputMode: "numeric", placeholder: t("EnterPhoneNumber"), require: "true", toplabel: "Phone", colprops: { xs: 12 }, colclass: "country-input-box" }]} />
               <SearchableSelectInput
                 nameList={[
                   {
@@ -46,6 +49,7 @@ const AccountSection = ({ values, setFieldValue }) => {
         <Col xs={12}>
           <div className="form-box form-checkbox">
             <Input
+              id="create_account"
               className="checkbox_animated check-box"
               type="checkbox"
               name="create_account"
@@ -54,7 +58,7 @@ const AccountSection = ({ values, setFieldValue }) => {
               }}
               checked={values.create_account}
             />
-            <Label className="form-check-label" htmlFor="flexCheckDefault">
+            <Label className="form-check-label" htmlFor="create_account">
               {t("CreateAnAccount")}
             </Label>
           </div>
