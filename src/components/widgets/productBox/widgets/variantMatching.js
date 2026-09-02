@@ -10,17 +10,46 @@ export const key = (value) => (value === null || value === undefined ? "" : Stri
 /** Variaciones publicadas: una variación desactivada en el admin no genera opciones. */
 export const getSellableVariations = (product) => (product?.variations ?? []).filter((variation) => variation?.status);
 
+/**
+ * Imagen de variación usable: un objeto poblado con `original_url`. Un id
+ * suelto (referencia sin poblar) o null no sirven para pintar nada.
+ */
+export const getVariationImage = (variation) => {
+  const image = variation?.variation_image;
+  return image && typeof image === "object" && image.original_url ? image : null;
+};
+
 /** Imagen de variación por valor de atributo (la API no la trae dentro del atributo). */
 export const getImagesByValueId = (variations) => {
   const map = new Map();
   variations.forEach((variation) => {
-    if (!variation?.variation_image) return;
+    const image = getVariationImage(variation);
+    if (!image) return;
     variation?.attribute_values?.forEach((attributeValue) => {
       const id = key(valueId(attributeValue));
-      if (!map.has(id)) map.set(id, variation.variation_image);
+      if (!map.has(id)) map.set(id, image);
     });
   });
   return map;
+};
+
+/**
+ * Imagen que debe mostrar la miniatura para la selección actual, parcial o
+ * completa: la de la variación exacta si existe; si no, la de la primera
+ * variación que contenga todo lo seleccionado y tenga imagen (elegir "Rojo"
+ * ya muestra la foto en rojo aunque falte la talla). null → la tarjeta
+ * conserva la miniatura del producto.
+ */
+export const getPreviewImage = (variations, selectedIds = [], matchedVariation = null) => {
+  if (!selectedIds.length) return null;
+  const exact = getVariationImage(matchedVariation);
+  if (exact) return exact;
+  const candidate = (variations ?? []).find((variation) => {
+    if (!getVariationImage(variation)) return false;
+    const ids = (variation?.attribute_values ?? []).map((attributeValue) => key(valueId(attributeValue)));
+    return selectedIds.every((id) => ids.includes(id));
+  });
+  return getVariationImage(candidate);
 };
 
 /**

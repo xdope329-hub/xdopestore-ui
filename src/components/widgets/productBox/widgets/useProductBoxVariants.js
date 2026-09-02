@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { findVariationFor, getSellableVariations, getVariantAttributes, isSelectionComplete, key, valueId } from "./variantMatching";
+import { findVariationFor, getPreviewImage, getSellableVariations, getVariantAttributes, isSelectionComplete, key, valueId } from "./variantMatching";
 
 /**
  * Selección de variantes dentro de la miniatura de producto.
@@ -68,6 +68,11 @@ const useProductBoxVariants = (productState, setProductState) => {
 
   const clear = useCallback(() => setSelected({}), []);
 
+  // Foto de la miniatura para la selección actual, aunque esté incompleta:
+  // elegir solo el color ya muestra la variación de ese color. null → la
+  // tarjeta sigue mostrando la miniatura del producto.
+  const previewImage = useMemo(() => getPreviewImage(variations, selectedIds, matchedVariation), [variations, selectedIds, matchedVariation]);
+
   // Propaga la variación resuelta (o su ausencia) al estado de la tarjeta, que
   // es lo que leen la imagen, el precio y el botón de carrito.
   useEffect(() => {
@@ -93,6 +98,7 @@ const useProductBoxVariants = (productState, setProductState) => {
     hasVariants,
     isComplete,
     matchedVariation,
+    previewImage,
     isSelected,
     isDisabled,
     select,
