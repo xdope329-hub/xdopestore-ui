@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import AccountHeading from "../common/AccountHeading";
 import Loader from "@/layout/loader";
 import Capitalize from "@/utils/customFunctions/Capitalize";
+import PendingReviews from "./PendingReviews";
 
 const MyOrders = () => {
   const [page, setPage] = useState(1);
@@ -36,6 +37,9 @@ const MyOrders = () => {
       </div>
     );
   return (
+    <>
+    {/* Productos entregados pendientes de calificar (se oculta si no hay). */}
+    <PendingReviews />
     <Card className="dashboard-table mt-0">
       <CardBody className="p-0">
         <AccountHeading title="MyOrders" classes={"top-sec"} />
@@ -95,6 +99,7 @@ const MyOrders = () => {
         )}
       </CardBody>
     </Card>
+    </>
   );
 };
 

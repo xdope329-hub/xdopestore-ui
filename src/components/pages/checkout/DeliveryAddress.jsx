@@ -1,7 +1,9 @@
 import CustomModal from '@/components/widgets/CustomModal';
+import { addressModalLabels } from '@/components/widgets/addressForm/addressRules';
 import request from '@/utils/axiosUtils';
 import { AddressAPI } from '@/utils/axiosUtils/API';
-import React, { useEffect } from 'react';
+import useUpdate from '@/utils/hooks/useUpdate';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from "react-i18next";
 import { RiAddLine, RiMapPinLine } from 'react-icons/ri';
 import { Row } from 'reactstrap';
@@ -13,6 +15,28 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
   const { t } = useTranslation('common');
 
   const selectedId = values?.[`${type}_address_id`];
+
+  // Edición de una dirección guardada desde el checkout: el mismo modal,
+  // precargado; al guardar se refresca la lista y la selección se mantiene
+  // (el id no cambia). Antes solo se podía elegir o agregar una nueva.
+  const [editAddress, setEditAddress] = useState(null);
+  const editingId = editAddress?.id || editAddress?._id;
+  const { mutate: updateAddress, isPending: updateLoading } = useUpdate(AddressAPI, editingId, false, 'AddressUpdatedSuccessfully', (resData) => {
+    if (resData?.status === 200) {
+      refetchAddresses && refetchAddresses();
+      setEditAddress(null);
+      setModal('');
+    }
+  });
+  const openEdit = (item) => {
+    setEditAddress(item);
+    setModal(type);
+  };
+  const closeModal = () => {
+    setEditAddress(null);
+    setModal('');
+  };
+  const labels = addressModalLabels(!!editingId);
 
   // Pre-select the user's default address (the API sorts is_default first, so it's
   // typically address[0], but we explicitly look for is_default to be safe).
@@ -65,7 +89,7 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
           <h4>
             {t(`${title}Address`)}
           </h4>
-          <a className='d-flex align-items-center fw-bold' onClick={() => setModal(type)}>
+          <a className='d-flex align-items-center fw-bold' onClick={() => { setEditAddress(null); setModal(type); }}>
             <RiAddLine className='me-1'></RiAddLine>
             {t('AddNew')}
           </a>
@@ -76,7 +100,7 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
               {address?.length > 0 ? (
                 <Row className='g-4'>
                   {address?.map((item, i) => (
-                    <ShowAddress item={item} key={item?.id || item?._id || i} type={type} index={i} />
+                    <ShowAddress item={item} key={item?.id || item?._id || i} type={type} index={i} onEdit={guest ? undefined : openEdit} />
                   ))}
                 </Row>
               ) : (
@@ -90,9 +114,9 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
               )}
             </>
           }
-          <CustomModal modal={modal == type ? true : false} setModal={setModal} classes={{ modalClass: 'theme-modal-2 address-modal address-modal-2', title: "AddAddress", }}>
+          <CustomModal modal={modal == type ? true : false} setModal={closeModal} classes={{ modalClass: 'theme-modal-2 address-modal address-modal-2', title: labels.title }}>
             <div className='right-sidebar-box'>
-              <AddAddressForm mutate={mutate} isLoading={isLoading} setModal={setModal} type={type} />
+              <AddAddressForm mutate={editingId ? updateAddress : mutate} isLoading={editingId ? updateLoading : isLoading} setModal={closeModal} type={type} editAddress={editingId ? editAddress : undefined} submitTitle={labels.submit} />
             </div>
           </CustomModal>
         </div>

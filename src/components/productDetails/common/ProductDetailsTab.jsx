@@ -1,8 +1,10 @@
 import NavTabTitles from "@/components/widgets/NavTabs";
+import NoDataFound from "@/components/widgets/NoDataFound";
 import TextLimit from "@/utils/customFunctions/TextLimit";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Col, TabContent, TabPane } from "reactstrap";
+import { Col, Row, TabContent, TabPane } from "reactstrap";
+import CustomerReview from "./CustomerReview";
 import QnATab from "./QnATab";
 import { RiArrowDownSLine } from "react-icons/ri";
 import Btn from "@/elements/buttons/Btn";
@@ -11,11 +13,12 @@ const ProductDetailsTab = ({ productState }) => {
   const { t } = useTranslation("common");
   let [showMore, setShowMore] = useState(false);
   const [activeTab, setActiveTab] = useState(1);
-  // Review tab intentionally hidden storewide (kept QA). To restore it, add
-  // { id: 2, name: "Review" } back here and re-add the matching TabPane below
-  // (renders <CustomerReview /> — see git history).
+  // Pestaña de reseñas: solo muestra las APROBADAS por el administrador
+  // (el API filtra por estado). El cliente que compró puede escribir la suya
+  // desde aquí o desde "Mis pedidos" al recibir el producto.
   const ProductDetailsTabTitle = [
     { id: 1, name: "Description" },
+    { id: 2, name: "Review" },
     { id: 3, name: "QA" },
   ];
 
@@ -33,6 +36,20 @@ const ProductDetailsTab = ({ productState }) => {
               {showMore ? t("ShowLess") : t("ShowMore")}
               <RiArrowDownSLine />
             </Btn>}
+          </div>
+        </TabPane>
+
+        <TabPane className={activeTab == 2 ? "show active" : ""}>
+          <div className="single-product-tables ">
+            <Row>
+              {productState?.product?.can_review || productState?.product?.reviews_count ? (
+                <CustomerReview productState={productState} />
+              ) : (
+                <Col xl={12}>
+                  <NoDataFound customClass="no-data-added" title="NoReviewYet" description="NoReviewYetDescription" />
+                </Col>
+              )}
+            </Row>
           </div>
         </TabPane>
 

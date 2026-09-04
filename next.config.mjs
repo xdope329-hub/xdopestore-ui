@@ -21,6 +21,10 @@ const imageHosts = [
     : [
         { protocol: "http", hostname: "127.0.0.1" },
         { protocol: "http", hostname: "localhost" },
+        // Picsum placeholders used by the seeder (QA / e2e data only). Without
+        // this next/image throws on the home page and the CSP blocks them.
+        { protocol: "https", hostname: "picsum.photos" },
+        { protocol: "https", hostname: "fastly.picsum.photos" },
       ]),
 ];
 try {

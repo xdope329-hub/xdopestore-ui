@@ -68,6 +68,10 @@ const CustomerReview = ({ productState }) => {
                 <div className="review-title-2">
                   <h4 className="fw-bold">{t("Reviewthisproduct")}</h4>
                   <p>{t("Letothercustomersknowwhatyouthink")}.</p>
+                  {/* Estado de moderación de la reseña propia (pendiente / publicada / rechazada). */}
+                  {productState?.product?.user_review?.status_slug === "pending" && <p className="text-content">{t("YourReviewIsPending")}</p>}
+                  {productState?.product?.user_review?.status_slug === "approved" && <p className="text-content">{t("YourReviewIsPublished")}</p>}
+                  {productState?.product?.user_review?.status_slug === "rejected" && <p className="text-content">{t("YourReviewWasRejected")}</p>}
                   <Btn onClick={() => setModal(productState?.product?.id)} title={productState?.product?.user_review ? t("EditReview") : t("Writeareview")} />
                 </div>
               ) : null}
