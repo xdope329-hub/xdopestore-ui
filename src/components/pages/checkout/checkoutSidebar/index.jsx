@@ -93,7 +93,11 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
     }
     // storeCoupon NO es disparador: aplicar/quitar el cupón ya llama a
     // recompute() explícitamente (un solo POST por clic, no dos).
-  }, [CartLoading, deleteCartLoader, cartTotal, cartProducts?.length, errors, values["points_amount"], values["wallet_balance"], values["billing_address_id"], values["delivery_description"], values["payment_method"], values["shipping_address_id"], values["delivery_interval"], values["shipping_address"]?.city, values["billing_address"]?.city]);
+    // `errors` de Formik tampoco: cambia en cada tecla del formulario de
+    // invitado y disparaba un POST /checkout por pulsación (y el límite de
+    // peticiones del API a mitad de compra). Lo que afecta al total ya está
+    // en la lista: direcciones, ciudad, entrega, pago, puntos y cupón.
+  }, [CartLoading, deleteCartLoader, cartTotal, cartProducts?.length, values["points_amount"], values["wallet_balance"], values["billing_address_id"], values["delivery_description"], values["payment_method"], values["shipping_address_id"], values["delivery_interval"], values["shipping_address"]?.city, values["billing_address"]?.city]);
 
   return (
     <>

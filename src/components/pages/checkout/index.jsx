@@ -7,7 +7,6 @@ import Loader from "@/layout/loader";
 import request from "@/utils/axiosUtils";
 import { AddToCartAPI, AddressAPI } from "@/utils/axiosUtils/API";
 import Breadcrumbs from "@/utils/commonComponents/breadcrumb";
-import useCreate from "@/utils/hooks/useCreate";
 import { buildCheckoutValidationSchema } from "@/utils/validation/ValidationSchema";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";;
 import { Form, Formik } from "formik";
@@ -65,14 +64,14 @@ const CheckoutContent = () => {
   }, [accessToken]);
 
   useEffect(() => {
-    if (addressData?.length > 0) setAddress(addressData);
+    // También cuando queda vacía (se borró la última dirección en otra pestaña).
+    if (Array.isArray(addressData)) setAddress(addressData);
   }, [addressData]);
 
-  const { mutate, isLoading } = useCreate(AddressAPI, false, false, "AddressAddedSuccessfully", (resDta) => {
-    refetchAddresses();
-    refetch();
-    setModal("");
-  });
+  // Direcciones nuevas/editadas con sesión: las guarda DeliveryAddress
+  // (POST/PUT /address); aquí solo se refresca la cuenta para que el libro
+  // de direcciones quede al día.
+  const onAddressChange = () => refetch && refetch();
 
   // Calling Add to Cart API
   const { data: addToCartData, isLoading: addToCartLoader, refetch: addToCartRefetch } = useFetchQuery([AddToCartAPI], () => request({ url: AddToCartAPI }, router), { enabled: false, refetchOnWindowFocus: false, cacheTime: 0, select: (res) => res?.data });
@@ -178,8 +177,8 @@ const CheckoutContent = () => {
                         {accessToken && (
                           <div className="checkout-detail-box">
                             <ul>
-                              {!addToCartData?.is_digital_only && <DeliveryAddress key="shipping" type="shipping" title={"Shipping"} values={values} updateId={values["consumer_id"]} setFieldValue={setFieldValue} address={address} modal={modal} mutate={mutate} isLoading={isLoading} setModal={setModal} refetchAddresses={refetchAddresses} />}
-                              <DeliveryAddress key="billing" type="billing" title={"Billing"} values={values} updateId={values["consumer_id"]} setFieldValue={setFieldValue} address={address} modal={modal} mutate={mutate} isLoading={isLoading} setModal={setModal} refetchAddresses={refetchAddresses} />
+                              {!addToCartData?.is_digital_only && <DeliveryAddress key="shipping" type="shipping" title={"Shipping"} values={values} setFieldValue={setFieldValue} address={address} modal={modal} setModal={setModal} refetchAddresses={refetchAddresses} onAddressChange={onAddressChange} />}
+                              <DeliveryAddress key="billing" type="billing" title={"Billing"} values={values} setFieldValue={setFieldValue} address={address} modal={modal} setModal={setModal} refetchAddresses={refetchAddresses} onAddressChange={onAddressChange} />
                               {!addToCartData?.is_digital_only && <DeliveryOptions values={values} setFieldValue={setFieldValue} />}
                               <PaymentOptions values={values} setFieldValue={setFieldValue} />
                             </ul>

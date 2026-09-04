@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import React, { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { buildInitializePayload, getGuestRegistrationPayload, getMissingRequirements } from "./placeOrderRules";
+import { clearDraft } from "../guestCheckoutDraft";
 
 // `appliedCouponCode`: el cupón realmente aplicado en el resumen (vacío si
 // no hay). El texto del campo de cupón NO cuenta.
@@ -78,6 +79,9 @@ const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "
           await request({ url: "/register", method: "post", data: registration });
         } catch (_) { /* no bloquea el pedido */ }
       }
+
+      // Pedido creado: el borrador del invitado ya no hace falta.
+      if (ok && isGuest && typeof window !== "undefined") clearDraft(window.sessionStorage);
 
       if (ok && res?.data?.redirect_url) {
         // Gateway-redirect flow (MercadoPago, etc.): the server keeps the
