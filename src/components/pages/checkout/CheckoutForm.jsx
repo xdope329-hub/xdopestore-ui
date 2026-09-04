@@ -7,6 +7,7 @@ import AccountSection from "./checkoutFormData/AccountSection";
 import DeliverySection from "./checkoutFormData/DeliverySection";
 import PaymentSection from "./checkoutFormData/PaymentSection";
 import DeliveryAddress from "./DeliveryAddress";
+import GuestDraftSync from "./GuestDraftSync";
 
 // Campos que viajan al API como dirección inline del pedido (sin los
 // metadatos locales de la tarjeta: id, type, is_default).
@@ -62,6 +63,16 @@ const CheckoutForm = ({ values, setFieldValue, errors, modal, setModal }) => {
     }
   };
 
+  // Edición de una tarjeta local: se reemplaza en la lista (la selección se
+  // conserva porque el id no cambia) y el efecto de abajo vuelve a copiar
+  // la dirección inline al payload.
+  const guestUpdate = (id, formValues) => {
+    setFieldValue(
+      "guest_addresses",
+      guestAddresses.map((a) => (a.id === id ? { ...a, ...formValues, id } : a))
+    );
+  };
+
   // Selección de tarjeta → objeto inline para el payload del pedido.
   useEffect(() => {
     const pick = (id) => guestAddresses.find((a) => a.id === id);
@@ -73,6 +84,8 @@ const CheckoutForm = ({ values, setFieldValue, errors, modal, setModal }) => {
 
   return (
     <>
+      {/* Un refresh no borra lo escrito por el invitado. */}
+      <GuestDraftSync />
       <AccountSection setFieldValue={setFieldValue} values={values} />
       <DeliveryAddress
         key="guest-shipping"
@@ -85,7 +98,7 @@ const CheckoutForm = ({ values, setFieldValue, errors, modal, setModal }) => {
         modal={modal}
         setModal={setModal}
         mutate={guestMutate}
-        isLoading={false}
+        guestUpdate={guestUpdate}
       />
       <DeliveryAddress
         key="guest-billing"
@@ -98,7 +111,7 @@ const CheckoutForm = ({ values, setFieldValue, errors, modal, setModal }) => {
         modal={modal}
         setModal={setModal}
         mutate={guestMutate}
-        isLoading={false}
+        guestUpdate={guestUpdate}
       />
       <DeliverySection values={values} setFieldValue={setFieldValue} />
       <PaymentSection values={values} setFieldValue={setFieldValue} />

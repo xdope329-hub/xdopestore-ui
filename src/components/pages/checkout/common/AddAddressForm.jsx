@@ -11,7 +11,7 @@ import SelectForm from "./SelectForm";
 
 // Formulario de dirección del checkout: alta y edición de una dirección
 // guardada. `editAddress` con id → modo edición (valores precargados, PUT).
-const AddAddressForm = ({ mutate, isLoading, type, editAddress, setEditAddress, modal, setModal, isFooterDisplay, submitTitle }) => {
+const AddAddressForm = ({ mutate, isLoading, type, editAddress, setEditAddress, modal, setModal, isFooterDisplay, submitTitle, showDefault = true }) => {
   const router = useRouter();
   const editing = !!(editAddress?.id || editAddress?._id);
   useEffect(() => {
@@ -28,13 +28,14 @@ const AddAddressForm = ({ mutate, isLoading, type, editAddress, setEditAddress, 
     <Formik
       enableReinitialize
       // Nuevas direcciones nacen como predeterminada; al editar se conserva lo guardado.
-      initialValues={toAddressFormValues(editAddress, { type: type ? type : null, defaultIsDefault: true })}
+      // Invitado (sin cuenta): la casilla no aplica y no se muestra.
+      initialValues={toAddressFormValues(editAddress, { type: type ? type : null, defaultIsDefault: showDefault })}
       validationSchema={YupObject({ ...addressFieldsSchema })}
       onSubmit={(values) => {
         mutate(buildAddressPayload(values, { editing }));
       }}
     >
-      {({ values, setFieldValue }) => <SelectForm values={values} setFieldValue={setFieldValue} setModal={setModal} isLoading={isLoading} data={data} isFooterDisplay={isFooterDisplay} submitTitle={submitTitle} />}
+      {({ values, setFieldValue }) => <SelectForm values={values} setFieldValue={setFieldValue} setModal={setModal} isLoading={isLoading} data={data} isFooterDisplay={isFooterDisplay} submitTitle={submitTitle} showDefault={showDefault} />}
     </Formik>
   );
 };

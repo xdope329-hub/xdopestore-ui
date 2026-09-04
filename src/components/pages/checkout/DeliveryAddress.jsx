@@ -2,8 +2,9 @@ import CustomModal from '@/components/widgets/CustomModal';
 import { addressModalLabels } from '@/components/widgets/addressForm/addressRules';
 import request from '@/utils/axiosUtils';
 import { AddressAPI } from '@/utils/axiosUtils/API';
+import useCreate from '@/utils/hooks/useCreate';
 import useUpdate from '@/utils/hooks/useUpdate';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from "react-i18next";
 import { RiAddLine, RiMapPinLine } from 'react-icons/ri';
 import { Row } from 'reactstrap';
@@ -11,32 +12,19 @@ import AddAddressForm from './common/AddAddressForm';
 import CheckoutCard from './common/CheckoutCard';
 import ShowAddress from './ShowAddress';
 
-const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setModal, setFieldValue, values, refetchAddresses, guest = false }) => {
+const addressId = (a) => a?.id || a?._id;
+
+/**
+ * Tarjetas de dirección del checkout (envío / facturación) + modal para
+ * agregar o editar. Con sesión las direcciones viven en la cuenta (API);
+ * como invitado viven en el estado del checkout (`mutate` / `guestUpdate`
+ * los provee CheckoutForm) y el modal se cierra en cuanto se guarda.
+ */
+const DeliveryAddress = ({ type, title, address, modal, setModal, setFieldValue, values, refetchAddresses, onAddressChange, guest = false, mutate: guestCreate, guestUpdate }) => {
   const { t } = useTranslation('common');
-
+  const other = type === 'shipping' ? 'billing' : 'shipping';
   const selectedId = values?.[`${type}_address_id`];
-
-  // Edición de una dirección guardada desde el checkout: el mismo modal,
-  // precargado; al guardar se refresca la lista y la selección se mantiene
-  // (el id no cambia). Antes solo se podía elegir o agregar una nueva.
-  const [editAddress, setEditAddress] = useState(null);
-  const editingId = editAddress?.id || editAddress?._id;
-  const { mutate: updateAddress, isPending: updateLoading } = useUpdate(AddressAPI, editingId, false, 'AddressUpdatedSuccessfully', (resData) => {
-    if (resData?.status === 200) {
-      refetchAddresses && refetchAddresses();
-      setEditAddress(null);
-      setModal('');
-    }
-  });
-  const openEdit = (item) => {
-    setEditAddress(item);
-    setModal(type);
-  };
-  const closeModal = () => {
-    setEditAddress(null);
-    setModal('');
-  };
-  const labels = addressModalLabels(!!editingId);
+  const otherSelectedId = values?.[`${other}_address_id`];
 
   // Pre-select the user's default address (the API sorts is_default first, so it's
   // typically address[0], but we explicitly look for is_default to be safe).
@@ -44,25 +32,24 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
     if (!address?.length) return;
     if (selectedId) return; // user already picked something — respect it
     const preferred = address.find((a) => a?.is_default) || address[0];
-    if (preferred?.id || preferred?._id) {
-      setFieldValue(`${type}_address_id`, preferred.id || preferred._id);
+    if (addressId(preferred)) {
+      setFieldValue(`${type}_address_id`, addressId(preferred));
     }
   }, [address, type]);
 
-  // Whenever the user picks a different billing address, promote it to be
-  // their account-wide default. The API endpoint clears the previous default
-  // and flips this address to is_default=true; refetching the list then moves
-  // the "Default" badge and keeps every other place (account → Saved Address,
-  // future checkout sessions, the inline-address pre-selection above) in sync.
+  // Elegir OTRA dirección de facturación la convierte en la predeterminada
+  // de la cuenta (el API quita la marca a la anterior; al refrescar la lista
+  // la insignia se mueve). Solo reacciona a un cambio de SELECCIÓN: antes
+  // también corría al refrescar la lista, y al guardar una dirección nueva
+  // como predeterminada volvía a marcar la anterior (la marca iba y venía).
+  const addressRef = useRef(address);
+  addressRef.current = address;
   useEffect(() => {
     if (guest) return; // invitado: no hay direcciones de cuenta que promover
     if (type !== 'billing') return;
     if (!selectedId) return;
-    if (!Array.isArray(address) || address.length === 0) return;
-
-    const picked = address.find((a) => (a?.id || a?._id) === selectedId);
-    if (!picked) return;
-    if (picked.is_default) return; // already the default — nothing to do
+    const picked = (addressRef.current || []).find((a) => addressId(a) === selectedId);
+    if (!picked || picked.is_default) return;
 
     let cancelled = false;
     (async () => {
@@ -80,7 +67,63 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
       }
     })();
     return () => { cancelled = true; };
-  }, [type, selectedId, address, refetchAddresses]);
+  }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Modal: agregar / editar ──────────────────────────────────────────
+  const [editAddress, setEditAddress] = useState(null);
+  const editingId = addressId(editAddress);
+  const closeModal = () => {
+    setEditAddress(null);
+    setModal('');
+  };
+  const openAdd = () => {
+    setEditAddress(null);
+    setModal(type);
+  };
+  const openEdit = (item) => {
+    setEditAddress(item);
+    setModal(type);
+  };
+
+  // Dirección recién creada: queda seleccionada en esta sección y, si la
+  // otra sección aún no tiene, también allí (facturar a la misma dirección
+  // es el caso común).
+  const selectNew = (id) => {
+    if (!id) return;
+    setFieldValue(`${type}_address_id`, id);
+    if (!otherSelectedId) setFieldValue(`${other}_address_id`, id);
+  };
+  const afterSave = () => {
+    refetchAddresses && refetchAddresses();
+    onAddressChange && onAddressChange();
+    closeModal();
+  };
+  // El modal solo se cierra cuando el API confirmó; si falla, el cliente
+  // ve el error y conserva lo escrito.
+  const { mutate: createAddress, isPending: createLoading } = useCreate(AddressAPI, false, false, 'AddressAddedSuccessfully', (res) => {
+    if (res?.status === 201 || res?.status === 200) {
+      selectNew(addressId(res?.data));
+      afterSave();
+    }
+  });
+  const { mutate: updateAddress, isPending: updateLoading } = useUpdate(AddressAPI, editingId, false, 'AddressUpdatedSuccessfully', (res) => {
+    if (res?.status === 200) afterSave();
+  });
+
+  const submitAddress = (formValues) => {
+    if (guest) {
+      // Sin cuenta: la dirección vive en el checkout; se guarda al instante.
+      if (editingId) guestUpdate && guestUpdate(editingId, formValues);
+      else guestCreate && guestCreate(formValues);
+      closeModal();
+      return;
+    }
+    if (editingId) updateAddress(formValues);
+    else createAddress(formValues);
+  };
+  const isSaving = guest ? false : editingId ? updateLoading : createLoading;
+  const canEdit = guest ? !!guestUpdate : true;
+  const labels = addressModalLabels(!!editingId);
 
   return (
     <>
@@ -89,7 +132,7 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
           <h4>
             {t(`${title}Address`)}
           </h4>
-          <a className='d-flex align-items-center fw-bold' onClick={() => { setEditAddress(null); setModal(type); }}>
+          <a className='d-flex align-items-center fw-bold' onClick={openAdd}>
             <RiAddLine className='me-1'></RiAddLine>
             {t('AddNew')}
           </a>
@@ -100,14 +143,14 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
               {address?.length > 0 ? (
                 <Row className='g-4'>
                   {address?.map((item, i) => (
-                    <ShowAddress item={item} key={item?.id || item?._id || i} type={type} index={i} onEdit={guest ? undefined : openEdit} />
+                    <ShowAddress item={item} key={addressId(item) || i} type={type} index={i} onEdit={canEdit ? openEdit : undefined} />
                   ))}
                 </Row>
               ) : (
                 <div className='empty-box text-center py-3'>
                   <h2 className='mb-2'>{t('AddYourFirstAddress')}</h2>
                   <p className='text-content mb-3' style={{ fontSize: '14px' }}>{t('AddYourFirstAddressDescription')}</p>
-                  <a className='btn btn-theme d-inline-flex align-items-center' onClick={() => setModal(type)}>
+                  <a className='btn btn-theme d-inline-flex align-items-center' onClick={openAdd}>
                     <RiAddLine className='me-1' /> {t('AddAddress')}
                   </a>
                 </div>
@@ -116,7 +159,7 @@ const DeliveryAddress = ({ type, title, address, modal, mutate, isLoading, setMo
           }
           <CustomModal modal={modal == type ? true : false} setModal={closeModal} classes={{ modalClass: 'theme-modal-2 address-modal address-modal-2', title: labels.title }}>
             <div className='right-sidebar-box'>
-              <AddAddressForm mutate={editingId ? updateAddress : mutate} isLoading={editingId ? updateLoading : isLoading} setModal={closeModal} type={type} editAddress={editingId ? editAddress : undefined} submitTitle={labels.submit} />
+              <AddAddressForm mutate={submitAddress} isLoading={isSaving} setModal={closeModal} type={type} editAddress={editingId ? editAddress : undefined} submitTitle={labels.submit} showDefault={!guest} />
             </div>
           </CustomModal>
         </div>
