@@ -184,8 +184,8 @@ const Fashion1 = () => {
         </>
       )}
 
-      {/* Product Categories */}
-      {data?.category_product?.status && (
+      {/* Product Categories — oculta si el admin quitó todas las categorías */}
+      {data?.category_product?.status && !(Array.isArray(data?.category_product?.category_ids) && data.category_product.category_ids.length === 0) && (
         <>
           <HomeTitle title={data?.category_product} type="basic" />
           <WrapperComponent

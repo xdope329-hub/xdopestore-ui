@@ -9,7 +9,7 @@ import { Col, Input, Label, ModalFooter, Row } from "reactstrap";
 // Modal de dirección del checkout (usuario logueado). Los campos viven en
 // el componente compartido AddressFields; aquí solo queda lo propio del
 // modal: aviso de campos obligatorios, checkbox "predeterminada" y footer.
-const SelectForm = ({ values, setFieldValue, isLoading, data, setModal, isFooterDisplay = true }) => {
+const SelectForm = ({ values, setFieldValue, isLoading, data, setModal, isFooterDisplay = true, submitTitle = "Submit" }) => {
   const { t } = useTranslation("common");
   // Intento de guardar con campos obligatorios vacíos → aviso claro.
   const { errors, submitCount } = useFormikContext();
@@ -42,7 +42,7 @@ const SelectForm = ({ values, setFieldValue, isLoading, data, setModal, isFooter
         {isFooterDisplay && (
           <ModalFooter className="ms-auto justify-content-end save-back-button">
             <Btn size="md" className="btn-outline fw-bold" title="Cancel" onClick={() => setModal(false)} />
-            <Btn className="btn-solid" type="submit" title="Submit" loading={Number(isLoading)} />
+            <Btn className="btn-solid" type="submit" title={submitTitle} loading={Number(isLoading)} disabled={!!isLoading} />
           </ModalFooter>
         )}
       </Row>

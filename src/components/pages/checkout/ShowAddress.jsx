@@ -1,9 +1,10 @@
 import { ReactstrapRadio } from "@/components/widgets/reactstrapFormik";
 import { Field } from "formik";
 import { useTranslation } from "react-i18next";
+import { RiEditLine } from "react-icons/ri";
 import { Col, Label } from "reactstrap";
 
-const ShowAddress = ({ item, type, index }) => {
+const ShowAddress = ({ item, type, index, onEdit }) => {
   const { t } = useTranslation("common");
   const value = item?.id || item?._id;
   return (
@@ -15,13 +16,29 @@ const ShowAddress = ({ item, type, index }) => {
               <Field component={ReactstrapRadio} id={`address-${type}-${index}`} className="form-check-input" type="radio" name={`${type}_address_id`} value={value} />
             </div>
             <ul className="delivery-address-detail">
-              <li>
+              <li className="d-flex align-items-start justify-content-between gap-2">
                 <h4 className="fw-semibold">
                   {item?.title}
                   {item?.is_default && (
                     <span className="badge bg-dark ms-2" style={{ fontSize: '0.65rem', verticalAlign: 'middle' }}>{t("Default") || "Default"}</span>
                   )}
                 </h4>
+                {onEdit && (
+                  // Editar la dirección guardada sin salir del checkout. Se
+                  // evita la activación del <label> para no cambiar la selección.
+                  <button
+                    type="button"
+                    className="btn btn-sm p-0 border-0 bg-transparent theme-color fw-semibold d-inline-flex align-items-center gap-1 address-edit-btn"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onEdit(item);
+                    }}
+                    aria-label={`${t("EditAddress")}: ${item?.title || ""}`}
+                  >
+                    <RiEditLine /> {t("Edit")}
+                  </button>
+                )}
               </li>
               <li>
                 <p className="text-content">

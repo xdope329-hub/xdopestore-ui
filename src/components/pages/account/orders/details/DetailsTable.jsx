@@ -8,15 +8,18 @@ import RefundModal from "./RefundModal";
 import { Href } from "@/utils/constants";
 import Btn from "@/elements/buttons/Btn";
 import { CapitalizeMultiple } from "@/utils/customFunctions/Capitalize";
+import { refundButtonState } from "./refundRules";
 
-const DetailsTable = ({ data }) => {
+const DetailsTable = ({ data, refetch }) => {
   const { t } = useTranslation("common");
   const { convertCurrency } = useContext(SettingContext);
   const [modal, setModal] = useState("");
   const [storeData, setStoreData] = useState("");
   const onModalOpen = (product) => {
     setStoreData(product);
-    setModal(product?.id);
+    // Las líneas del pedido no tienen `id` propio: con `product.id` el modal
+    // recibía undefined y nunca se abría.
+    setModal(product?.product_id || product?.id || "refund");
   };
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const toggle = (index) =>
@@ -72,26 +75,36 @@ const DetailsTable = ({ data }) => {
                             <h6>{convertCurrency(product?.pivot?.subtotal)}</h6>
                           </td>
                           <td>
-                            {product?.is_return === 1 && ["completed", "paid"].includes(String(data?.payment_status || "").toLowerCase()) && data.order_status && data.order_status.slug == "delivered" && !product?.pivot?.refund_status ? (
-                              <a className="btn btn-solid" href={Href} onClick={() => onModalOpen(product)}>
-                                {t("Refund")}
-                              </a>
-                            ) : product.is_return === 0 ? (
-                              <span>{t("NonRefundable")}</span>
-                            ) : product?.pivot?.refund_status ? (
-                              <div className={`status-${product?.pivot?.refund_status?.toLowerCase()}`}>
-                                <span>{CapitalizeMultiple(product?.pivot?.refund_status)}</span>
-                              </div>
-                            ) : (
-                              <>
-                              <div className="black-tooltip" id={"refunded" + i}>
-                                {!product?.pivot?.refund_status && <Btn className="btn-solid disabled"> {t("Refund")}</Btn>}
-                              </div>
-                                <Tooltip isOpen={tooltipOpen[i]} target={"refunded" + i} toggle={() => toggle(i)}>
-                                {t("EnableAfterDelivery")}
-                              </Tooltip>
-                              </>
-                            )}
+                            {(() => {
+                              // Regla en refundRules.js: antes se comparaba `is_return === 1`
+                              // y el API mandaba `true`, así que el botón nunca se habilitaba.
+                              const refund = refundButtonState({ product, order: data });
+                              if (refund.state === "refund") {
+                                return (
+                                  <a className="btn btn-solid" href={Href} onClick={() => onModalOpen(product)}>
+                                    {t("Refund")}
+                                  </a>
+                                );
+                              }
+                              if (refund.state === "non_refundable") return <span>{t("NonRefundable")}</span>;
+                              if (refund.state === "requested") {
+                                return (
+                                  <div className={`status-${refund.status}`}>
+                                    <span>{t(`Refund_${refund.status}`, { defaultValue: CapitalizeMultiple(refund.status) })}</span>
+                                  </div>
+                                );
+                              }
+                              return (
+                                <>
+                                  <div className="black-tooltip" id={"refunded" + i}>
+                                    <Btn className="btn-solid disabled"> {t("Refund")}</Btn>
+                                  </div>
+                                  <Tooltip isOpen={tooltipOpen[i]} target={"refunded" + i} toggle={() => toggle(i)}>
+                                    {t("EnableAfterDelivery")}
+                                  </Tooltip>
+                                </>
+                              );
+                            })()}
                           </td>
                         </tr>
                       ))
@@ -102,7 +115,7 @@ const DetailsTable = ({ data }) => {
           </div>
         </CardBody>
       </Card>
-      <RefundModal modal={modal} setModal={setModal} storeData={storeData} />
+      <RefundModal modal={modal} setModal={setModal} storeData={storeData} orderId={data?.id} onSubmitted={refetch} />
     </>
   );
 };

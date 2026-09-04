@@ -54,8 +54,8 @@ const RefundTable = () => {
                             <span className="fw-bolder">#{refund?.order?.order_number}</span>
                           </td>
                           <td>
-                            <div className={`${refund.status.toLowerCase() === "pending" ? "badge bg-pending" : refund.status.toLowerCase() === "completed" ? "badge bg-completed" : "status-rejected"} custom-badge rounded-pill`}>
-                              <span>{Capitalize(refund.status)}</span>
+                            <div className={`${refund.status.toLowerCase() === "pending" ? "badge bg-pending" : ["completed", "approved"].includes(refund.status.toLowerCase()) ? "badge bg-completed" : "badge bg-cancelled"} custom-badge rounded-pill`}>
+                              <span>{t(`Refund_${refund.status.toLowerCase()}`, { defaultValue: Capitalize(refund.status) })}</span>
                             </div>
                           </td>
 
@@ -71,7 +71,7 @@ const RefundTable = () => {
             <div className="product-pagination">
               <div className="theme-pagination-block">
                 <nav>
-                  <Pagination current_page={data?.transactions?.current_page} total={data?.transactions?.total} per_page={data?.transactions?.per_page} setPage={setPage} />
+                  <Pagination current_page={data?.current_page} total={data?.total} per_page={data?.per_page} setPage={setPage} />
                 </nav>
               </div>
             </div>

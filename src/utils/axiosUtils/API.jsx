@@ -104,6 +104,8 @@ export const FeedBackAPI = "/question-and-answer/feedback";
 
 // Review API
 export const ReviewAPI = "/review";
+// Productos entregados que el cliente aún no ha calificado.
+export const ReviewPendingAPI = "/review/pending";
 
 // Order Status API
 export const OrderStatusAPI = "/orderStatus";

@@ -8,10 +8,11 @@ import { ProductAPI } from "@/utils/axiosUtils/API";
 import { Href } from "@/utils/constants";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";;
 import { useRouter } from "next/navigation";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Slider from "react-slick";
 import { Col, Row } from "reactstrap";
+import { selectHomeTabCategories } from "./homeProductTabRules";
 
 const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle, classes, type, title, product_box_style, sliderOptions, paginate, isFilterCategoryDataNested, dynamic, customSelect }) => {
   const router = useRouter();
@@ -24,44 +25,15 @@ const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle,
 
   const [customSelectedId, setCustomSelectedId] = useState("");
 
-  const filterCategoryDataNested = (categoryData, categoryIds) => {
-    if (!categoryData || !categoryIds) return [];
-    const idSet = new Set(categoryIds);
-    const seen = new Set();
-    const result = [];
-    const visit = (category) => {
-      if (seen.has(category.id)) return;
-      if (idSet.has(category.id)) {
-        seen.add(category.id);
-        result.push(category);
-        category.subcategories?.forEach(visit);
-      } else {
-        category.subcategories?.forEach(visit);
-      }
-    };
-    categoryData.forEach(visit);
-    return result;
-  };
-
-  // The API returns a flat list that already includes subcategories — just filter by id directly.
-  const filterCategoryData = (categoryData, categoryIds) => {
-    if (!categoryData || !categoryIds) return [];
-    const idSet = new Set(categoryIds);
-    return categoryData.filter((cat) => idSet.has(cat.id));
-  };
-
-  const filteredCategoriesRaw = isFilterCategoryDataNested ? filterCategoryDataNested(categoryData, categoryIds) : filterCategoryData(categoryData, categoryIds);
-
-  // Fallback: if the configured category_ids don't resolve to any real
-  // category (stale/empty config, or an id-format mismatch), don't leave the
-  // tab silently empty — show the product categories that actually have
-  // products, preferring those with a product count.
-  const filteredCategories = (() => {
-    if (filteredCategoriesRaw?.length) return filteredCategoriesRaw;
-    const all = categoryData || [];
-    const withProducts = all.filter((c) => Number(c?.products_count) > 0);
-    return withProducts.length ? withProducts : all;
-  })();
+  // Las categorías que eligió el administrador (Front → Category Products)
+  // se respetan tal cual, también cuando quitó todas. Antes, una lista vacía
+  // o con ids no encontrados caía a "todas las categorías con productos", así
+  // que quitar categorías en el admin no cambiaba nada en la tienda. El API
+  // ya descarta las eliminadas o sin productos (homeProductTabRules.js).
+  const filteredCategories = useMemo(
+    () => selectHomeTabCategories(categoryData, categoryIds, { nested: !!isFilterCategoryDataNested }),
+    [categoryData, categoryIds, isFilterCategoryDataNested]
+  );
 
   // Auto-select the first category as soon as the tab list is available so the
   // storefront shows its products by default (instead of "No Product Found").
