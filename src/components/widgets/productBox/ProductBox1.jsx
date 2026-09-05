@@ -51,16 +51,21 @@ const ProductBox1 = ({ productState, setProductState }) => {
           {productState?.selectedVariation ? (
             <>
               {productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}
-              <span className="discounted-price">
-                {productState?.selectedVariation?.discount}% {t("Off")}
-              </span>
+              {Number(productState?.selectedVariation?.discount) > 0 && (
+                <span className="discounted-price">
+                  {productState?.selectedVariation?.discount}% {t("Off")}
+                </span>
+              )}
             </>
           ) : (
             <>
               {productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}
-              <span className="discounted-price">
-                {productState?.product?.discount}% {t("Off")}
-              </span>
+              {/* Sin descuento (0 / null) no hay etiqueta: antes salía "% Off" vacío. */}
+              {Number(productState?.product?.discount) > 0 && (
+                <span className="discounted-price">
+                  {productState?.product?.discount}% {t("Off")}
+                </span>
+              )}
             </>
           )}
         </h4>

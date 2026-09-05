@@ -4,10 +4,10 @@ import useFetchQuery from "@/utils/hooks/useFetchQuery";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import AccountSection from "./checkoutFormData/AccountSection";
-import DeliverySection from "./checkoutFormData/DeliverySection";
-import PaymentSection from "./checkoutFormData/PaymentSection";
 import DeliveryAddress from "./DeliveryAddress";
+import DeliveryOptions from "./DeliveryOptions";
 import GuestDraftSync from "./GuestDraftSync";
+import PaymentOptions from "./PaymentOptions";
 
 // Campos que viajan al API como dirección inline del pedido (sin los
 // metadatos locales de la tarjeta: id, type, is_default).
@@ -113,8 +113,9 @@ const CheckoutForm = ({ values, setFieldValue, errors, modal, setModal }) => {
         mutate={guestMutate}
         guestUpdate={guestUpdate}
       />
-      <DeliverySection values={values} setFieldValue={setFieldValue} />
-      <PaymentSection values={values} setFieldValue={setFieldValue} />
+      {/* Entrega y pago: las mismas tarjetas (y textos) que el cliente con sesión. */}
+      <DeliveryOptions values={values} setFieldValue={setFieldValue} />
+      <PaymentOptions values={values} setFieldValue={setFieldValue} />
     </>
   );
 };
