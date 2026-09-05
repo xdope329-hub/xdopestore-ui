@@ -38,7 +38,8 @@ const PaymentOptions = ({ values, setFieldValue }) => {
           {settingData?.payment_methods?.length > 0 &&
             settingData?.payment_methods?.map((elem, i) => (
               <Fragment key={i}>
-                {elem?.status && (
+                {/* !!: un método desactivado (status 0) pintaba un "0" suelto en la sección */}
+                {!!elem?.status && (
                   <Col xs={12} xxl={elem?.name === "mercadopago" ? 12 : 6}>
                     <div className="payment-option">
                       <div className="payment-category w-100">

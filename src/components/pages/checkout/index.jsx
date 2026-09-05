@@ -149,9 +149,10 @@ const CheckoutContent = () => {
                     <div className="left-sidebar-checkout">
                       <div className="checkout-detail-box">
                         {!accessToken && settingData?.activation?.guest_checkout && (
-                          <div className="checkout-form-section">
-                            {/* Compra como invitado: datos de contacto + direcciones
-                                inline. Iniciar sesión sigue disponible como atajo. */}
+                          // Compra como invitado: las MISMAS tarjetas que el cliente con
+                          // sesión (contacto, direcciones, entrega y pago). Iniciar
+                          // sesión sigue disponible como atajo.
+                          <div className="checkout-detail-box">
                             <div className="guest-login-hint mb-3">
                               <span className="text-content">{t("AlreadyHaveAccount")}</span>{" "}
                               <a className="theme-color fw-semibold" style={{ cursor: "pointer" }} onClick={() => setOpenAuthModal(true)}>

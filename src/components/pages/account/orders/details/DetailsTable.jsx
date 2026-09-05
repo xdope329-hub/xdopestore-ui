@@ -10,7 +10,8 @@ import Btn from "@/elements/buttons/Btn";
 import { CapitalizeMultiple } from "@/utils/customFunctions/Capitalize";
 import { refundButtonState } from "./refundRules";
 
-const DetailsTable = ({ data, refetch }) => {
+// `readOnly`: seguimiento público sin sesión → sin columna ni modal de reembolso.
+const DetailsTable = ({ data, refetch, readOnly = false }) => {
   const { t } = useTranslation("common");
   const { convertCurrency } = useContext(SettingContext);
   const [modal, setModal] = useState("");
@@ -43,7 +44,7 @@ const DetailsTable = ({ data, refetch }) => {
                     <th scope="col">{t("Price")}</th>
                     <th scope="col">{t("Quantity")}</th>
                     <th scope="col">{t("Subtotal")}</th>
-                    <th scope="col">{t("RefundStatus")}</th>
+                    {!readOnly && <th scope="col">{t("RefundStatus")}</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -74,6 +75,7 @@ const DetailsTable = ({ data, refetch }) => {
                           <td>
                             <h6>{convertCurrency(product?.pivot?.subtotal)}</h6>
                           </td>
+                          {!readOnly && (
                           <td>
                             {(() => {
                               // Regla en refundRules.js: antes se comparaba `is_return === 1`
@@ -106,6 +108,7 @@ const DetailsTable = ({ data, refetch }) => {
                               );
                             })()}
                           </td>
+                          )}
                         </tr>
                       ))
                     : null}
@@ -115,7 +118,7 @@ const DetailsTable = ({ data, refetch }) => {
           </div>
         </CardBody>
       </Card>
-      <RefundModal modal={modal} setModal={setModal} storeData={storeData} orderId={data?.id} onSubmitted={refetch} />
+      {!readOnly && <RefundModal modal={modal} setModal={setModal} storeData={storeData} orderId={data?.id} onSubmitted={refetch} />}
     </>
   );
 };

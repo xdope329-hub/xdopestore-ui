@@ -3,14 +3,18 @@ import ThemeOptionContext from "@/context/themeOptionsContext";
 import WishlistContext from "@/context/wishlistContext";
 import { Href } from "@/utils/constants";
 import useBumpOnIncrease from "@/utils/hooks/useBumpOnIncrease";
-import { t } from "i18next";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useContext, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { RiHeartLine, RiHome2Line, RiSearch2Line, RiShoppingBagLine, RiUserLine } from "react-icons/ri";
 
 const MobileMenu = () => {
+  // Hook de react-i18next, no el `t` global de i18next: el singleton del
+  // servidor renderizaba "Home" y el cliente "Inicio", y cada página
+  // registraba un error de hidratación de React.
+  const { t } = useTranslation("common");
   const { setOpenAuthModal, setCartCanvas } = useContext(ThemeOptionContext);
   const { cartProducts } = useContext(CartContext) || {};
   const cartCount = cartProducts?.length || 0;
