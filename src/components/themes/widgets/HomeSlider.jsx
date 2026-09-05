@@ -4,7 +4,11 @@ import { homeBannerSettings } from "@/data/sliderSetting/SliderSetting";
 import { ImagePath, storageURL } from "@/utils/constants";
 import useIsMobile from "@/utils/hooks/useIsMobile";
 import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Slider from "react-slick";
+import { progressPercent, resolveAutoplaySeconds, shouldAutoplay } from "./homeSliderRules";
+
+const PROGRESS_TICK_MS = 100;
 
 const resolveUrl = (banner, isMobile) => {
   if (isMobile && banner?.image_url_mobile) return storageURL + banner.image_url_mobile;
@@ -68,17 +72,77 @@ const SliderSlide = ({ banner, height, width, isMobile }) => {
   );
 };
 
+// Barra de progreso del auto-desplazamiento: se llena durante `seconds` y al
+// completarse avanza el slider (`onElapsed`). Se pausa con el cursor encima o
+// con la pestaña oculta (y sigue donde iba al volver) y vuelve a empezar cuando
+// cambia el banner (`cycle`), también si el cambio lo hizo el cliente con las
+// flechas o deslizando. Vive en su propio componente para que el tic no
+// vuelva a renderizar los banners.
+const AutoplayProgress = ({ seconds, paused, cycle, onElapsed }) => {
+  const [progress, setProgress] = useState(0);
+  const elapsedRef = useRef(0);
+
+  useEffect(() => {
+    elapsedRef.current = 0;
+    setProgress(0);
+  }, [cycle, seconds]);
+
+  useEffect(() => {
+    if (paused) return undefined;
+    let last = performance.now();
+    const timer = setInterval(() => {
+      const now = performance.now();
+      elapsedRef.current += now - last;
+      last = now;
+      if (elapsedRef.current >= seconds * 1000) {
+        elapsedRef.current = 0;
+        setProgress(0);
+        onElapsed();
+      } else {
+        setProgress(progressPercent(elapsedRef.current, seconds));
+      }
+    }, PROGRESS_TICK_MS);
+    return () => clearInterval(timer);
+  }, [paused, seconds, onElapsed]);
+
+  return (
+    <div className="home-slider-progress" aria-hidden="true">
+      <span style={{ width: `${progress}%` }} />
+    </div>
+  );
+};
+
 const HomeSlider = ({ bannerData, height, width, sliderClass }) => {
   const isMobile = useIsMobile();
   const banners = bannerData?.banners ?? [];
+  // Segundos entre banners (Front → Home Banner): vacío = 5, 0 = sin auto-desplazamiento.
+  const seconds = resolveAutoplaySeconds(bannerData?.autoplay_interval);
+  const autoplay = shouldAutoplay(banners.length, seconds);
+  const sliderRef = useRef(null);
+  const [cycle, setCycle] = useState(0);
+  const [hovered, setHovered] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    if (!autoplay || typeof document === "undefined") return undefined;
+    const update = () => setHidden(document.hidden);
+    update();
+    document.addEventListener("visibilitychange", update);
+    return () => document.removeEventListener("visibilitychange", update);
+  }, [autoplay]);
+
+  const next = useCallback(() => sliderRef.current?.slickNext?.(), []);
 
   if (banners.length > 1) {
     return (
-      <Slider {...homeBannerSettings} className={sliderClass || ""}>
-        {banners.map((banner, i) => (
-          <SliderSlide key={i} banner={banner} height={height} width={width} isMobile={isMobile} />
-        ))}
-      </Slider>
+      <div className="home-slider-autoplay" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+        <Slider ref={sliderRef} {...homeBannerSettings} className={sliderClass || ""} beforeChange={(_, nextSlide) => setCycle(nextSlide)}>
+          {banners.map((banner, i) => (
+            <SliderSlide key={i} banner={banner} height={height} width={width} isMobile={isMobile} />
+          ))}
+        </Slider>
+        {autoplay && <AutoplayProgress seconds={seconds} paused={hovered || hidden} cycle={cycle} onElapsed={next} />}
+      </div>
     );
   }
 

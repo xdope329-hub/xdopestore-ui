@@ -44,8 +44,9 @@ const ReviewModal = ({ modal, setModal, productState, refetch }) => {
                 <div className="product-review-rating">
                   <label>{t("Rating")}</label>
                   <div className="product-rating">
-                    {/* <ProductBox1Rating totalRating={productState?.product?.rating_count} /> */}
-                    <h6 className="rating-number">{productState?.product?.rating_count?.toFixed(2) || 0}</h6>
+                    {/* Promedio actual del producto: estrellas llenas en proporción (4.3 → cuatro y el 30 % de la quinta). */}
+                    <RatingBox totalRating={productState?.product?.rating_count} />
+                    <h6 className="rating-number">{Number(productState?.product?.rating_count || 0).toFixed(2)}</h6>
                   </div>
                 </div>
               </div>

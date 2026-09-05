@@ -44,7 +44,10 @@ const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle,
     }
   }, [filteredCategories, currentCategory]);
 
-  const { data: productRes, refetch, fetchStatus, isLoading } = useFetchQuery([currentCategory], () => request({ url: ProductAPI, params: { category_ids: currentCategory || customSelectedId, status: 1, paginate: paginate ? paginate : 8 } }, router), { enabled: !!(currentCategory || customSelectedId), refetchOnWindowFocus: false, select: (res) => res?.data });
+  // Los productos de cada pestaña salen en el orden en que se agregaron en el
+  // admin (created_at ascendente); sin estos parámetros el API devolvía los
+  // más recientes primero.
+  const { data: productRes, refetch, fetchStatus, isLoading } = useFetchQuery([currentCategory], () => request({ url: ProductAPI, params: { category_ids: currentCategory || customSelectedId, status: 1, paginate: paginate ? paginate : 8, sortBy: "asc", field: "created_at" } }, router), { enabled: !!(currentCategory || customSelectedId), refetchOnWindowFocus: false, select: (res) => res?.data });
   const product = productRes?.data;
   const totalProducts = productRes?.total ?? 0;
   // Slug of the active tab's category, for the "view all" link below.

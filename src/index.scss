@@ -1,5 +1,62 @@
 @import '../public/assets/scss/app.scss';
 
+/* Read-only stars (components/widgets/starRating): the average rating fills
+   the stars proportionally — 4.3 shows four full stars and 30% of the fifth.
+   Each star stacks the grey outline and, on top, the coloured filled star
+   clipped to the fraction. */
+.star-rating-item {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  vertical-align: middle;
+
+  .star-rating-base {
+    display: inline-block;
+  }
+
+  .star-rating-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  i,
+  svg {
+    display: block;
+    margin: 0 !important;
+  }
+}
+
+/* Home banner auto-scroll (themes/widgets/HomeSlider): thin bar at the bottom
+   of the slider that fills up during the interval set in the admin and resets
+   on every banner change. */
+.home-slider-autoplay {
+  position: relative;
+}
+
+.home-slider-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.35);
+  z-index: 2;
+  pointer-events: none;
+
+  span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--theme-color, #51ec8c);
+    transition: width 0.1s linear;
+  }
+}
+
 /* Product card photo (widgets/productBox/widgets/ProductImage): shimmer
    skeleton while the lazy image downloads, fade-in on load, and a soft
    shimmer overlay while a variant swap fetches the next photo. The box keeps
