@@ -4,6 +4,7 @@ import ColorAttribute from "./ColorAttribute";
 import DropdownAttribute from "./DropdownAttribute";
 import ImageOtherAttributes from "./Image&OtherAttributes";
 import RadioAttribute from "./RadioAttribute";
+import { pickDefaultVariation } from "./defaultVariation";
 
 const ProductAttribute = ({ productState, setProductState, stickyAddToCart, noHoverEffect }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);
@@ -38,14 +39,11 @@ const ProductAttribute = ({ productState, setProductState, stickyAddToCart, noHo
       });
     });
 
-    let firstAvailableVariant = null;
-
-    for (const variation of productObj?.variations) {
-      if (variation.stock_status !== "out_of_stock") {
-        firstAvailableVariant = variation;
-        break;
-      }
-    }
+    // Variación predeterminada: la vendible más barata, la misma que da el
+    // precio "desde" y el descuento de la tarjeta (defaultVariation.js).
+    // Antes era la primera con stock, y la ficha abría con un descuento
+    // distinto al que anunciaba la tarjeta.
+    const firstAvailableVariant = pickDefaultVariation(productObj?.variations);
 
     if (firstAvailableVariant) {
       (firstAvailableVariant.attribute_values || []).forEach((attribute_val) => {

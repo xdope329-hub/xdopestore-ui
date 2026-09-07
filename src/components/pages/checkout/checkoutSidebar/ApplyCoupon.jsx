@@ -22,13 +22,11 @@ const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values,
   const [toggle, setToggle] = useState(false);
   const router = useRouter();
 
-  // GET /coupon exige sesión: para un invitado devolvía 401 en cada visita
-  // al checkout (y ese 401 era el que disparaba la renovación silenciosa de
-  // la sesión anterior). El invitado sigue pudiendo escribir su código.
-  // Vista de cliente (cupones vigentes, sin límites de uso ni contadores);
-  // el catálogo completo de /coupon es solo para administradores.
+  // Vista de cliente (cupones vigentes, sin límites de uso ni contadores),
+  // también para invitados: /coupon/public no exige sesión. El catálogo
+  // completo de /coupon es solo para administradores.
   const { data: couponData } = useFetchQuery([`${CouponAPI}/public`], () => request({ url: `${CouponAPI}/public` }, router), {
-    enabled: Boolean(sessionToken),
+    enabled: true,
     refetchOnWindowFocus: false,
     select: (res) => res?.data?.data ?? [],
   });
@@ -66,7 +64,7 @@ const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values,
     <div className="promo-code-box">
       <div className="promo-title">
         <h5>{t("PromoCode")}</h5>
-        {sessionToken && (
+        {couponData?.length > 0 && (
           <a href={Href} onClick={() => setToggle(true)}>
             <RiCouponLine /> {t("ViewAll")}
           </a>

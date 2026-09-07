@@ -16,7 +16,9 @@ import OfferSkeleton from "./OfferSkeleton";
 const Offer = () => {
   const router = useRouter();
   const { t } = useTranslation("common");
-  const { data, isLoading } = useFetchQuery([CouponAPI], () => request({ url: CouponAPI, params: { status: 1 } }, router), {
+  // Vista pública de cupones vigentes. GET /coupon es el catálogo del admin
+  // (401/403 para clientes), así que esta página siempre salía vacía.
+  const { data, isLoading } = useFetchQuery([`${CouponAPI}/public`], () => request({ url: `${CouponAPI}/public` }, router), {
     enabled: true,
     refetchOnWindowFocus: false,
     select: (data) => data.data.data,

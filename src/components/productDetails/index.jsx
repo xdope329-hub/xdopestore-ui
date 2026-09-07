@@ -1,4 +1,5 @@
 "use client";
+import NoDataFound from "@/components/widgets/NoDataFound";
 import ProductIdsContext from "@/context/productIdsContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
 import Loader from "@/layout/loader";
@@ -34,7 +35,7 @@ const ProductDetailContent = ({ params }) => {
   const [productState, setProductState] = useState({ product: [], attributeValues: [], productQty: 1, selectedVariation: "", variantIds: [], statusIds: [] });
 
   // Calling Product API on slug
-  const { data: ProductData, isLoading, refetch, error } = useFetchQuery([params], () => request({ url: `${ProductAPI}/${params}` }, router), { enabled: false, refetchOnWindowFocus: false, select: (res) => res?.data });
+  const { data: ProductData, isLoading, isFetched, isFetching, refetch, error } = useFetchQuery([params], () => request({ url: `${ProductAPI}/${params}` }, router), { enabled: false, refetchOnWindowFocus: false, select: (res) => res?.data });
   // Calling Product API when params is there
   useEffect(() => {
     params && refetch();
@@ -74,6 +75,18 @@ const ProductDetailContent = ({ params }) => {
   }, []);
 
   if (isLoading) return <Loader />;
+
+  // Slug inexistente o producto inactivo: el API responde 404. Antes se
+  // pintaba la ficha vacía y su botón de carrito agregaba una línea sin
+  // producto ($0 en el carrito local; CastError en el servidor).
+  if (isFetched && !isFetching && !ProductData?.id) {
+    return (
+      <>
+        <Breadcrumbs title={params} subNavigation={[{ name: "Product" }, { name: params }]} />
+        <NoDataFound customClass="no-data-added" imageUrl="/assets/svg/empty-items.svg" title="NoProductFound" height="300" width="300" />
+      </>
+    );
+  }
 
   const showProductLayout = {
     product_thumbnail: <ProductThumbnail productState={productState} setProductState={setProductState} />,
