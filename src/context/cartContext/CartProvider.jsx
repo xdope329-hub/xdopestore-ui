@@ -159,6 +159,8 @@ const CartProvider = (props) => {
     const cart = [...cartProducts];
     const productId = getCartProductId(productObj);
     const variationId = getCartVariationId(cloneVariation);
+    // Sin producto (ficha sin cargar o no encontrada) no hay nada que agregar.
+    if (!productId) return;
     const index = cart.findIndex((item) => isSameCartLine(item, productId, variationId));
     const obj = {
       product_id: productId,
