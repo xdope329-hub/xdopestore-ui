@@ -1,4 +1,6 @@
+import WhatsAppCapacityLink from "@/components/widgets/capacity/WhatsAppCapacityLink";
 import CartContext from "@/context/cartContext";
+import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
 import WishlistContext from "@/context/wishlistContext";
 import { Href } from "@/utils/constants";
@@ -19,6 +21,8 @@ const MobileMenu = () => {
   const { cartProducts } = useContext(CartContext) || {};
   const cartCount = cartProducts?.length || 0;
   const cartBumped = useBumpOnIncrease(cartCount);
+  // Sin cupo hoy (Ajustes → Capacidad) el carrito se sustituye por WhatsApp.
+  const { capacityReached } = useContext(SettingContext) || {};
 
   // Wishlist indicator: show a count badge on the bottom-nav item whenever
   // the wishlist has products, and bump it when something is added.
@@ -59,13 +63,17 @@ const MobileMenu = () => {
           </Link>
         </li>
         <li className={active == "3" ? "active" : ""}>
-          <a href={Href} onClick={() => setCartCanvas(true)} style={{ position: "relative" }}>
-            <span className={cartBumped ? "cart-bump" : ""} style={{ display: "inline-flex", position: "relative" }}>
-              <RiShoppingBagLine />
-              {cartCount > 0 && <span className="mobile-cart-badge">{cartCount}</span>}
-            </span>
-            <span>{t("Cart")}</span>
-          </a>
+          {capacityReached ? (
+            <WhatsAppCapacityLink label style={{ position: "relative" }} />
+          ) : (
+            <a href={Href} onClick={() => setCartCanvas(true)} style={{ position: "relative" }}>
+              <span className={cartBumped ? "cart-bump" : ""} style={{ display: "inline-flex", position: "relative" }}>
+                <RiShoppingBagLine />
+                {cartCount > 0 && <span className="mobile-cart-badge">{cartCount}</span>}
+              </span>
+              <span>{t("Cart")}</span>
+            </a>
+          )}
         </li>
         <li className={active == "4" ? "active" : ""}>
           <a href={Href} onClick={() => handleWishlist()} style={{ position: "relative" }}>

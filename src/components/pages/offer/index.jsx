@@ -1,5 +1,8 @@
 "use client";
 import NoDataFound from "@/components/widgets/NoDataFound";
+import { couponBenefitLabel } from "@/utils/customFunctions/couponLabel";
+import { useContext } from "react";
+import SettingContext from "@/context/settingContext";
 import WrapperComponent from "@/components/widgets/WrapperComponent";
 import Btn from "@/elements/buttons/Btn";
 import Loader from "@/layout/loader";
@@ -16,6 +19,7 @@ import OfferSkeleton from "./OfferSkeleton";
 const Offer = () => {
   const router = useRouter();
   const { t } = useTranslation("common");
+  const { convertCurrency } = useContext(SettingContext) || {};
   // Vista pública de cupones vigentes. GET /coupon es el catálogo del admin
   // (401/403 para clientes), así que esta página siempre salía vacía.
   const { data, isLoading } = useFetchQuery([`${CouponAPI}/public`], () => request({ url: `${CouponAPI}/public` }, router), {
@@ -52,6 +56,7 @@ const Offer = () => {
                     </div>
                   </div>
                   <div className='coupon-content'>
+                    <p className='p-0 coupon-benefit fw-semibold'>{couponBenefitLabel(coupon, { t, format: convertCurrency || String })}</p>
                     <p className='p-0'>{coupon.description}</p>
                     <div className='coupon-apply'>
                       <h6 className='coupon-code success-color'>#{coupon.code}</h6>

@@ -15,9 +15,16 @@ import Loader from "@/layout/loader";
 import Capitalize from "@/utils/customFunctions/Capitalize";
 import PendingReviews from "./PendingReviews";
 
+const orderStatusBadge = (slug) => {
+  if (slug === "cancelled") return "bg-cancelled";
+  if (slug === "delivered") return "bg-completed";
+  return "bg-pending";
+};
+
 const MyOrders = () => {
   const [page, setPage] = useState(1);
   const { t } = useTranslation("common");
+  const paymentMethodLabel = (method) => (method === "cod" ? t("PaymentMethodCod") : method === "mercadopago" ? t("PaymentMethodMercadoPago") : String(method || "").toUpperCase());
   const { convertCurrency } = useContext(SettingContext);
   const { data, isLoading, refetch } = useFetchQuery([page], () => request({ url: OrderAPI, params: { page: page, paginate: 10 } }), {
     enabled: true,
@@ -54,8 +61,8 @@ const MyOrders = () => {
                         <th>{t("OrderNumber")}</th>
                         <th>{t("Date")}</th>
                         <th>{t("Amount")}</th>
-                        <th>{t("PaymentStatus")}</th>
-                        <th>{t("PaymentMethod")}</th>
+                        <th>{t("OrderState")}</th>
+                        <th>{t("PaymentLabel")}</th>
                         <th>{t("Option")}</th>
                       </tr>
                     </thead>
@@ -68,12 +75,15 @@ const MyOrders = () => {
                           <td>{showMonthWiseDateAndTime(order?.created_at)}</td>
                           <td>{convertCurrency(order?.total)} </td>
                           <td>
-                            <div className={`${order.payment_status.toLowerCase() === "pending" ? "badge bg-pending" : order.payment_status.toLowerCase() === "completed" ? "badge bg-completed" : "badge bg-cancelled custom-badge rounded-0"} custom-badge rounded-0`}>
-                              <span>{Capitalize(order?.payment_status)}</span>
+                            {/* Estado del PEDIDO (antes salía el estado del pago en inglés y un pedido cancelado decía "Pending"). */}
+                            <div className={`badge ${orderStatusBadge(order?.order_status?.slug)} custom-badge rounded-0`}>
+                              <span>{order?.order_status?.name || Capitalize(order?.order_status?.slug || "")}</span>
                             </div>
                           </td>
-
-                          <td>{order.payment_method.toUpperCase()}</td>
+                          <td>
+                            {t(`PaymentStatus_${order?.payment_status}`, { defaultValue: Capitalize(order?.payment_status || "") })}
+                            <small className="d-block text-content">{paymentMethodLabel(order?.payment_method)}</small>
+                          </td>
                           <td>
                             <Link href={`/account/order/details/${order.order_number}`}>
                               <RiEyeLine />

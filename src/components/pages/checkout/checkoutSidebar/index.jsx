@@ -2,9 +2,11 @@ import NoDataFound from "@/components/widgets/NoDataFound";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import { CheckoutAPI } from "@/utils/axiosUtils/API";
-import useCreate from "@/utils/hooks/useCreate";
-import React, { useContext, useEffect, useState } from "react";
+import request from "@/utils/axiosUtils";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { checkoutCity, createLatestQuoteRequest } from "./quoteState";
 import { Col } from "reactstrap";
+import CapacityHint from "@/components/widgets/capacity/CapacityHint";
 import BillingSummary from "./BillingSummary";
 import SidebarProduct from "./SidebarProduct";
 
@@ -18,38 +20,31 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
   const access_token = sessionToken;
   const [resData, setResData] = useState({});
 
-  const { isLoading, mutate } = useCreate(
-    CheckoutAPI,
-    false,
-    false,
-    true,
-    (resDta) => {
-      if (resDta?.status == 200 || resDta?.status == 201) {
-        setResData(resDta);
-        setErrorCoupon("");
-        storeCoupon !== "" && setAppliedCoupon("applied");
-      } else {
-        // request() devuelve { data, status, ok }: el mensaje del API vive en
-        // resDta.data (antes se leía de un `.response` inexistente y el error
-        // de cupón se perdía).
-        setErrorCoupon(resDta?.data?.message || resDta?.response?.data?.message || "");
-        setAppliedCoupon(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const latestQuote = useRef(createLatestQuoteRequest()).current;
+  useEffect(() => () => latestQuote.invalidate(), [latestQuote]);
+
+  const mutate = (payload) => {
+    setIsLoading(true);
+    setResData({});
+    latestQuote.run(
+      () => request({ url: CheckoutAPI, method: "post", data: payload }),
+      (resDta) => {
+        setIsLoading(false);
+        if (resDta?.status == 200 || resDta?.status == 201) {
+          setResData(resDta);
+          setErrorCoupon("");
+          setAppliedCoupon(payload.coupon_code ? "applied" : null);
+        } else {
+          setErrorCoupon(resDta?.data?.message || "");
+          setAppliedCoupon(null);
+        }
       }
-    },
-    false,
-    setErrorCoupon,
-    false,
-    false,
-    false,
-    (resDta) => {
-      setStoreCoupon("");
-      setAppliedCoupon(null);
-      setFieldValue("coupon", "");
-      values["coupon"] = "";
-    }
-  );
+    );
+  };
 
   const isGuestCheckout = Boolean(settingData?.activation?.guest_checkout) && !access_token;
+  const city = checkoutCity(values, isGuestCheckout);
 
   // POST /checkout con TODO el contexto del pedido. Es la ÚNICA forma de
   // hablar con /checkout desde el sidebar (también para aplicar/quitar un
@@ -67,7 +62,6 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
     const couponCode = extra.coupon_code !== undefined ? extra.coupon_code : storeCoupon || "";
     // Ciudad de entrega para el cálculo de envío por zonas: invitados la
     // llevan inline; con sesión el servidor la resuelve por el address_id.
-    const city = values["shipping_address"]?.city || values["billing_address"]?.city || "";
     // Invitados: el carrito vive en el navegador — se envían los ids y el
     // servidor reconstruye precios desde la base de datos.
     const products = isGuestCheckout ? { products: cartProducts } : {};
@@ -97,13 +91,14 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
     // invitado y disparaba un POST /checkout por pulsación (y el límite de
     // peticiones del API a mitad de compra). Lo que afecta al total ya está
     // en la lista: direcciones, ciudad, entrega, pago, puntos y cupón.
-  }, [CartLoading, deleteCartLoader, cartTotal, cartProducts?.length, values["points_amount"], values["wallet_balance"], values["billing_address_id"], values["delivery_description"], values["payment_method"], values["shipping_address_id"], values["delivery_interval"], values["shipping_address"]?.city, values["billing_address"]?.city]);
+  }, [CartLoading, deleteCartLoader, cartTotal, cartProducts, isGuestCheckout, access_token, values["points_amount"], values["wallet_balance"], values["billing_address_id"], values["delivery_description"], values["payment_method"], values["shipping_address_id"], values["delivery_interval"], city]);
 
   return (
     <>
       <Col lg="5">
         {cartProducts?.length > 0 ? (
           <div className="checkout-right-box">
+            <CapacityHint className="mb-3" />
             <SidebarProduct values={values} setFieldValue={setFieldValue} />
             <BillingSummary values={values} errors={errors} setFieldValue={setFieldValue} data={resData} errorCoupon={errorCoupon} appliedCoupon={appliedCoupon} setAppliedCoupon={setAppliedCoupon} storeCoupon={storeCoupon} setStoreCoupon={setStoreCoupon} isLoading={isLoading} addToCartData={addToCartData} mutate={recompute} sessionToken={sessionToken} />
           </div>

@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import ApplyCoupon from "./ApplyCoupon";
 import PlaceOrder from "./PlaceOrder";
 import PointWallet from "./PointWallet";
+import { hasShippingQuote } from "./quoteState";
 
 const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeCoupon, setStoreCoupon, errorCoupon, appliedCoupon, setAppliedCoupon, errors, sessionToken, addToCartData }) => {
   const { convertCurrency } = useContext(SettingContext);
@@ -14,11 +15,11 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
   const { t } = useTranslation("common");
 
   const subtotal = cartTotal || cartProducts?.reduce((s, i) => s + (i.sub_total || 0), 0) || 0;
-  const shipping = data?.data?.shipping_total ?? values?.shipping_total ?? 0;
+  const shipping = data?.data?.shipping_quote?.amount ?? 0;
   // Estado del envío por zonas: el servidor manda shipping_quote cuando ya
   // conoce la ciudad de entrega. Antes de eso mostramos una pista en vez de $0.
   const shippingQuote = data?.data?.shipping_quote;
-  const hasQuote = Boolean(shippingQuote) || (data?.data?.shipping_total ?? null) !== null;
+  const hasQuote = hasShippingQuote(data?.data);
   const couponDiscount = data?.data?.coupon_total_discount || 0;
   // Compute the total from the LIVE local cart so quantity changes reflect
   // immediately; only defer to the server's figure while a coupon is applied
@@ -49,7 +50,7 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
                 </li>
                 <li>
                   {t("Shipping")}
-                  {shippingQuote?.free_shipping ? (
+                  {hasQuote && shippingQuote?.free_shipping ? (
                     <span className="count text-success fw-semibold">{t("FreeShipping")}</span>
                   ) : hasQuote ? (
                     <span className="count">{convertCurrency(shipping)}</span>
@@ -69,7 +70,7 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
               <ul className="total">
                 <li className="list-total">
                   {t("Total")}
-                  <span className="count">{convertCurrency(total)}</span>
+                  <span className="count">{hasQuote ? convertCurrency(total) : t("ShippingCalculatedAtAddress")}</span>
                 </li>
               </ul>
               <PlaceOrder values={values} errors={errors} sessionToken={sessionToken} addToCartData={addToCartData} appliedCouponCode={appliedCoupon === "applied" ? storeCoupon : ""} />

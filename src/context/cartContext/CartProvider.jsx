@@ -9,11 +9,14 @@ import useDelete from "@/utils/hooks/useDelete";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";
 import { useMutation } from "@tanstack/react-query";
 import Cookies from "js-cookie";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import SettingContext from "@/context/settingContext";
 import CartContext from ".";
 
 const CartProvider = (props) => {
   const isCookie = Cookies.get("uat");
+  // Cupo diario (Ajustes → Capacidad): con el cupo lleno no se agrega nada.
+  const { capacityReached } = useContext(SettingContext) || {};
   const [cartProducts, setCartProducts] = useState([]);
   const [variationModal, setVariationModal] = useState("");
   const [cartTotal, setCartTotal] = useState(0);
@@ -161,6 +164,12 @@ const CartProvider = (props) => {
     const variationId = getCartVariationId(cloneVariation);
     // Sin producto (ficha sin cargar o no encontrada) no hay nada que agregar.
     if (!productId) return;
+    // Sin cupo hoy la tienda ya cambia los botones por WhatsApp; esto cubre
+    // cualquier otro camino (lista de deseos, paquetes, modal de variantes).
+    if (qty > 0 && capacityReached) {
+      ToastNotification("error", i18next.t("CapacityReachedToast"));
+      return false;
+    }
     const index = cart.findIndex((item) => isSameCartLine(item, productId, variationId));
     const obj = {
       product_id: productId,
@@ -184,8 +193,10 @@ const CartProvider = (props) => {
       ToastNotification("success", i18next.t("AddedToCart"));
     } else {
       // Checking the Stock QTY of particular product
-      const productStockQty = cart[index]?.variation?.quantity ? cart[index]?.variation?.quantity : cart[index]?.product?.quantity;
-      if (productStockQty < cart[index]?.quantity + qty) {
+      // Tope de stock: la cantidad de la VARIANTE elegida (aunque sea 0) y
+      // la del producto solo si no hay variante; sin control (null) no limita.
+      const productStockQty = cart[index]?.variation ? Number(cart[index]?.variation?.quantity) : Number(cart[index]?.product?.quantity);
+      if (qty > 0 && Number.isFinite(productStockQty) && productStockQty < cart[index]?.quantity + qty) {
         ToastNotification("error", i18next.t("StockLimitMessage", { qty: productStockQty }));
         return false;
       }

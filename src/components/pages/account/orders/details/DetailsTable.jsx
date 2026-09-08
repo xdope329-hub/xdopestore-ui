@@ -60,7 +60,7 @@ const DetailsTable = ({ data, refetch, readOnly = false }) => {
                             {product?.variation_attributes?.length > 0 && (
                               <div className="text-content" style={{ fontSize: "13px" }}>
                                 {product.variation_attributes.map((attr, i) => (
-                                  <span key={i} className="me-2"><strong>{attr?.name}:</strong> {attr?.value}</span>
+                                  <span key={i} className="me-2">{attr?.name ? <><strong>{attr.name}:</strong> </> : null}{attr?.value}</span>
                                 ))}
                               </div>
                             )}

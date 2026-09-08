@@ -5,11 +5,13 @@ import SettingContext from "@/context/settingContext";
 import { Href } from "@/utils/constants";
 import { useTranslation } from "react-i18next";
 import { RiShoppingCartLine, RiTruckLine } from "react-icons/ri";
+import CapacityHint from "@/components/widgets/capacity/CapacityHint";
+import CapacityNotice from "@/components/widgets/capacity/CapacityNotice";
 import CartVariationModal from "./CartVariationModal";
 import SelectedCart from "./SelectedCart";
 
 const HeaderCartBottom = ({ modal, setModal, shippingFreeAmt, shippingCal }) => {
-  const { convertCurrency } = useContext(SettingContext);
+  const { convertCurrency, capacityReached } = useContext(SettingContext);
   const [selectedVariation, setSelectedVariation] = useState("");
   const { t } = useTranslation("common");
   const { cartProducts, getTotal, clearCart, clearCartLoader } = useContext(CartContext);
@@ -17,13 +19,18 @@ const HeaderCartBottom = ({ modal, setModal, shippingFreeAmt, shippingCal }) => 
   const total = useMemo(() => {
     return getTotal(cartProducts);
   }, [cartProducts, modal]);
+  const hasFreeShipping = Number.isFinite(Number(shippingFreeAmt)) && Number(shippingFreeAmt) > 0;
 
   return (
     <>
+      {capacityReached && <CapacityNotice compact className="m-3" />}
+      <CapacityHint className="m-3" />
       {cartProducts?.length > 0 && (
         <>
           <div className="pere-text-box success-box">
-            {shippingFreeAmt > total ? (
+            {!hasFreeShipping ? (
+              <p>{t("ShippingCalculatedAtAddress")}</p>
+            ) : shippingFreeAmt > total ? (
               <p>
                 {t("Spend")} <span className="shipping">{convertCurrency(shippingFreeAmt - total)}</span> {t("moreandenjoy")} <span className="shipping">{t("FREESHIPPING!")}</span>
               </p>
@@ -32,7 +39,7 @@ const HeaderCartBottom = ({ modal, setModal, shippingFreeAmt, shippingCal }) => 
                 <span className="shipping">{t("Congratulations")}!</span> {t("Enjoyfreeshippingonus")}!
               </p>
             )}
-            <Progress multi>
+            {hasFreeShipping && <Progress multi>
               {shippingCal <= 30 ? (
                 <Progress striped animated color="danger" value={shippingCal}>
                   <div className="progress-icon">
@@ -52,7 +59,7 @@ const HeaderCartBottom = ({ modal, setModal, shippingFreeAmt, shippingCal }) => 
                   </div>
                 </Progress>
               )}
-            </Progress>
+            </Progress>}
           </div>
           <div className="sidebar-title">
             <a

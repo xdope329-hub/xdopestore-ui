@@ -1,4 +1,5 @@
 "use client";
+import CapacityNotice from "@/components/widgets/capacity/CapacityNotice";
 import WrapperComponent from "@/components/widgets/WrapperComponent";
 import AccountContext from "@/context/accountContext";
 import SettingContext from "@/context/settingContext";
@@ -24,7 +25,7 @@ import PaymentOptions from "./PaymentOptions";
 const CheckoutContent = () => {
   const { t } = useTranslation("common");
   const { accountData, refetch } = useContext(AccountContext);
-  const { settingData } = useContext(SettingContext);
+  const { settingData, capacityReached } = useContext(SettingContext);
   const [address, setAddress] = useState([]);
   const [modal, setModal] = useState("");
   const router = useRouter();
@@ -89,6 +90,18 @@ const CheckoutContent = () => {
   const validationSchema = buildCheckoutValidationSchema({ isGuest, requiresShipping: !addToCartData?.is_digital_only });
 
   if (themeLoad) return <Loader />;
+  // Sin cupo hoy (Ajustes → Capacidad) no hay checkout: solo WhatsApp. El
+  // API rechaza igualmente cualquier pedido (422).
+  if (capacityReached) {
+    return (
+      <Fragment>
+        <Breadcrumbs title={"Checkout"} subNavigation={[{ name: "Checkout" }]} />
+        <WrapperComponent classes={{ sectionClass: "section-b-space checkout-section-2", fluidClass: "container" }} noRowCol={true}>
+          <CapacityNotice />
+        </WrapperComponent>
+      </Fragment>
+    );
+  }
   return (
     <Fragment>
       <Breadcrumbs title={"Checkout"} subNavigation={[{ name: "Checkout" }]} />

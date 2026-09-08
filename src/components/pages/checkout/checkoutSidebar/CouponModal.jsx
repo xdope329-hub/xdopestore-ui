@@ -1,12 +1,15 @@
 import Btn from "@/elements/buttons/Btn";
+import { couponBenefitLabel } from "@/utils/customFunctions/couponLabel";
+import SettingContext from "@/context/settingContext";
 import { Href } from "@/utils/constants";
-import React from "react";
+import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { RiCloseLine } from "react-icons/ri";
 import { Col, Modal, ModalBody, ModalHeader, Row } from "reactstrap";
 
 const CouponModal = ({ couponData, onCopyCode, setToggle, toggle }) => {
   const { t } = useTranslation("common");
+  const { convertCurrency } = useContext(SettingContext) || {};
   return (
     <Modal size="lg" className="modal-dialog modal-dialog-centered coupon-modal theme-modal-2" toggle={() => setToggle(!toggle)} isOpen={toggle}>
       <div className="modal-content">
@@ -29,6 +32,7 @@ const CouponModal = ({ couponData, onCopyCode, setToggle, toggle }) => {
                     </div>
                   </div>
                   <div className="coupon-content">
+                    <p className="coupon-benefit fw-semibold mb-1">{couponBenefitLabel(item, { t, format: convertCurrency || String })}</p>
                     <p>{item?.description}</p>
                     <div className="coupon-apply">
                       <h6 className="coupon-code success-color">{item?.code}</h6>

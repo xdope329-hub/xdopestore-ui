@@ -1,4 +1,5 @@
 import SettingContext from "@/context/settingContext";
+import { originalPriceToStrike } from "./widgets/priceRules";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useContext } from "react";
@@ -36,7 +37,7 @@ const ProductBox4 = ({ productState }) => {
             <span>({productState?.product?.reviews_count})</span>
           </div>
           <h4 className="price">
-            {convertCurrency(productState?.product?.sale_price)} {productState?.product?.discount && <>{productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}</>}
+            {convertCurrency(productState?.product?.sale_price)} {productState?.product?.discount && <>{originalPriceToStrike(productState) != null && <del>{convertCurrency(originalPriceToStrike(productState))}</del>}</>}
           </h4>
           <div className="add-cart-button">
             <CartButton productState={productState} selectedVariation={productState.selectedVariation} classes="add-cart-btn" text={t("AddToCart")} />

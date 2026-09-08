@@ -1,4 +1,5 @@
 import SettingContext from "@/context/settingContext";
+import { originalPriceToStrike } from "./widgets/priceRules";
 import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { RiDiscountPercentFill, RiStarFill } from "react-icons/ri";
@@ -53,7 +54,7 @@ const ProductBox10 = ({ productState }) => {
             </div>
 
             <div className="price-vertical">
-              {productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}
+              {originalPriceToStrike(productState) != null && <del>{convertCurrency(originalPriceToStrike(productState))}</del>}
               <h4>{productState?.selectedVariation ? convertCurrency(productState?.selectedVariation.sale_price) : convertCurrency(productState?.product?.sale_price)}</h4>
             </div>
           </div>

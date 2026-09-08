@@ -16,6 +16,9 @@ const CartData = ({ elem }) => {
   const { removeCart } = useContext(CartContext);
   const { convertCurrency } = useContext(SettingContext);
   const { mutate } = useCreate(WishlistAPI, false);
+  const unitPrice = elem?.variation?.sale_price ?? elem?.product?.sale_price;
+  const regularPrice = elem?.variation?.price ?? elem?.product?.price;
+  const savings = Math.max(0, Number(regularPrice) - Number(unitPrice));
 
   const removeItem = () => {
     removeCart(elem?.variation_id ? elem?.variation_id : elem.product_id, elem?.id);
@@ -25,7 +28,10 @@ const CartData = ({ elem }) => {
     <tr>
       <CartProductDetail elem={elem} />
       <td>
-        <Link href={`/product/${elem?.product?.slug}`}>{elem?.variation?.name ?? elem?.product?.name}</Link>
+        <Link href={`/product/${elem?.product?.slug}`}>
+          {elem?.product?.name}
+          {elem?.variation?.name ? <small className="d-block text-content">{elem.variation.name}</small> : null}
+        </Link>
         <Row className="mobile-cart-content">
           <Col>
             <div className="qty-box">
@@ -34,8 +40,8 @@ const CartData = ({ elem }) => {
           </Col>
           <Col className="table-price">
             <h2 className="td-color">
-              {convertCurrency(elem?.product?.sale_price)}
-              {elem?.product?.discount || elem?.product?.discount ? <del className="text-content">{convertCurrency(elem?.product?.price)}</del> : null}
+              {convertCurrency(unitPrice)}
+              {savings > 0 ? <del className="text-content">{convertCurrency(regularPrice)}</del> : null}
             </h2>
           </Col>
           <Col>
@@ -47,12 +53,12 @@ const CartData = ({ elem }) => {
       </td>
       <td className="table-price">
         <h2>
-          {convertCurrency(elem?.product?.sale_price)}
-          {elem?.product?.discount || elem?.product?.discount ? <del className="text-content">{convertCurrency(elem?.product?.price)}</del> : null}
+          {convertCurrency(unitPrice)}
+          {savings > 0 ? <del className="text-content">{convertCurrency(regularPrice)}</del> : null}
         </h2>
-        {elem?.product?.price - elem?.product?.sale_price != 0 || elem?.product?.price - elem?.product?.sale_price < 0 ? (
+        {savings > 0 ? (
           <h6 className="theme-color">
-            {t("YouSave")}: {convertCurrency(Math.abs(elem?.product?.price - elem?.product?.sale_price).toFixed(2))}
+            {t("YouSave")}: {convertCurrency(savings)}
           </h6>
         ) : null}
       </td>

@@ -1,4 +1,5 @@
 import SettingContext from "@/context/settingContext";
+import { originalPriceToStrike } from "./widgets/priceRules";
 import Link from "next/link";
 import React, { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -71,13 +72,13 @@ const ProductBox2 = ({ productState, setProductState, priority = false }) => {
               </div>
             </div>
             <a href={`/product/${productState?.product?.slug}`}>
-              <h6>{productState?.selectedVariation ? productState?.selectedVariation?.name : productState?.product?.name}</h6>
+              <h6>{productState?.product?.name}</h6>
             </a>
             <h4 className="price">
               {productState?.selectedVariation ? convertCurrency(productState?.selectedVariation.sale_price) : convertCurrency(productState?.product?.sale_price)} {/* Adjust currencySymbol based on your implementation */}
               {(productState?.selectedVariation ? productState?.selectedVariation.discount : productState?.product?.discount) ? (
                 <>
-                  {productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}
+                  {originalPriceToStrike(productState) != null && <del>{convertCurrency(originalPriceToStrike(productState))}</del>}
                   <span className="discounted-price">{productState?.selectedVariation ? productState?.selectedVariation.discount : productState?.product?.discount}% {t("Off")}</span>
                 </>
               ) : null}

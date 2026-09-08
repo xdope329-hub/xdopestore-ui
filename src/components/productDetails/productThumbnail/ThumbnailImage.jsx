@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RiHeadphoneLine, RiVideoLine } from "react-icons/ri";
-import ImageZoom from "react-image-zooom";
+import ProductMainImage from "../common/ProductMainImage";
 import Slider from "react-slick";
 import { Col, Row } from "reactstrap";
 import DigitalImageOptions from "../common/DigitalImageOptions";
@@ -102,13 +102,13 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
                           </audio>
                         </div>
                       ) : (
-                        <ImageZoom src={image?.original_url} alt={image?.name} zoom="200" className="img-fluid" height={670} width={670} />
+                        <ProductMainImage src={image?.original_url} alt={image?.name} />
                       )}
                     </div>
                   </div>
                 ))}
               </Slider>
-              {!currentVariation?.length && <img src={productState?.product?.product_thumbnail ? productState?.product?.product_thumbnail?.original_url : placeHolderImage} className="img-fluid" alt={productState?.product?.name} />}
+              {!currentVariation?.length && <ProductMainImage src={productState?.product?.product_thumbnail ? productState?.product?.product_thumbnail?.original_url : placeHolderImage} alt={productState?.product?.name} />}
 
               {productState?.product?.product_type == "digital" && <DigitalImageOptions product={productState?.product} />}
             </div>

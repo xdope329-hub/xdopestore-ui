@@ -42,14 +42,18 @@ const DeliveryAddress = ({ type, title, address, modal, setModal, setFieldValue,
   // la insignia se mueve). Solo reacciona a un cambio de SELECCIÓN: antes
   // también corría al refrescar la lista, y al guardar una dirección nueva
   // como predeterminada volvía a marcar la anterior (la marca iba y venía).
-  const addressRef = useRef(address);
-  addressRef.current = address;
+  // Se evalúa al cambiar la selección Y al llegar la lista refrescada: una
+  // dirección recién creada queda seleccionada antes de que la lista la
+  // incluya, y antes ese caso nunca la promovía. `promotedRef` evita
+  // repetir la llamada para la misma selección.
+  const promotedRef = useRef(null);
   useEffect(() => {
     if (guest) return; // invitado: no hay direcciones de cuenta que promover
     if (type !== 'billing') return;
     if (!selectedId) return;
-    const picked = (addressRef.current || []).find((a) => addressId(a) === selectedId);
-    if (!picked || picked.is_default) return;
+    const picked = (address || []).find((a) => addressId(a) === selectedId);
+    if (!picked || picked.is_default || promotedRef.current === selectedId) return;
+    promotedRef.current = selectedId;
 
     let cancelled = false;
     (async () => {
@@ -67,7 +71,7 @@ const DeliveryAddress = ({ type, title, address, modal, setModal, setFieldValue,
       }
     })();
     return () => { cancelled = true; };
-  }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedId, address]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Modal: agregar / editar ──────────────────────────────────────────
   const [editAddress, setEditAddress] = useState(null);

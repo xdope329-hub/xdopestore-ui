@@ -23,7 +23,7 @@ import ProductVerticalTab from "./productVerticalTab";
 
 const ProductDetailContent = ({ params }) => {
   const router = useRouter();
-  const { themeOption } = useContext(ThemeOptionContext);
+  const { themeOption, setWhatsappProduct } = useContext(ThemeOptionContext);
   const { setGetProductIds, isLoading: productLoader } = useContext(ProductIdsContext);
   const searchParams = useSearchParams();
   const queryProductLayout = searchParams.get("layout");
@@ -48,6 +48,15 @@ const ProductDetailContent = ({ params }) => {
       setProductState({ ...productState, product: ProductData });
     }
   }, [isLoading]);
+
+  // Referencia para el botón flotante de WhatsApp: mientras se está en la
+  // ficha, su mensaje lleva este producto y la variante elegida.
+  useEffect(() => {
+    if (!setWhatsappProduct) return undefined;
+    const product = productState?.product;
+    setWhatsappProduct(product?.slug ? { name: product.name, slug: product.slug, variation: productState?.selectedVariation || null } : null);
+    return () => setWhatsappProduct(null);
+  }, [productState?.product?.id, productState?.selectedVariation?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handleScroll = () => {

@@ -1,6 +1,8 @@
 'use client'
+import SettingContext from '@/context/settingContext'
 import ThemeOptionContext from '@/context/themeOptionsContext'
 import WishlistContext from '@/context/wishlistContext'
+import WhatsAppCapacityLink from '@/components/widgets/capacity/WhatsAppCapacityLink'
 import { useHeaderScroll } from '@/utils/hooks/HeaderScroll'
 import { getAccountSummary, logout } from '@/utils/axiosUtils'
 import { safeHttpUrl } from '@/utils/security/safeUrl'
@@ -22,6 +24,8 @@ const ADMIN_URL = safeHttpUrl(process.env.NEXT_PUBLIC_ADMIN_URL)
 const HeaderOne = () => {
   const { themeOption, setOpenAuthModal, openAuthModal, mobileSideBar, setMobileSideBar } = useContext(ThemeOptionContext)
   const { wishlistIds, wishlistProducts } = useContext(WishlistContext)
+  // Sin cupo hoy (Ajustes → Capacidad) el carrito se sustituye por WhatsApp.
+  const { capacityReached } = useContext(SettingContext) || {}
   const UpScroll = useHeaderScroll(false)
   const { t } = useTranslation('common')
   const router = useRouter()
@@ -143,7 +147,7 @@ const HeaderOne = () => {
                           </a>
                         </li>
                         <li className="onhover-div">
-                          <HeaderCart />
+                          {capacityReached ? <WhatsAppCapacityLink /> : <HeaderCart />}
                         </li>
                         <li className="onhover-div">
                           <a href="#" onClick={handleProfileClick}>

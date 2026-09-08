@@ -45,7 +45,7 @@ const DetailsConsumer = ({ data }) => {
                       <li className="col-3">
                         <label>{t("PaymentMode")}:</label>
                         <div className="d-flex align-items-center gap-2">
-                          <h4>{data.payment_method?.toUpperCase()}</h4>
+                          <h4>{data.payment_method === "cod" ? t("PaymentMethodCod") : data.payment_method === "mercadopago" ? t("PaymentMethodMercadoPago") : data.payment_method?.toUpperCase()}</h4>
                         </div>
                       </li>
                     ) : null}
@@ -53,7 +53,7 @@ const DetailsConsumer = ({ data }) => {
                       <li className="col-3">
                         <label>{t("PaymentStatus")}:</label>
                         <div className="d-flex align-items-center gap-2">
-                          <h4>{data.payment_status}</h4>
+                          <h4>{t(`PaymentStatus_${data.payment_status}`, { defaultValue: data.payment_status })}</h4>
                         </div>
                       </li>
                     ) : null}
@@ -73,7 +73,12 @@ const DetailsConsumer = ({ data }) => {
                     </li>
                     {data && !data?.is_digital_only && (
                       <li>
-                        {t("Shipping")} <span>{data?.shipping_total ? convertCurrency(data?.shipping_total) : convertCurrency(0)}</span>
+                        {t("Shipping")} <span>{data?.shipping_total ? convertCurrency(data?.shipping_total) : t("FreeShipping")}</span>
+                      </li>
+                    )}
+                    {Number(data?.coupon_total_discount) > 0 && (
+                      <li>
+                        {t("Discount")}{data?.coupon_code ? ` (${data.coupon_code})` : ""} <span>- {convertCurrency(data.coupon_total_discount)}</span>
                       </li>
                     )}
                     <li>
