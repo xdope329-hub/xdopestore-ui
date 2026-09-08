@@ -2,6 +2,7 @@ import "../index.scss";
 import { I18nProvider } from "./i18n/i18n-context";
 import { detectLanguage } from "./i18n/server";
 import { serializeJsonLd } from "@/utils/security/jsonLd";
+import { brandText, SITE_NAME, SITE_TITLE, SITE_DESCRIPTION } from "@/utils/seo/siteBranding";
 
 export async function generateMetadata() {
   const themeOption = await fetch(`${process.env.API_PROD_URL}/themeOptions`)
@@ -9,9 +10,9 @@ export async function generateMetadata() {
     .catch((err) => console.log("err", err));
 
   const seo = themeOption?.options?.seo || {};
-  const siteName = seo?.site_name || "";
-  const metaTitle = seo?.meta_title || siteName;
-  const metaDescription = seo?.meta_description || "";
+  const siteName = brandText(seo?.site_name, SITE_NAME);
+  const metaTitle = brandText(seo?.meta_title, SITE_TITLE);
+  const metaDescription = brandText(seo?.meta_description, SITE_DESCRIPTION);
   const ogImage = seo?.og_image?.original_url;
   const twitterImage = seo?.twitter_image?.original_url || ogImage;
 
@@ -42,15 +43,15 @@ export async function generateMetadata() {
     openGraph: {
       type: "website",
       siteName: siteName,
-      title: seo?.og_title || metaTitle,
-      description: seo?.og_description || metaDescription,
+      title: brandText(seo?.og_title, metaTitle),
+      description: brandText(seo?.og_description, metaDescription),
       ...(ogImage && { images: [{ url: ogImage, width: 1200, height: 630 }] }),
     },
     twitter: {
       card: seo?.twitter_card || "summary_large_image",
       site: seo?.twitter_site || "",
-      title: seo?.twitter_title || seo?.og_title || metaTitle,
-      description: seo?.twitter_description || seo?.og_description || metaDescription,
+      title: brandText(seo?.twitter_title, brandText(seo?.og_title, metaTitle)),
+      description: brandText(seo?.twitter_description, brandText(seo?.og_description, metaDescription)),
       ...(twitterImage && { images: [twitterImage] }),
     },
     other: {
@@ -76,7 +77,7 @@ export default async function RootLayout({ children }) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: seo?.site_name || "",
+    name: brandText(seo?.site_name, SITE_NAME),
     url: seo?.canonical_url || "",
     logo: themeOptions?.options?.logo?.header_logo?.original_url || "",
   };

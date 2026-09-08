@@ -2,8 +2,9 @@ import Btn from "@/elements/buttons/Btn";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
-import request from "@/utils/axiosUtils";
+import request, { saveAccountSummary, saveSession } from "@/utils/axiosUtils";
 import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
+import { isCapacityReached } from "@/utils/customFunctions/capacityRules";
 import { setNestedObjectValues, useFormikContext } from "formik";
 import { useRouter } from "next/navigation";
 import React, { useContext, useState } from "react";
@@ -27,7 +28,7 @@ const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "
   // Cart context is used to flush the local cart state after a successful
   // order so the header badge and cart drawer reflect the cleared server cart.
   const { setCartProducts, setCartTotal, refetch: cartRefetch, cartProducts } = useContext(CartContext) || {};
-  const { settingData } = useContext(SettingContext) || {};
+  const { settingData, refetchCapacity } = useContext(SettingContext) || {};
   const guestCheckout = Boolean(settingData?.activation?.guest_checkout);
   const isGuest = !access_token;
   const requiresShipping = !addToCartData?.is_digital_only;
@@ -62,21 +63,37 @@ const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "
         return;
       }
 
+      // Cupo del día en este instante: pudo llenarse mientras el cliente
+      // completaba el formulario (el API lo rechazaría igual con un 422).
+      if (refetchCapacity) {
+        const fresh = await refetchCapacity();
+        if (isCapacityReached(fresh?.data)) {
+          ToastNotification("error", t("CapacityReachedToast"));
+          return;
+        }
+      }
+
       // Nunca viaja la contraseña; el invitado manda productos + direcciones
       // inline (ver placeOrderRules.js).
       const payload = buildInitializePayload({ values, isGuest, cartProducts, couponCode: appliedCouponCode });
       const res = await request({ url: "/payment/initialize", method: "post", data: payload });
       const ok = res?.status === 200 || res?.status === 201;
 
-      // Invitado que marcó "crear cuenta": se registra en segundo plano ANTES
-      // de redirigir a la pasarela (con Mercado Pago la redirección destruye
-      // la página y el registro nunca ocurría). El servidor adopta sus
-      // pedidos por el correo; si el correo ya existe se ignora en silencio
-      // (el pedido no depende de esto).
+      // Invitado que marcó "crear cuenta": se registra ANTES de redirigir a la
+      // pasarela (con Mercado Pago la redirección destruye la página). Ruta
+      // propia del checkout, sin captcha: el pedido recién creado con ese
+      // correo es la prueba. Si la cuenta se crea, el cliente queda logueado y
+      // la página de éxito verifica el pago ya como dueño del pedido (antes
+      // el pedido se adoptaba y la verificación anónima respondía 403 →
+      // "El pago falló"). Si el correo ya existe se ignora en silencio.
       const registration = ok && isGuest ? getGuestRegistrationPayload(values) : null;
       if (registration) {
         try {
-          await request({ url: "/register", method: "post", data: registration });
+          const reg = await request({ url: "/register/checkout", method: "post", data: { ...registration, order_id: res?.data?.order_id } });
+          if (reg?.status === 201 && reg?.data) {
+            saveSession(reg.data);
+            saveAccountSummary(reg.data?.data);
+          }
         } catch (_) { /* no bloquea el pedido */ }
       }
 

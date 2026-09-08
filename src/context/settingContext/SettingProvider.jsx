@@ -1,5 +1,6 @@
 import request from "@/utils/axiosUtils";
-import { SettingAPI } from "@/utils/axiosUtils/API";
+import { CapacityAPI, SettingAPI } from "@/utils/axiosUtils/API";
+import { isCapacityReached } from "@/utils/customFunctions/capacityRules";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";;
 import Cookies from "js-cookie";
 import { useCallback, useEffect, useState } from "react";
@@ -41,6 +42,19 @@ const SettingProvider = (props) => {
   useEffect(() => {
     refetch(); // 🔁 Fetch settings when component mounts
   }, []);
+
+  // Cupo de hoy (GET /capacity). Cambia a medida que entran pedidos, así que
+  // se refresca cada minuto y al volver a la pestaña; el checkout lo vuelve a
+  // pedir antes de crear el pedido. Con el cupo lleno (`capacityReached`) la
+  // tienda oculta carrito, botones de compra y checkout y ofrece WhatsApp.
+  const { data: capacity, refetch: refetchCapacity } = useFetchQuery([CapacityAPI], () => request({ url: CapacityAPI }), {
+    refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: true,
+    staleTime: 15 * 1000,
+    retry: 1,
+    select: (res) => res?.data,
+  });
+  const capacityReached = isCapacityReached(capacity);
 
   useEffect(() => {
     if (settingData) {
@@ -84,6 +98,6 @@ const SettingProvider = (props) => {
     },
     [settingObj, selectedCurrency]
   );
-  return <SettingContext.Provider value={{ ...props, settingData, convertCurrency, selectedCurrency, setSelectedCurrency, menuLoader, isLoading, setMenuLoader }}>{props.children}</SettingContext.Provider>;
+  return <SettingContext.Provider value={{ ...props, settingData, convertCurrency, selectedCurrency, setSelectedCurrency, menuLoader, isLoading, setMenuLoader, capacity, capacityReached, refetchCapacity }}>{props.children}</SettingContext.Provider>;
 };
 export default SettingProvider;

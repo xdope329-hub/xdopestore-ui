@@ -1,5 +1,7 @@
 import request from "@/utils/axiosUtils";
 import { SyncCart } from "@/utils/axiosUtils/API";
+import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
+import i18next from "i18next";
 
 // Reads the guest cart kept in localStorage by CartProvider
 // (stored as { items: [...], total: n }) and returns the items array.
@@ -42,7 +44,14 @@ const syncLocalCart = async () => {
     });
     if (res?.ok) {
       localStorage.removeItem("cart");
-      return { ok: true, synced: payload.length };
+      // Líneas que el servidor no aceptó (producto con talla/color sin
+      // elegir, cantidad inválida): se avisa para volver a agregarlas desde
+      // la ficha. Antes entraban al carrito y el checkout las rechazaba.
+      const skipped = Array.isArray(res?.data?.skipped) ? res.data.skipped : [];
+      if (skipped.length) {
+        ToastNotification("error", `${i18next.t("CartLinesSkipped")}: ${skipped.map((s) => `${s.name} (${s.message})`).join(", ")}`);
+      }
+      return { ok: true, synced: payload.length - skipped.length, skipped };
     }
     return { ok: false, synced: 0, error: res?.error || res?.data };
   } catch (error) {

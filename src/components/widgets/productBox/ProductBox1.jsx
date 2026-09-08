@@ -1,4 +1,5 @@
 import SettingContext from "@/context/settingContext";
+import { originalPriceToStrike } from "./widgets/priceRules";
 import Link from "next/link";
 import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
@@ -43,14 +44,14 @@ const ProductBox1 = ({ productState, setProductState }) => {
         )}
 
         <Link href={`/product/${productState?.product?.slug}`}>
-          <h6>{productState?.selectedVariation ? productState?.selectedVariation?.name : productState?.product?.name}</h6>
+          <h6>{productState?.product?.name}</h6>
         </Link>
 
         <h4 className="price">
           {productState?.selectedVariation ? convertCurrency(Number(productState?.selectedVariation.sale_price).toFixed(2)) : convertCurrency(Number(productState?.product?.sale_price).toFixed(2))}
           {productState?.selectedVariation ? (
             <>
-              {productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}
+              {originalPriceToStrike(productState) != null && <del>{convertCurrency(originalPriceToStrike(productState))}</del>}
               {Number(productState?.selectedVariation?.discount) > 0 && (
                 <span className="discounted-price">
                   {productState?.selectedVariation?.discount}% {t("Off")}
@@ -59,7 +60,7 @@ const ProductBox1 = ({ productState, setProductState }) => {
             </>
           ) : (
             <>
-              {productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}
+              {originalPriceToStrike(productState) != null && <del>{convertCurrency(originalPriceToStrike(productState))}</del>}
               {/* Sin descuento (0 / null) no hay etiqueta: antes salía "% Off" vacío. */}
               {Number(productState?.product?.discount) > 0 && (
                 <span className="discounted-price">

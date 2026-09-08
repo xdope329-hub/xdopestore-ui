@@ -1,4 +1,5 @@
 import RatingBox from "@/components/collection/collectionSidebar/RatingBox";
+import { discountPercent, originalPriceToStrike } from "@/components/widgets/productBox/widgets/priceRules";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
@@ -14,6 +15,7 @@ import QuestionAnswerModal from "./allModal/QuestionAnswerModal";
 import SizeModal from "./allModal/SizeModal";
 import ProductAttribute from "./productAttribute/ProductAttribute";
 import ProductDetailAction from "./ProductDetailAction";
+import WhatsAppInquiryButton from "./WhatsAppInquiryButton";
 
 const ProductContent = ({ productState, setProductState, productAccordion, noDetails, noQuantityButtons, noModals }) => {
   const { t } = useTranslation("common");
@@ -42,7 +44,8 @@ const ProductContent = ({ productState, setProductState, productAccordion, noDet
     <>
       {!noDetails && (
         <>
-          <h2 className="main-title">{productState?.selectedVariation?.name ?? productState?.product?.name}</h2>
+          <h2 className="main-title">{productState?.product?.name}</h2>
+          {productState?.selectedVariation?.name ? <p className="selected-variant-name">{productState.selectedVariation.name}</p> : null}
           {!productState?.product?.is_external && (
             <div className="product-rating">
               <RatingBox totalRating={productState?.selectedVariation?.rating_count ?? productState?.product?.rating_count} />
@@ -57,11 +60,11 @@ const ProductContent = ({ productState, setProductState, productAccordion, noDet
               <span className="text-dark fw-normal">{t("MRP")}:</span>
               {productState?.selectedVariation?.sale_price ? convertCurrency(productState?.selectedVariation?.sale_price) : convertCurrency(productState?.product?.sale_price)}
 
-              {productState?.selectedVariation?.discount || productState?.product?.discount ? <del>{productState?.selectedVariation ? convertCurrency(productState?.selectedVariation?.price) : convertCurrency(productState?.product?.price)}</del> : null}
+              {originalPriceToStrike(productState) != null ? <del>{convertCurrency(originalPriceToStrike(productState))}</del> : null}
 
-              {productState?.selectedVariation?.discount || productState?.product?.discount ? (
+              {discountPercent(productState) != null ? (
                 <span className="discounted-price">
-                  {productState?.selectedVariation ? productState?.selectedVariation?.discount : productState?.product?.discount} % {t("Off")}
+                  {discountPercent(productState)} % {t("Off")}
                 </span>
               ) : null}
             </h3>
@@ -106,7 +109,7 @@ const ProductContent = ({ productState, setProductState, productAccordion, noDet
       {!productAccordion && (
         <div className="product-buttons">
           <ProductDetailAction productState={productState} setProductState={setProductState} />
-          <AddToCartButton productState={productState} isLoading={isLoading} addToCart={addToCart} buyNow={buyNow} />
+          <AddToCartButton productState={productState} isLoading={isLoading} addToCart={addToCart} buyNow={buyNow} whatsappButton={<WhatsAppInquiryButton productState={productState} />} />
         </div>
       )}
     </>

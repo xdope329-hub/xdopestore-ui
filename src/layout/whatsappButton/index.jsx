@@ -1,6 +1,8 @@
 "use client";
 import SettingContext from "@/context/settingContext";
-import { buildWhatsAppLink } from "@/utils/customFunctions/whatsappLink";
+import ThemeOptionContext from "@/context/themeOptionsContext";
+import { buildWhatsAppLink, whatsappHref } from "@/utils/customFunctions/whatsappLink";
+import { buildProductInquiryMessage, productUrl } from "@/utils/customFunctions/whatsappProductMessage";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -22,7 +24,20 @@ const STICKY_BAR_SETTLE_MS = 600;
 const WhatsAppButton = () => {
   const { t } = useTranslation("common");
   const { settingData } = useContext(SettingContext);
-  const { enabled, href } = buildWhatsAppLink(settingData?.whatsapp);
+  const { whatsappProduct } = useContext(ThemeOptionContext) || {};
+  const link = buildWhatsAppLink(settingData?.whatsapp);
+  const { enabled } = link;
+
+  // En la ficha de producto el mensaje lleva la referencia del producto
+  // (nombre, variante elegida y enlace), igual que el botón "Consultar por
+  // WhatsApp" de la ficha. El origen se lee en el cliente (sin window en SSR).
+  const [origin, setOrigin] = useState("");
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+  const href = whatsappProduct?.slug
+    ? whatsappHref(link.number, buildProductInquiryMessage({ greeting: link.message || t("WhatsAppProductGreeting"), product: whatsappProduct, variation: whatsappProduct.variation, url: productUrl(origin, whatsappProduct.slug) }))
+    : link.href;
 
   // Distance (px) from the viewport bottom to sit above the product page's
   // sticky checkout bar (body.stickyCart + .sticky-bottom-cart); null = CSS default.

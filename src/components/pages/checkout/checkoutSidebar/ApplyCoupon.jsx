@@ -1,4 +1,5 @@
 import SettingContext from "@/context/settingContext";
+import { couponBenefitLabel, isFreeShippingCoupon } from "@/utils/customFunctions/couponLabel";
 import Btn from "@/elements/buttons/Btn";
 import request from "@/utils/axiosUtils";
 import { CouponAPI } from "@/utils/axiosUtils/API";
@@ -76,6 +77,7 @@ const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values,
             <div className="coupon-box">
               <div className="card-name">
                 <h6>{item?.title}</h6>
+                <p className="coupon-benefit mb-0">{couponBenefitLabel(item, { t, format: convertCurrency })}</p>
               </div>
               <div className="coupon-content">
                 <div className="coupon-apply">
@@ -92,7 +94,14 @@ const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values,
           <Image src={`${ImagePath}/offer.gif`} className="img-fluid" height={20} width={20} alt="offer" />
           <div>
             <h4>
-              {t("Yousaved")} <span>{convertCurrency(data?.data?.coupon_total_discount || 0)}</span> {t("withthiscode")} 🎉 <p>{t("CouponApplied")}</p>
+              {isFreeShippingCoupon(data?.data?.applied_coupon) ? (
+                t("CouponFreeShippingApplied")
+              ) : (
+                <>
+                  {t("Yousaved")} <span>{convertCurrency(data?.data?.coupon_total_discount || 0)}</span> {t("withthiscode")}
+                </>
+              )}{" "}
+              🎉 <p>{t("CouponApplied")}</p>
             </h4>
           </div>
           <a style={{ cursor: "pointer" }} className="close-coupon" onClick={() => removeCoupon()}>

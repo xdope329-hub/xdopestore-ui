@@ -31,6 +31,173 @@
   }
 }
 
+/* "Consultar por WhatsApp" next to the buy buttons on the product page
+   (productDetails/common/WhatsAppInquiryButton). With three buttons the row
+   wraps instead of squeezing "Agregar al carrito" and "Comprar ahora". */
+.product-page-details .product-buy-btn-group {
+  flex-wrap: wrap;
+}
+
+/* Daily capacity (Ajustes → Capacidad): notice + WhatsApp CTA that replace
+   the cart, the buy buttons and the checkout while today's quota is full. */
+.capacity-notice {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px 22px;
+  border: 1px solid #d9f2e3;
+  border-left: 4px solid #25d366;
+  background: #f4fcf7;
+  border-radius: 8px;
+  max-width: 640px;
+
+  .capacity-notice-icon {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e3f8ec;
+    color: #128c7e;
+    font-size: 22px;
+  }
+
+  .capacity-notice-title {
+    margin: 0 0 6px;
+    font-weight: 700;
+    text-transform: none;
+  }
+
+  .capacity-notice-text {
+    margin: 0 0 12px;
+    color: #4a5568;
+    line-height: 1.5;
+  }
+
+  .capacity-notice-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #25d366;
+    color: #fff;
+    border-radius: 6px;
+    font-weight: 600;
+    padding: 10px 18px;
+
+    svg {
+      font-size: 18px;
+    }
+
+    &:hover {
+      background: #1ebe5b;
+      color: #fff;
+    }
+  }
+
+  &.capacity-notice-compact {
+    padding: 14px 16px;
+    gap: 12px;
+
+    .capacity-notice-icon {
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+    }
+
+    .capacity-notice-title {
+      font-size: 15px;
+    }
+  }
+
+  &.capacity-notice-button {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    max-width: none;
+  }
+}
+
+.capacity-hint {
+  padding: 12px 14px;
+  border: 1px solid #ffe7a3;
+  border-left: 4px solid #f5b400;
+  background: #fff9e6;
+  border-radius: 6px;
+  color: #5c4400;
+  font-size: 14px;
+
+  .capacity-hint-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #128c7e;
+    font-weight: 600;
+  }
+}
+
+.coupon-benefit {
+  font-size: 13px;
+  color: #128c7e;
+}
+
+.product-page-details .selected-variant-name {
+  margin: -4px 0 10px;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.capacity-whatsapp-link {
+  color: #128c7e;
+
+  svg {
+    color: #25d366;
+  }
+
+  &.capacity-add-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+  }
+}
+
+.whatsapp-inquiry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #25d366;
+  color: #128c7e;
+  background: #fff;
+  border-radius: 0;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.25s ease, color 0.25s ease;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: #25d366;
+    border-color: #25d366;
+    color: #fff;
+  }
+}
+
+/* Checkout: the empty address card heading is a 26px capitalised title that
+   wraps badly on phones. */
+@media (max-width: 575px) {
+  .checkout-section-2 .left-sidebar-checkout .empty-box h2 {
+    font-size: 18px;
+    padding-block: 12px;
+  }
+}
+
 /* Home banner auto-scroll (themes/widgets/HomeSlider): thin bar at the bottom
    of the slider that fills up during the interval set in the admin and resets
    on every banner change. */
@@ -257,10 +424,40 @@
 }
 
 /* Logos de métodos disponibles bajo la opción Mercado Pago en el checkout. */
-.payment-methods-full {
+.product-main-touch-image {
+  display: block;
+  margin-inline: auto;
+  object-fit: contain;
+  touch-action: pan-y pinch-zoom;
+}
+
+@media (max-width: 767px) {
+  .thumbnail-image-slider .product-slick {
+    padding-inline: 16px;
+
+    .slick-list {
+      touch-action: pan-y pinch-zoom;
+    }
+
+    .product-main-touch-image {
+      width: 100%;
+      height: min(55svh, 420px);
+      max-height: 420px;
+    }
+  }
+}
+
+.payment-methods-full,
+.checkout-section-2 .left-sidebar-checkout .checkout-detail-box > ul > li .checkout-box .checkout-detail .payment-option img.payment-methods-full {
+  position: static;
+  top: auto;
+  right: auto;
+  transform: none;
   display: block;
   width: 100%;
-  max-width: 520px;
+  max-width: 400px;
+  height: auto;
+  margin-top: 10px;
   border: 1px solid #ececec;
   border-radius: 10px;
   background: #fff;

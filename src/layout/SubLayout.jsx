@@ -17,6 +17,7 @@ import RecentPurchase from './recentPurchase'
 import TapTop from './tapTop'
 import WhatsAppButton from './whatsappButton'
 import AnnouncementBar from './announcementBar'
+import { brandText, SITE_TITLE } from '@/utils/seo/siteBranding'
 
 const SubLayout = ({ children }) => {
   const isTabActive = TabFocusChecker()
@@ -86,7 +87,7 @@ const SubLayout = ({ children }) => {
   }, [themeColor, themeColor2])
 
   useEffect(() => {
-    const messages = themeOption?.general?.taglines
+    const messages = themeOption?.general?.taglines?.filter((message) => brandText(message, ''))
     let timer
 
     const updateTitle = (index) => {
@@ -104,8 +105,8 @@ const SubLayout = ({ children }) => {
         let value =
           themeOption?.general?.site_title && themeOption?.general?.site_tagline
             ? `${themeOption?.general?.site_title} | ${themeOption?.general?.site_tagline}`
-            : 'Multikart Marketplace: Where Vendors Shine Together'
-        document.title = value
+            : brandText(themeOption?.general?.site_title, SITE_TITLE)
+        document.title = brandText(themeOption?.seo?.meta_title, brandText(value, SITE_TITLE))
         clearTimeout(timer)
       }
     }
@@ -113,7 +114,7 @@ const SubLayout = ({ children }) => {
     return () => {
       clearTimeout(timer)
     }
-  }, [isTabActive, themeOption])
+  }, [isTabActive, themeOption, pathName])
 
   return (
     <>

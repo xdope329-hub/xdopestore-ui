@@ -41,6 +41,9 @@ export const CurrencyAPI = "/currency";
 
 // Setting API
 export const SettingAPI = "/settings";
+// Capacidad diaria (cupo de hoy): la tienda decide con esto si vende o solo
+// ofrece WhatsApp (utils/customFunctions/capacityRules.js).
+export const CapacityAPI = "/capacity";
 
 // Wishlist API
 export const WishlistAPI = "/wishlist";

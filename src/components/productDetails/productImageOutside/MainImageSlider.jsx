@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import ImageZoom from "react-image-zooom";
+import ProductMainImage from "../common/ProductMainImage";
 import Slider from "react-slick";
 import { Col, Row } from "reactstrap";
 import SlickArrowLeft from "../common/SlickArrowLeft";
@@ -44,7 +44,7 @@ const MainImageSlider = ({ productState, nav2, sliderRef1, setNav1 }) => {
                           </audio>
                         </div>
                       ) : (
-                        <ImageZoom zoom="200" src={image?.original_url} alt={image?.name} className="img-fluid" height={670} width={670} />
+                        <ProductMainImage src={image?.original_url} alt={image?.name} />
                       )}
                     </div>
                   </div>

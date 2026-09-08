@@ -72,6 +72,8 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  // Allow QA and the regular local storefront to use separate build caches.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   env: {
     // Public API base URL (inlined in the client bundle - never put secrets here).
     API_PROD_URL: API_URL,
