@@ -4,7 +4,7 @@ import SimpleInputField from "@/components/widgets/inputFields/SimpleInputField"
 import request from "@/utils/axiosUtils";
 import { ShippingAPI } from "@/utils/axiosUtils/API";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 
@@ -49,27 +49,29 @@ const CityField = ({ values, setFieldValue, data, name = "city", countryIdPath =
     return [...cities, { id: OTHER, name: t("OtherCity") }];
   }, [cityData, stateName, t]);
 
-  // Al editar una dirección cuya ciudad no está en la lista → modo texto libre.
+  const previousLocation = useRef({ country: countryIdValue, state: stateIdValue });
+  // Preserve custom cities when opening an existing address, but a changed
+  // country/department always starts with that department's city dropdown.
   useEffect(() => {
-    if (!cityData?.length || !cityValue || cityValue === OTHER) return;
-    const listed = cityOptions.some((c) => c.id === cityValue);
-    setShowOther(!listed);
-  }, [cityData, stateName]); // eslint-disable-line
+    const previous = previousLocation.current;
+    const changed = previous.country !== countryIdValue || previous.state !== stateIdValue;
+    previousLocation.current = { country: countryIdValue, state: stateIdValue };
+    if (changed) {
+      setFieldValue(name, "");
+      setShowOther(false);
+      return;
+    }
+    if (cityData?.length && stateName && cityValue && cityValue !== OTHER) {
+      setShowOther(!cityOptions.some((c) => c.id === cityValue));
+    }
+  }, [countryIdValue, stateIdValue, cityData, stateName]); // eslint-disable-line
 
-  // Elegir "Otra ciudad" limpia el campo y muestra el input de texto.
   useEffect(() => {
     if (cityValue === OTHER) {
       setFieldValue(name, "");
       setShowOther(true);
     }
   }, [cityValue]); // eslint-disable-line
-
-  // Cambiar de departamento invalida una ciudad de la lista que no pertenezca al nuevo.
-  useEffect(() => {
-    if (!cityValue || showOther || !cityData?.length) return;
-    const listed = cityOptions.some((c) => c.id === cityValue && c.id !== OTHER);
-    if (!listed) setFieldValue(name, "");
-  }, [stateName]); // eslint-disable-line
 
   if (showOther) {
     return (

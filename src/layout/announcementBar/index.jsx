@@ -1,6 +1,6 @@
 "use client";
 import SettingContext from "@/context/settingContext";
-import { useContext } from "react";
+import { useContext, useEffect, useRef } from "react";
 
 /**
  * Cinta de anuncios (estilo koaj.co): tira superior que desplaza en bucle
@@ -18,7 +18,25 @@ const AnnouncementBar = () => {
     .filter((m) => m?.status && typeof m?.text === "string" && m.text.trim())
     .map((m) => m.text.trim());
 
-  if (!bar?.status || messages.length === 0) return null;
+  const visible = Boolean(bar?.status && messages.length);
+  const barRef = useRef(null);
+
+  // Keep the fixed navigation below the strip, including after font/size changes.
+  useEffect(() => {
+    if (!visible || !barRef.current) return;
+    const updateHeight = () => document.documentElement.style.setProperty(
+      "--announcement-bar-height", `${barRef.current.getBoundingClientRect().height}px`
+    );
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(barRef.current);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--announcement-bar-height");
+    };
+  }, [visible]);
+
+  if (!visible) return null;
 
   const bg = bar.bg_color || "var(--theme-color, #2c1810)";
   const color = bar.text_color || "#ffffff";
@@ -38,7 +56,7 @@ const AnnouncementBar = () => {
   );
 
   return (
-    <div className="announcement-bar" style={{ background: bg, color }} role="region" aria-label="Anuncios">
+    <div ref={barRef} className="announcement-bar" style={{ background: bg, color }} role="region" aria-label="Anuncios">
       <div className="announcement-bar-track" style={{ animationDuration: `${speed}s` }}>
         {sequence}
       </div>
@@ -51,7 +69,8 @@ const AnnouncementBar = () => {
           letter-spacing: 0.06em;
           text-transform: uppercase;
           padding: 8px 0;
-          position: relative;
+          position: sticky;
+          top: 0;
           z-index: 10;
         }
         .announcement-bar-track {

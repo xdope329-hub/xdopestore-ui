@@ -52,7 +52,6 @@ const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values,
       return;
     }
     setFieldValue("coupon", code);
-    setStoreCoupon(code);
     mutate && mutate({ coupon_code: code });
   };
 

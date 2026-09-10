@@ -9,24 +9,21 @@ import PlaceOrder from "./PlaceOrder";
 import PointWallet from "./PointWallet";
 import { hasShippingQuote } from "./quoteState";
 
-const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeCoupon, setStoreCoupon, errorCoupon, appliedCoupon, setAppliedCoupon, errors, sessionToken, addToCartData }) => {
+const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeCoupon, setStoreCoupon, errorCoupon, appliedCoupon, setAppliedCoupon, errors, sessionToken, addToCartData, quoteError, isQuoteCurrent }) => {
   const { convertCurrency } = useContext(SettingContext);
   const { cartProducts, cartTotal } = useContext(CartContext);
   const { t } = useTranslation("common");
 
-  const subtotal = cartTotal || cartProducts?.reduce((s, i) => s + (i.sub_total || 0), 0) || 0;
+  const subtotal = data?.data?.sub_total ?? (cartTotal || cartProducts?.reduce((s, i) => s + (i.sub_total || 0), 0) || 0);
   const shipping = data?.data?.shipping_quote?.amount ?? 0;
   // Estado del envío por zonas: el servidor manda shipping_quote cuando ya
-  // conoce la ciudad de entrega. Antes de eso mostramos una pista en vez de $0.
+  // conoce la ciudad de entrega. Antes de eso el envío empieza en $0.
   const shippingQuote = data?.data?.shipping_quote;
   const hasQuote = hasShippingQuote(data?.data);
   const couponDiscount = data?.data?.coupon_total_discount || 0;
-  // Compute the total from the LIVE local cart so quantity changes reflect
-  // immediately; only defer to the server's figure while a coupon is applied
-  // (the discount rules live server-side). The next /checkout recompute
-  // reconciles both anyway.
+  // The server's current prices and discounts determine the payable total.
   const localTotal = subtotal + shipping - couponDiscount;
-  const total = couponDiscount > 0 && data?.data?.total != null ? data.data.total : localTotal;
+  const total = data?.data?.total ?? localTotal;
 
   return (
     <div className="checkout-details ">
@@ -38,6 +35,12 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
           </div>
           <div>
             <div className="custom-box-loader">
+              {quoteError && (
+                <div className="alert alert-danger checkout-quote-error" role="alert">
+                  <p>{t("CheckoutQuoteFailed")}</p>
+                  <button type="button" className="btn btn-outline" disabled={isLoading} onClick={() => mutate()}>{t("RetryCheckoutQuote")}</button>
+                </div>
+              )}
               {isLoading && (
                 <div className="box-loader">
                   <Loader />
@@ -55,7 +58,7 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
                   ) : hasQuote ? (
                     <span className="count">{convertCurrency(shipping)}</span>
                   ) : (
-                    <span className="count text-content" style={{ fontSize: "13px" }}>{t("ShippingCalculatedAtAddress")}</span>
+                    <span className="count" title={t("ShippingCalculatedAtAddress")}>{convertCurrency(0)}</span>
                   )}
                 </li>
                 {couponDiscount > 0 && (
@@ -70,10 +73,10 @@ const BillingSummary = ({ data, values, setFieldValue, isLoading, mutate, storeC
               <ul className="total">
                 <li className="list-total">
                   {t("Total")}
-                  <span className="count">{hasQuote ? convertCurrency(total) : t("ShippingCalculatedAtAddress")}</span>
+                  <span className="count">{convertCurrency(total)}</span>
                 </li>
               </ul>
-              <PlaceOrder values={values} errors={errors} sessionToken={sessionToken} addToCartData={addToCartData} appliedCouponCode={appliedCoupon === "applied" ? storeCoupon : ""} />
+              <PlaceOrder values={values} errors={errors} sessionToken={sessionToken} addToCartData={addToCartData} appliedCouponCode={appliedCoupon === "applied" ? storeCoupon : ""} isQuoteCurrent={isQuoteCurrent} />
             </div>
           </div>
         </div>

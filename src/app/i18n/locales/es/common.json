@@ -1,4 +1,8 @@
 {
+  "CheckoutQuoteFailed": "No pudimos actualizar el envío y el total. Reintenta antes de realizar el pedido.",
+  "RetryCheckoutQuote": "Recalcular total",
+  "CheckoutQuoteRequired": "Espera a que se calcule el total de tu pedido. Si hubo un error, pulsa Recalcular total.",
+  "CheckoutPricesUpdated": "Algunos precios cambiaron desde que agregaste los productos. El resumen muestra los precios actuales.",
   "NoTagsFound": "No se encontraron etiquetas",
   "StartSelling": "Empezar a vender",
   "TotalPrice": "Precio total",

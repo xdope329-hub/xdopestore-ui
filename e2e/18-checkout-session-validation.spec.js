@@ -71,7 +71,7 @@ test.describe("Checkout — sesión de invitado", () => {
     expect(await cookieNames(page)).not.toContain("uat");
     // Sigue viendo el checkout de invitado, no las direcciones guardadas.
     await expect(page.locator('input[type="radio"][name="billing_address_id"][value]:not([value^="guest-"])')).toHaveCount(0);
-    await expect(page.locator(".checkout-form-section")).toBeVisible();
+    await expect(page.locator('input[name="name"]')).toBeVisible();
   });
 
   test("el logout del header borra ambas cookies de sesión y revoca el refresh", async ({ page }) => {
@@ -109,7 +109,7 @@ test.describe("Checkout — validación del invitado", () => {
     if (!product) test.skip(true, "No hay productos en stock");
     await page.goto("/checkout", { waitUntil: "domcontentloaded" });
     await page.locator(".loader-wrapper").waitFor({ state: "hidden", timeout: 20000 }).catch(() => {});
-    await page.waitForSelector(".checkout-form-section", { timeout: 20000 });
+    await expect(page.locator('input[name="name"]')).toBeVisible({ timeout: 20000 });
   });
 
   test("teléfono es un campo de texto numérico y los campos inválidos se marcan al pedir", async ({ page }) => {
@@ -160,7 +160,7 @@ test.describe("Checkout — validación del invitado", () => {
     await page.waitForTimeout(1000);
     expect(addressPosts).toHaveLength(0);
     // Sigue en el checkout, sin toast de "dirección agregada".
-    await expect(page.locator(".checkout-form-section")).toBeVisible();
+    await expect(page.locator('input[name="name"]')).toBeVisible();
   });
 
   test("escribir un cupón no consulta el API en cada tecla", async ({ page }) => {
