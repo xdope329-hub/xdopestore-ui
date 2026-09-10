@@ -4,7 +4,7 @@ import SettingContext from "@/context/settingContext";
 import { CheckoutAPI } from "@/utils/axiosUtils/API";
 import request from "@/utils/axiosUtils";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { checkoutCity, createLatestQuoteRequest } from "./quoteState";
+import { checkoutCity, createLatestQuoteRequest, hasShippingQuote, requestCheckoutQuote } from "./quoteState";
 import { Col } from "reactstrap";
 import CapacityHint from "@/components/widgets/capacity/CapacityHint";
 import BillingSummary from "./BillingSummary";
@@ -19,42 +19,54 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
   // Misma fuente de verdad que la página de checkout (ver PlaceOrder.jsx).
   const access_token = sessionToken;
   const [resData, setResData] = useState({});
+  const [quoteError, setQuoteError] = useState(false);
+  const [validatedKey, setValidatedKey] = useState(null);
+  const quoteReady = useRef(false);
+  const isGuestCheckout = Boolean(settingData?.activation?.guest_checkout) && !access_token;
+  const city = checkoutCity(values, isGuestCheckout);
+  // Invalidate immediately on a changed destination/cart, even before effects run.
+  const contextKey = JSON.stringify([access_token, city, cartProducts, values.billing_address_id,
+    values.shipping_address_id, values.delivery_description, values.payment_method,
+    values.delivery_interval, values.points_amount, values.wallet_balance]);
+  const currentContext = useRef(contextKey);
+  const selectionKey = JSON.stringify([contextKey, storeCoupon]);
+  currentContext.current = selectionKey;
 
   const [isLoading, setIsLoading] = useState(false);
+  quoteReady.current = !isLoading && !quoteError && validatedKey === contextKey
+    && Number.isFinite(resData?.data?.total)
+    && (addToCartData?.is_digital_only || hasShippingQuote(resData?.data));
   const latestQuote = useRef(createLatestQuoteRequest()).current;
   useEffect(() => () => latestQuote.invalidate(), [latestQuote]);
 
   const mutate = (payload) => {
+    quoteReady.current = false;
     setIsLoading(true);
-    setResData({});
+    setQuoteError(false);
+    setValidatedKey(null);
     latestQuote.run(
-      () => request({ url: CheckoutAPI, method: "post", data: payload }),
-      (resDta) => {
+      () => requestCheckoutQuote((data) => request({ url: CheckoutAPI, method: "post", data }), payload),
+      ({ response: resDta, couponError, couponCode }) => {
         setIsLoading(false);
-        if (resDta?.status == 200 || resDta?.status == 201) {
+        if ((resDta?.status == 200 || resDta?.status == 201) && Number.isFinite(resDta?.data?.total)) {
           setResData(resDta);
-          setErrorCoupon("");
-          setAppliedCoupon(payload.coupon_code ? "applied" : null);
+          setValidatedKey(contextKey);
+          setErrorCoupon(couponError);
+          setStoreCoupon(couponCode);
+          setAppliedCoupon(couponCode ? "applied" : null);
         } else {
-          setErrorCoupon(resDta?.data?.message || "");
-          setAppliedCoupon(null);
+          setQuoteError(true);
         }
       }
     );
   };
-
-  const isGuestCheckout = Boolean(settingData?.activation?.guest_checkout) && !access_token;
-  const city = checkoutCity(values, isGuestCheckout);
 
   // POST /checkout con TODO el contexto del pedido. Es la ÚNICA forma de
   // hablar con /checkout desde el sidebar (también para aplicar/quitar un
   // cupón): así el invitado siempre manda sus productos y la ciudad, y el
   // cupón aplicado se conserva al cambiar método de pago o dirección.
   const recompute = (extra = {}) => {
-    // The /checkout endpoint reads `coupon_code` from the body, but Formik
-    // stores the input under `coupon`. Forward the currently-applied coupon
-    // (preferring the local `storeCoupon` state, which is the source of truth
-    // for "what the user just applied") on every recompute.
+    // storeCoupon only contains a code accepted by the latest quote response.
     // Solo el cupón APLICADO (storeCoupon). El texto del campo (values.coupon)
     // puede ser un código a medio escribir o inválido: enviarlo al cambiar
     // método de pago o dirección pintaba "cupón inválido" sin que el cliente
@@ -76,15 +88,9 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
     if (CartLoading || deleteCartLoader) return;
     if (!cartProducts?.length) return;
 
-    if (isGuestCheckout) {
-      if (values["delivery_description"] && values["payment_method"]) {
-        recompute();
-      }
-    } else {
-      if (access_token && values["billing_address_id"] && values["shipping_address_id"] && values["delivery_description"] && values["payment_method"]) {
-        recompute();
-      }
-    }
+    // Quotes are previews: missing addresses mean initial zero shipping.
+    // Do not require physical-delivery fields for a digital-only cart.
+    if (values.payment_method && (isGuestCheckout || access_token)) recompute();
     // storeCoupon NO es disparador: aplicar/quitar el cupón ya llama a
     // recompute() explícitamente (un solo POST por clic, no dos).
     // `errors` de Formik tampoco: cambia en cada tecla del formulario de
@@ -99,8 +105,8 @@ const CheckoutSidebar = ({ values, setFieldValue, errors, addToCartData, session
         {cartProducts?.length > 0 ? (
           <div className="checkout-right-box">
             <CapacityHint className="mb-3" />
-            <SidebarProduct values={values} setFieldValue={setFieldValue} />
-            <BillingSummary values={values} errors={errors} setFieldValue={setFieldValue} data={resData} errorCoupon={errorCoupon} appliedCoupon={appliedCoupon} setAppliedCoupon={setAppliedCoupon} storeCoupon={storeCoupon} setStoreCoupon={setStoreCoupon} isLoading={isLoading} addToCartData={addToCartData} mutate={recompute} sessionToken={sessionToken} />
+            <SidebarProduct values={values} setFieldValue={setFieldValue} quotedCart={resData?.data?.cart} />
+            <BillingSummary values={values} errors={errors} setFieldValue={setFieldValue} data={resData} errorCoupon={errorCoupon} appliedCoupon={appliedCoupon} setAppliedCoupon={setAppliedCoupon} storeCoupon={storeCoupon} setStoreCoupon={setStoreCoupon} isLoading={isLoading} addToCartData={addToCartData} mutate={recompute} sessionToken={sessionToken} quoteError={quoteError} isQuoteCurrent={() => quoteReady.current && currentContext.current === selectionKey} />
           </div>
         ) : (
           <NoDataFound customClass="no-data-added" height={156} width={180} imageUrl={`/assets/svg/empty-items.svg`} title="EmptyCart" />

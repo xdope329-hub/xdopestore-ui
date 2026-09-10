@@ -14,7 +14,7 @@ import { clearDraft } from "../guestCheckoutDraft";
 
 // `appliedCouponCode`: el cupón realmente aplicado en el resumen (vacío si
 // no hay). El texto del campo de cupón NO cuenta.
-const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "" }) => {
+const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "", isQuoteCurrent }) => {
   const { t } = useTranslation("common");
   // La MISMA fuente de verdad que decidió qué checkout se mostró (formulario
   // de invitado vs direcciones guardadas): el estado del checkout, no una
@@ -63,6 +63,11 @@ const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "
         return;
       }
 
+      if (!isQuoteCurrent?.()) {
+        ToastNotification("error", t("CheckoutQuoteRequired"));
+        return;
+      }
+
       // Cupo del día en este instante: pudo llenarse mientras el cliente
       // completaba el formulario (el API lo rechazaría igual con un 422).
       if (refetchCapacity) {
@@ -73,6 +78,12 @@ const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "
         }
       }
 
+      // Recheck after the asynchronous capacity lookup: the cart or city may
+      // have changed while it was pending.
+      if (!isQuoteCurrent?.()) {
+        ToastNotification("error", t("CheckoutQuoteRequired"));
+        return;
+      }
       // Nunca viaja la contraseña; el invitado manda productos + direcciones
       // inline (ver placeOrderRules.js).
       const payload = buildInitializePayload({ values, isGuest, cartProducts, couponCode: appliedCouponCode });

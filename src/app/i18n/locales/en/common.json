@@ -1,4 +1,8 @@
 {
+  "CheckoutQuoteFailed": "We could not update shipping and your total. Please retry before placing your order.",
+  "RetryCheckoutQuote": "Recalculate total",
+  "CheckoutQuoteRequired": "Wait for your order total to be calculated. If it failed, select Recalculate total.",
+  "CheckoutPricesUpdated": "Some prices have changed since you added these products. Your summary shows the current prices.",
   "NoTagsFound": " No Tags Found",
   "StartSelling": "StartSelling",
   "TotalPrice": "Total Price",
