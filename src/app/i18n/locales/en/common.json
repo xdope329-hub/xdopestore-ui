@@ -861,5 +861,11 @@
   "Reasonisrequired": "Please tell us the reason for the refund",
   "Refund_pending": "Refund pending",
   "Refund_approved": "Refund approved",
-  "Refund_rejected": "Refund rejected"
+  "Refund_rejected": "Refund rejected",
+  "CheckoutAcceptTermsPrefix": "I accept the",
+  "CheckoutTermsRequired": "You must accept the Terms & Conditions to place your order.",
+  "CheckoutTermsChanged": "The Terms & Conditions have changed. Please review and accept them again to continue.",
+  "CheckoutTermsUnavailable": "We couldn't load the purchase terms. Please try again before placing your order.",
+  "LegalContentUnavailable": "We couldn't load this page. Please try again to read the current version.",
+  "RetryLegalContent": "Try again"
 }

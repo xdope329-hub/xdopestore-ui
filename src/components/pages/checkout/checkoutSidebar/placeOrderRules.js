@@ -24,6 +24,7 @@ export const getMissingRequirements = ({ values = {}, errors = {}, isGuest = fal
   const hasFieldErrors = Boolean(isGuest) && Object.keys(errors || {}).length > 0;
   if (hasFieldErrors) missing.push(t("CompleteRequiredFields"));
   if (!values.payment_method) missing.push(t("SelectPaymentMethodFirst"));
+  if (values.terms_accepted !== true || !values.terms_version) missing.push(t("CheckoutTermsRequired"));
   return { missing, hasFieldErrors };
 };
 

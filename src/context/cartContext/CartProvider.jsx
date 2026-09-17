@@ -1,4 +1,5 @@
 import request from "@/utils/axiosUtils";
+import { useAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { AddToCartAPI, ClearCart, ReplaceCartAPI } from "@/utils/axiosUtils/API";
 import syncLocalCart from "@/utils/customFunctions/SyncLocalCart";
 import { getCartProductId, getCartVariationId, isSameCartLine } from "@/utils/customFunctions/CartItemIdentity";
@@ -14,6 +15,7 @@ import SettingContext from "@/context/settingContext";
 import CartContext from ".";
 
 const CartProvider = (props) => {
+  const analytics = useAnalytics();
   const isCookie = Cookies.get("uat");
   // Cupo diario (Ajustes → Capacidad): con el cupo lleno no se agrega nada.
   const { capacityReached } = useContext(SettingContext) || {};
@@ -31,7 +33,7 @@ const CartProvider = (props) => {
     data: addData,
     mutate,
     isLoading,
-  } = useCreate(AddToCartAPI, false, false, "No", (resDta) => {
+  } = useCreate(AddToCartAPI, false, false, "No", (resDta, variables) => {
     if (resDta?.status == 200 || resDta?.status == 201) {
       // The server returns the full, authoritative cart on every write — adopt it
       // wholesale so optimistic local items pick up their real cart-item IDs and
@@ -40,11 +42,13 @@ const CartProvider = (props) => {
         setCartProducts(resDta.data.items);
         setCartTotal(resDta.data.total ?? 0);
         setGetCardData(resDta.data.items[0]);
+        const line = resDta.data.items.find((item) => isSameCartLine(item, variables.product_id, variables.variation_id));
+        if (line && variables.quantity) analytics?.ecommerce(variables.quantity > 0 ? "add_to_cart" : "remove_from_cart", [{ ...line, quantity: Math.abs(variables.quantity) }]);
       }
     }
   });
   // Delete Cart API Data
-  const { mutate: deleteCart, isLoading: deleteCartLoader } = useDelete(AddToCartAPI, false, true);
+  const { mutateAsync: deleteCart, isLoading: deleteCartLoader } = useDelete(AddToCartAPI, false, true);
 
   // Replace Cart API
   const { mutate: replaceCartMutate, isLoading: replaceCartLoader } = useCreate(ReplaceCartAPI, false, false, "No");
@@ -120,6 +124,7 @@ const CartProvider = (props) => {
 
   const clearCart = async () => {
     if (!isCookie) {
+      analytics?.ecommerce("remove_from_cart", cartProducts);
       setCartProducts([]);
       setCartTotal(0);
       localStorage.removeItem("cart");
@@ -134,6 +139,7 @@ const CartProvider = (props) => {
       return false;
     }
 
+    analytics?.ecommerce("remove_from_cart", cartProducts);
     setCartProducts(responseData?.data?.items ?? []);
     setCartTotal(responseData?.data?.total ?? 0);
     setGetCardData([]);
@@ -142,12 +148,18 @@ const CartProvider = (props) => {
 
   // Remove and Delete cart data from API and State
   const removeCart = (id, cartId) => {
+    const removed = cartProducts?.filter((item) => (item?.variation_id ? item.variation_id === id : item.product_id === id));
     const updatedCart = cartProducts?.filter((item) => (item?.variation_id ? item?.variation_id !== id : item.product_id !== id));
     setCartProducts(updatedCart);
     ToastNotification("success", i18next.t("RemovedFromCart"));
     // Mirror the deletion on the server so the user's cart in the DB matches.
     if (isCookie && cartId) {
-      deleteCart(cartId);
+      // Each promise belongs to its own removal, even during rapid clicks.
+      deleteCart(cartId).then((response) => {
+        if (response?.ok) analytics?.ecommerce("remove_from_cart", removed);
+      }).catch(() => {});
+    } else if (!isCookie) {
+      analytics?.ecommerce("remove_from_cart", removed);
     }
   };
 
@@ -229,6 +241,12 @@ const CartProvider = (props) => {
         variation_id: obj.variation_id,
         quantity: obj.quantity,
       });
+    } else if (qty) {
+      analytics?.ecommerce(qty > 0 ? "add_to_cart" : "remove_from_cart", [{
+        product: productObj,
+        variation: cloneVariation?.selectedVariation || cloneVariation?.variation || cart[index]?.variation || null,
+        quantity: Math.abs(qty),
+      }]);
     }
 
     // Update the productQty state immediately after updating the cartProducts state

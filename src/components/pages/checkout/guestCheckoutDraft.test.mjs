@@ -8,6 +8,8 @@ const memoryStorage = () => {
 };
 
 const values = {
+  terms_accepted: true,
+  terms_version: "old-version",
   name: "Ana",
   email: "ana@example.com",
   phone: "3001234567",
@@ -21,6 +23,14 @@ const values = {
   products: [{ product_id: "p1" }],
   coupon: "",
 };
+
+test("terms acceptance is never restored from a saved checkout", () => {
+  const storage = memoryStorage();
+  storage.setItem(GUEST_DRAFT_KEY, JSON.stringify(values));
+  assert.equal(loadDraft(storage).terms_accepted, undefined);
+  assert.equal(loadDraft(storage).terms_version, undefined);
+  assert.equal(pickDraft(values).terms_accepted, undefined);
+});
 
 test("el borrador nunca incluye la contraseña ni el carrito", () => {
   const draft = pickDraft(values);

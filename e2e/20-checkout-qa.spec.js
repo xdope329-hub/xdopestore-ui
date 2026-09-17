@@ -131,6 +131,7 @@ test('payment failure preserves cart and contact fields', async ({ page }) => {
   await openCheckout(page, { withAddress: true });
   const calls = [];
   page.on('request', (r) => { if (r.url().endsWith('/payment/initialize')) calls.push(r.postDataJSON()); });
+  await page.locator("#checkout-terms-accepted").check();
   await page.locator('.order-btn').click();
   await expect(page.locator('.Toastify__toast--error').filter({ hasText: 'QA: payment unavailable' })).toBeVisible();
   expect(calls).toHaveLength(1);
@@ -164,6 +165,7 @@ test('quote failure displays a clear error and prevents payment until recalculat
   await expect(page.locator('.checkout-quote-error')).toBeVisible();
   const calls = [];
   page.on('request', (r) => { if (r.url().endsWith('/payment/initialize')) calls.push(r.url()); });
+  await page.locator("#checkout-terms-accepted").check();
   await page.locator('.order-btn').click();
   await page.waitForTimeout(800);
   expect(calls, 'no order should be submitted with an unknown shipping total').toHaveLength(0);
@@ -171,6 +173,7 @@ test('quote failure displays a clear error and prevents payment until recalculat
   await page.locator('.checkout-quote-error button').click();
   await expect(shipping(page)).toContainText('14.900');
   await expect(page.locator('.checkout-quote-error')).toHaveCount(0);
+  await page.locator("#checkout-terms-accepted").check();
   await page.locator('.order-btn').click();
   await expect.poll(() => calls.length).toBe(1);
 });
@@ -224,6 +227,7 @@ test('network failure allows quote retry without submitting an order', async ({ 
   await expect(page.locator('.box-loader')).toHaveCount(0);
   const calls = [];
   page.on('request', (r) => { if (r.url().endsWith('/payment/initialize')) calls.push(r.url()); });
+  await page.locator("#checkout-terms-accepted").check();
   await page.locator('.order-btn').click();
   await expect(page.locator('.Toastify__toast--error')).toBeVisible();
   expect(calls).toHaveLength(0);
@@ -234,6 +238,7 @@ test('network failure allows quote retry without submitting an order', async ({ 
 
 test('pending destination quote blocks payment until its total is ready', async ({ page }) => {
   await openCheckout(page, { withAddress: true });
+  await page.locator('#checkout-terms-accepted').check();
   let release;
   const waiting = new Promise((resolve) => { release = resolve; });
   await page.route('**/checkout', async (route) => {

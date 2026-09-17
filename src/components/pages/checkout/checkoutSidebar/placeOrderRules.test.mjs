@@ -6,11 +6,13 @@ const ready = {
   billing_address_id: "guest-1",
   shipping_address_id: "guest-1",
   payment_method: "cod",
+  terms_accepted: true,
+  terms_version: "bundled-2026-08-27",
 };
 
 test("sin direcciones ni pago: se listan en el orden en que se muestran", () => {
   const { missing, hasFieldErrors } = getMissingRequirements({ values: {}, isGuest: true });
-  assert.deepEqual(missing, ["SelectBillingAddressFirst", "SelectShippingAddressFirst", "SelectPaymentMethodFirst"]);
+  assert.deepEqual(missing, ["SelectBillingAddressFirst", "SelectShippingAddressFirst", "SelectPaymentMethodFirst", "CheckoutTermsRequired"]);
   assert.equal(hasFieldErrors, false);
 });
 
@@ -27,13 +29,25 @@ test("con sesión los errores de Formik de los campos de invitado no bloquean el
 });
 
 test("carrito solo digital no exige dirección de envío", () => {
-  const { missing } = getMissingRequirements({ values: { billing_address_id: "1", payment_method: "cod" }, isGuest: false, requiresShipping: false });
+  const { missing } = getMissingRequirements({ values: { ...ready, shipping_address_id: "" }, isGuest: false, requiresShipping: false });
   assert.deepEqual(missing, []);
 });
 
 test("los mensajes pasan por la función de traducción", () => {
   const { missing } = getMissingRequirements({ values: {}, isGuest: false, requiresShipping: false, t: (k) => `t:${k}` });
-  assert.deepEqual(missing, ["t:SelectBillingAddressFirst", "t:SelectPaymentMethodFirst"]);
+  assert.deepEqual(missing, ["t:SelectBillingAddressFirst", "t:SelectPaymentMethodFirst", "t:CheckoutTermsRequired"]);
+});
+
+test("every shopper must explicitly accept a version of the terms", () => {
+  for (const isGuest of [true, false]) {
+    for (const terms_accepted of [undefined, false, "true", 1]) {
+      assert.ok(getMissingRequirements({ values: { ...ready, terms_accepted }, isGuest }).missing.includes("CheckoutTermsRequired"));
+    }
+    assert.ok(getMissingRequirements({ values: { ...ready, terms_version: "" }, isGuest }).missing.includes("CheckoutTermsRequired"));
+    const payload = buildInitializePayload({ values: ready, isGuest });
+    assert.equal(payload.terms_accepted, true);
+    assert.equal(payload.terms_version, ready.terms_version);
+  }
 });
 
 test("payload de invitado: sin contraseña ni tarjetas locales, con productos del carrito", () => {

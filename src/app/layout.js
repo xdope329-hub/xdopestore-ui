@@ -1,4 +1,6 @@
 import "../index.scss";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import { resolveMeasurementId } from "@/utils/analytics/googleAnalytics";
 import { I18nProvider } from "./i18n/i18n-context";
 import { detectLanguage } from "./i18n/server";
 import { serializeJsonLd } from "@/utils/security/jsonLd";
@@ -83,6 +85,7 @@ export default async function RootLayout({ children }) {
   };
 
   const lng = await detectLanguage();
+  const measurementId = resolveMeasurementId(settings?.values, process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID);
   return (
     <I18nProvider language={lng}>
       <html lang="en">
@@ -103,7 +106,11 @@ export default async function RootLayout({ children }) {
             dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
           />
         </head>
-        <body suppressHydrationWarning={true} style={bodyStyle}>{children}</body>
+        <body suppressHydrationWarning={true} style={bodyStyle}>
+          <GoogleAnalytics key={measurementId} measurementId={measurementId}>
+            {children}
+          </GoogleAnalytics>
+        </body>
       </html>
     </I18nProvider>
   );

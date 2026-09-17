@@ -1,4 +1,5 @@
 import Btn from "@/elements/buttons/Btn";
+import { useAnalytics } from "@/components/analytics/GoogleAnalytics";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
@@ -7,14 +8,18 @@ import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 import { isCapacityReached } from "@/utils/customFunctions/capacityRules";
 import { setNestedObjectValues, useFormikContext } from "formik";
 import { useRouter } from "next/navigation";
-import React, { useContext, useState } from "react";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { buildInitializePayload, getGuestRegistrationPayload, getMissingRequirements } from "./placeOrderRules";
 import { clearDraft } from "../guestCheckoutDraft";
+import { loadCheckoutTerms } from "../checkoutTerms";
 
 // `appliedCouponCode`: el cupón realmente aplicado en el resumen (vacío si
 // no hay). El texto del campo de cupón NO cuenta.
 const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "", isQuoteCurrent }) => {
+  const analytics = useAnalytics();
   const { t } = useTranslation("common");
   // La MISMA fuente de verdad que decidió qué checkout se mostró (formulario
   // de invitado vs direcciones guardadas): el estado del checkout, no una
@@ -36,6 +41,25 @@ const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "
   // como "touched" para que los errores se pinten en rojo bajo cada campo
   // cuando el invitado intenta pedir con datos incompletos.
   const formik = useFormikContext();
+  const [termsError, setTermsError] = useState("");
+  const termsInput = useRef(null);
+  const { data: terms, isError: termsLoadError, isPending: termsLoading, refetch: refetchTerms } = useQuery({
+    queryKey: ["checkout-terms"],
+    queryFn: () => loadCheckoutTerms(request),
+    retry: false,
+    staleTime: 0,
+  });
+  const termsReady = !!terms?.version && !termsLoading && !termsLoadError;
+  const clearTerms = () => {
+    formik.setFieldValue("terms_accepted", false, false);
+    formik.setFieldValue("terms_version", "", false);
+  };
+  useEffect(() => {
+    if (values.terms_accepted && terms?.version && values.terms_version !== terms.version) {
+      clearTerms();
+      setTermsError("CheckoutTermsChanged");
+    }
+  }, [terms?.version, values.terms_accepted, values.terms_version]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // En vez de un botón deshabilitado sin explicación, el clic valida y le
   // dice al cliente exactamente qué falta para poder realizar el pedido.
@@ -55,6 +79,12 @@ const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "
   };
 
   const handleClick = async () => {
+    if (loading) return;
+    if (!termsReady || values.terms_accepted !== true || values.terms_version !== terms.version) {
+      setTermsError(termsReady ? "CheckoutTermsRequired" : "CheckoutTermsUnavailable");
+      termsInput.current?.focus();
+      return;
+    }
     setLoading(true);
     try {
       const missing = await findMissingRequirements();
@@ -87,8 +117,19 @@ const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "
       // Nunca viaja la contraseña; el invitado manda productos + direcciones
       // inline (ver placeOrderRules.js).
       const payload = buildInitializePayload({ values, isGuest, cartProducts, couponCode: appliedCouponCode });
+      analytics?.ecommerce("add_payment_info", cartProducts, {
+        payment_type: values.payment_method,
+        ...(appliedCouponCode ? { coupon: appliedCouponCode } : {}),
+      });
       const res = await request({ url: "/payment/initialize", method: "post", data: payload });
       const ok = res?.status === 200 || res?.status === 201;
+      if (["TERMS_VERSION_CHANGED", "TERMS_ACCEPTANCE_REQUIRED"].includes(res?.data?.code)) {
+        clearTerms();
+        setTermsError(res.data.code === "TERMS_VERSION_CHANGED" ? "CheckoutTermsChanged" : "CheckoutTermsRequired");
+        refetchTerms();
+        termsInput.current?.focus();
+        return;
+      }
 
       // Invitado que marcó "crear cuenta": se registra ANTES de redirigir a la
       // pasarela (con Mercado Pago la redirección destruye la página). Ruta
@@ -176,7 +217,38 @@ const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "
 
   return (
     <div className="text-end">
-      <Btn className="order-btn" onClick={handleClick} disabled={loading}>
+      <div className="checkout-terms text-start my-3">
+        <div className="form-check d-flex align-items-start gap-2 p-0">
+          <input
+            ref={termsInput}
+            id="checkout-terms-accepted"
+            name="terms_accepted"
+            type="checkbox"
+            className={`form-check-input m-0 mt-1 flex-shrink-0${termsError ? " is-invalid" : ""}`}
+            checked={values.terms_accepted === true}
+            disabled={!termsReady || loading}
+            aria-required="true"
+            aria-invalid={!!termsError}
+            aria-describedby={termsError || termsLoadError ? "checkout-terms-error" : undefined}
+            onChange={(event) => {
+              formik.setFieldValue("terms_accepted", event.target.checked, false);
+              formik.setFieldValue("terms_version", event.target.checked ? terms.version : "", false);
+              setTermsError("");
+            }}
+          />
+          <label className="form-check-label" htmlFor="checkout-terms-accepted">
+            {t("CheckoutAcceptTermsPrefix")}{" "}
+            <Link href="/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="theme-color text-decoration-underline">{t("TermsAndConditions")}</Link>.
+          </label>
+        </div>
+        <small className="d-block mt-2">
+          <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-decoration-underline">{t("PrivacyPolicy")}</Link>
+        </small>
+        {termsLoading && <small className="d-block mt-2" role="status">{t("Loading")}</small>}
+        {(termsError || termsLoadError) && <div id="checkout-terms-error" className="text-danger small mt-2" role="alert">{t(termsLoadError ? "CheckoutTermsUnavailable" : termsError)}</div>}
+        {termsLoadError && <button type="button" className="btn btn-link p-0 mt-1" onClick={() => refetchTerms()}>{t("RetryLegalContent")}</button>}
+      </div>
+      <Btn type="button" className="order-btn" onClick={handleClick} disabled={loading}>
         {loading ? t("Loading") : t("PlaceOrder")}
       </Btn>
     </div>

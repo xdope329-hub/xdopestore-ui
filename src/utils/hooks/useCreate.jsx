@@ -8,9 +8,9 @@ const useCreate = (url, updateId, path = false, message, extraFunction, notHandl
   const pathName = usePathname();
   return useMutation({
     mutationFn: (data) => request({ url: updateId ? `${url}/${Array.isArray(updateId) ? updateId.join("/") : updateId}` : url, data, method: "post", responseType: responseType ? responseType : "" }),
-    onSuccess: (resDta) => {
+    onSuccess: (resDta, variables) => {
       !notHandler && SuccessHandle(resDta, router, path, message, setCouponError, pathName, setShowBoxMessage);
-      extraFunction && extraFunction(resDta);
+      extraFunction && extraFunction(resDta, variables);
       refetch && refetch();
     },
     onError: (err) => {

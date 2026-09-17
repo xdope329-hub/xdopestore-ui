@@ -120,6 +120,8 @@ test.describe("Checkout — validación del invitado", () => {
     await page.locator('input[name="email"]').fill("correo-invalido");
     await phone.fill("300abc");
 
+    await page.locator("#checkout-terms-accepted").check();
+
     await page.locator(".order-btn").first().click();
     // Toast con el primer requisito pendiente…
     await expect(page.locator(".Toastify__toast--error").first()).toBeVisible({ timeout: 8000 });
@@ -144,6 +146,7 @@ test.describe("Checkout — validación del invitado", () => {
     const password = page.locator('input[name="password"]');
     await expect(password).toBeVisible();
     await password.fill("abc");
+    await page.locator("#checkout-terms-accepted").check();
     await page.locator(".order-btn").first().click();
     await expect(password).toHaveClass(/is-invalid/, { timeout: 8000 });
     await expect(page.locator(".invalid-feedback").filter({ hasText: /8/ })).toBeVisible();

@@ -1,5 +1,6 @@
 "use client";
 import CapacityHint from "@/components/widgets/capacity/CapacityHint";
+import { useEcommerceView } from "@/components/analytics/GoogleAnalytics";
 import CapacityNotice from "@/components/widgets/capacity/CapacityNotice";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
@@ -15,6 +16,7 @@ const CartContent = () => {
   const { cartProducts, getCartLoading } = useContext(CartContext);
   const { isLoading } = useContext(ThemeOptionContext);
   const { capacityReached } = useContext(SettingContext) || {};
+  useEcommerceView("view_cart", cartProducts, "cart", !isLoading && !getCartLoading);
 
   if (isLoading) return <Loader />;
   return (

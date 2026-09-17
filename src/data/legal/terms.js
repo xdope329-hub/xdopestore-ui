@@ -1,6 +1,8 @@
 // Terms & Conditions content for XDOPE Store, keyed by language.
 // Rendered by src/components/pages/legal/index.jsx.
 // Each section: { h: heading, ps: [paragraphs], list: [bullet items] (optional, rendered after ps) }.
+// Keep this version paired with the API's immutable fallback terms archive.
+export const BUNDLED_TERMS_VERSION = "bundled-2026-08-27";
 const terms = {
   es: {
     title: "Términos y Condiciones",

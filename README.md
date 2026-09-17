@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+Google Analytics setup and funnel events: [Google Analytics 4](docs/google-analytics.md).
+
+Checkout terms, acceptance records and deployment: [Checkout terms](docs/checkout-terms.md).
+
 ## Getting Started
 
 First, run the development server:

@@ -171,6 +171,8 @@ test.describe("Checkout — recent fixes", () => {
       if (msg.type() === "error") consoleErrors.push(msg.text());
     });
 
+    await page.locator("#checkout-terms-accepted").check();
+
     await placeOrderBtn.click();
 
     // Toast with the server message
@@ -213,6 +215,7 @@ test.describe("Checkout — recent fixes", () => {
 
     const placeOrderBtn = page.locator(".order-btn").first();
     if (!(await placeOrderBtn.isEnabled())) test.skip(true, "Place Order disabled in this state");
+    await page.locator("#checkout-terms-accepted").check();
     await placeOrderBtn.click();
     await expect.poll(() => initializeBody, { timeout: 10000 }).not.toBeNull();
 
