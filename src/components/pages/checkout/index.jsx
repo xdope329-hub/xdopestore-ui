@@ -1,5 +1,7 @@
 "use client";
 import CapacityNotice from "@/components/widgets/capacity/CapacityNotice";
+import { useEcommerceView } from "@/components/analytics/GoogleAnalytics";
+import CartContext from "@/context/cartContext";
 import WrapperComponent from "@/components/widgets/WrapperComponent";
 import AccountContext from "@/context/accountContext";
 import SettingContext from "@/context/settingContext";
@@ -25,12 +27,14 @@ import PaymentOptions from "./PaymentOptions";
 const CheckoutContent = () => {
   const { t } = useTranslation("common");
   const { accountData, refetch } = useContext(AccountContext);
-  const { settingData, capacityReached } = useContext(SettingContext);
+  const { settingData, capacity, capacityReached } = useContext(SettingContext);
   const [address, setAddress] = useState([]);
   const [modal, setModal] = useState("");
   const router = useRouter();
   const [accessToken, setAccessToken] = useState(null);
   const { isLoading: themeLoad, openAuthModal, setOpenAuthModal } = useContext(ThemeOptionContext);
+  const { cartProducts } = useContext(CartContext);
+  useEcommerceView("begin_checkout", cartProducts, "checkout", !themeLoad && !!capacity && !capacityReached);
 
   // Re-read the auth cookie whenever the auth modal opens/closes, so once a
   // guest logs in from the checkout prompt the address/payment UI appears
@@ -120,6 +124,8 @@ const CheckoutContent = () => {
               delivery_description: "",
               delivery_interval: "",
               payment_method: "",
+              terms_accepted: false,
+              terms_version: "",
               create_account: false,
               name: "",
               email: "",

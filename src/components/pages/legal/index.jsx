@@ -13,13 +13,18 @@ import { useTranslation } from "react-i18next";
 // slug from the API. If the API has no published page for the slug, the
 // bundled bilingual content from src/data/legal is rendered as fallback.
 const LegalPage = ({ slug, fallback }) => {
-  const { i18n } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const lang = (i18n?.resolvedLanguage || i18n?.language || "es").split("-")[0];
   const staticPage = fallback?.[lang] || fallback?.es;
 
-  const { data: adminPage, isLoading } = useFetchQuery(
+  const { data: adminPage, isLoading, isError, refetch } = useFetchQuery(
     [PageAPI, slug],
-    () => request({ url: `${PageAPI}/${slug}` }),
+    async () => {
+      const response = await request({ url: `${PageAPI}/${slug}` });
+      // An outage must not silently substitute bundled text for published terms.
+      if (!response?.ok && response?.status !== 404) throw new Error("LegalContentUnavailable");
+      return response;
+    },
     {
       enabled: Boolean(slug),
       refetchOnWindowFocus: false,
@@ -37,7 +42,12 @@ const LegalPage = ({ slug, fallback }) => {
       <Breadcrumbs title={title} subNavigation={[{ name: title }]} />
       <WrapperComponent classes={{ sectionClass: "legal-section section-b-space", fluidClass: "container", colClass: "col-sm-12" }}>
         <div className="legal-content">
-          {adminPage?.content ? (
+          {isError ? (
+            <div role="alert">
+              <p>{t("LegalContentUnavailable")}</p>
+              <button type="button" className="btn btn-solid" onClick={() => refetch()}>{t("RetryLegalContent")}</button>
+            </div>
+          ) : adminPage?.content ? (
             <div dangerouslySetInnerHTML={trustedHtml(adminPage.content)} />
           ) : (
             <>

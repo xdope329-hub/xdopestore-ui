@@ -1,4 +1,5 @@
 import Avatar from "@/components/widgets/Avatar";
+import { useAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { placeHolderImage } from "@/components/widgets/Placeholder";
 import CartContext from "@/context/cartContext";
 import ProductIdsContext from "@/context/productIdsContext";
@@ -15,6 +16,7 @@ import { Col, Row } from "reactstrap";
 import VariantDropDown from "./VariantDropDown";
 
 const ProductBundle = ({ productState, setProductState }) => {
+  const analytics = useAnalytics();
   const [crossSellProduct, setCrossSellProduct] = useState([]);
   const { t } = useTranslation("common");
   const isLogin = Cookies.get("uat");
@@ -22,7 +24,9 @@ const ProductBundle = ({ productState, setProductState }) => {
   const { convertCurrency } = useContext(SettingContext);
   const { filteredProduct } = useContext(ProductIdsContext);
   const [selectedProductIds, setSelectedProductIds] = useState([]);
-  const { data: addData, mutate, isLoading } = useCreate(AddToCartAPI, false, false, "No");
+  const { data: addData, mutate, isLoading } = useCreate(AddToCartAPI, false, false, "No", (response, variables) => {
+    if (response?.ok) analytics?.ecommerce("add_to_cart", [variables]);
+  });
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [total, setTotal] = useState(0);
 
@@ -67,6 +71,7 @@ const ProductBundle = ({ productState, setProductState }) => {
         }
         let obj = { product: elem, product_id: elem.id, quantity: qty, sub_total: elem?.sale_price, variation_id: null };
         isLogin && mutate(obj);
+        if (!isLogin) analytics?.ecommerce("add_to_cart", [obj]);
       });
     }
   };

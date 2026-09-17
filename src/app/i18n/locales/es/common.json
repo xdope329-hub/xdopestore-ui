@@ -893,5 +893,11 @@
   "Reasonisrequired": "Indica el motivo del reembolso",
   "Refund_pending": "Reembolso pendiente",
   "Refund_approved": "Reembolso aprobado",
-  "Refund_rejected": "Reembolso rechazado"
+  "Refund_rejected": "Reembolso rechazado",
+  "CheckoutAcceptTermsPrefix": "Acepto los",
+  "CheckoutTermsRequired": "Debes aceptar los Términos y Condiciones para realizar tu pedido.",
+  "CheckoutTermsChanged": "Los Términos y Condiciones han cambiado. Revísalos y acéptalos de nuevo para continuar.",
+  "CheckoutTermsUnavailable": "No pudimos cargar los términos de la compra. Inténtalo de nuevo antes de realizar tu pedido.",
+  "LegalContentUnavailable": "No pudimos cargar esta página. Inténtalo de nuevo para leer la versión vigente.",
+  "RetryLegalContent": "Intentar de nuevo"
 }

@@ -123,6 +123,7 @@ test.describe("Checkout", () => {
 
     const placeOrderBtn = page.locator('.order-btn, button:has-text("Place Order")').first();
     if (await placeOrderBtn.isEnabled()) {
+      await page.locator("#checkout-terms-accepted").check();
       await placeOrderBtn.click();
       // Wait for navigation to success or payment gateway
       await page.waitForNavigation({ timeout: 15000 }).catch(() => {});
