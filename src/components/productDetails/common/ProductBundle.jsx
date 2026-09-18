@@ -64,10 +64,15 @@ const ProductBundleContent = ({ productState, compact = false }) => {
   const [checkedProductIds, setCheckedIds] = useState([]);
   const checkedIds = isBundle ? items.map((it) => String(it.product.id))
     : checkedProductIds.filter((id) => items.some((it) => String(it.product.id) === id));
+  // Un bundle puede repetir el mismo producto en varios slots (con distintas
+  // allowed_variation_ids), así que la selección se guarda por índice de slot.
+  // El cross-sell mantiene la clave por product_id (no hay duplicados ahí).
   const [variationByProduct, setVariationByProduct] = useState({});
-  const selectedVariations = Object.fromEntries(items.map((it) => {
+  const [variationBySlot, setVariationBySlot] = useState({});
+  const bundleVariations = items.map((it, i) => selectedBundleVariation(it, variationBySlot[i]));
+  const selectedVariations = Object.fromEntries(items.map((it, i) => {
     const pid = String(it.product.id);
-    return [pid, selectedBundleVariation(it, variationByProduct[pid])];
+    return [pid, isBundle ? bundleVariations[i] : selectedBundleVariation(it, variationByProduct[pid])];
   }));
 
   const onProductCheck = (event) => {
@@ -76,18 +81,19 @@ const ProductBundleContent = ({ productState, compact = false }) => {
     if (event.target.checked) setCheckedIds((prev) => Array.from(new Set([...prev, productId])));
     else setCheckedIds((prev) => prev.filter((id) => id !== productId));
   };
-  const onVariantSelected = (productId, variation) => {
-    setVariationByProduct((prev) => ({ ...prev, [String(productId)]: variationId(variation) }));
+  const onVariantSelected = (slot, productId, variation) => {
+    if (isBundle) setVariationBySlot((prev) => ({ ...prev, [slot]: variationId(variation) }));
+    else setVariationByProduct((prev) => ({ ...prev, [String(productId)]: variationId(variation) }));
   };
 
   // Paquete (cross-sell): la ficha primero y luego cada relacionado marcado.
   const packageInput = { parent, parentVariation, items, checkedIds, selectedVariations };
   const lines = isBundle ? [] : packageLines(packageInput);
 
-  // ¿Faltan variantes por elegir? Bundle: en cada item. Paquete: en la ficha
+  // ¿Faltan variantes por elegir? Bundle: en cada slot. Paquete: en la ficha
   // o en algún relacionado marcado.
   const missingVariant = isBundle
-    ? items.some((it) => Array.isArray(it.product.variations) && it.product.variations.length > 0 && !selectedVariations[String(it.product.id)])
+    ? items.some((it, i) => Array.isArray(it.product.variations) && it.product.variations.length > 0 && !bundleVariations[i])
     : packageMissingVariant(packageInput);
 
   // Total mostrado: bundle -> precio fijo; paquete -> ficha + marcados.
@@ -106,9 +112,9 @@ const ProductBundleContent = ({ productState, compact = false }) => {
       return;
     }
     if (isBundle) {
-      const selections = items.map((it) => {
+      const selections = items.map((it, i) => {
         const pid = String(it.product.id);
-        const variation = selectedVariations[pid];
+        const variation = bundleVariations[i];
         return { product_id: pid, variation_id: variation ? String(variation.id || variation._id) : null };
       });
       addBundleToCart?.(parent, selections);
@@ -193,19 +199,20 @@ const ProductBundleContent = ({ productState, compact = false }) => {
               })}
             </Col>
           )}
-          {items.map((it) => {
+          {items.map((it, i) => {
             const pid = String(it.product.id);
             const hasVariants = Array.isArray(it.product.variations) && it.product.variations.length > 0;
             const filteredProductForVariants = it.allowedIds.length
               ? { ...it.product, variations: (it.product.variations || []).filter((v) => it.allowedIds.includes(String(v.id || v._id))) }
               : it.product;
-            const variation = selectedVariations[pid];
+            const variation = isBundle ? bundleVariations[i] : selectedVariations[pid];
+            const slotKey = isBundle ? `${pid}-${i}` : pid;
             return (
-              <Col {...colProps} key={pid}>
+              <Col {...colProps} key={slotKey}>
                 {card({
                   product: it.product,
                   checkbox: isBundle ? null : <input type="checkbox" className="form-check-input checkbox_animated" id={`crosssell-${pid}`} value={pid} checked={checkedIds.includes(pid)} onChange={onProductCheck} />,
-                  variant: hasVariants ? <VariantDropDown product={filteredProductForVariants} value={variationId(variation)} selectedOption={(v) => onVariantSelected(pid, v)} /> : null,
+                  variant: hasVariants ? <VariantDropDown product={filteredProductForVariants} value={variationId(variation)} selectedOption={(v) => onVariantSelected(i, pid, v)} /> : null,
                   price: isBundle ? null : lineUnitPrice(it.product, variation),
                 })}
               </Col>
