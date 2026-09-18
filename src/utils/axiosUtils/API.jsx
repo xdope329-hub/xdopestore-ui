@@ -6,6 +6,7 @@ export const ForgotPasswordAPI = "/forgot-password";
 export const VerifyTokenAPI = "/verify-otp";
 export const UpdatePasswordAPI = "/update-password";
 export const LogoutAPI = "/logout";
+export const RefreshAPI = "/refresh";
 
 // Brand Logo API
 export const BrandLogo = "/brand";

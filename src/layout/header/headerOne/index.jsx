@@ -5,6 +5,7 @@ import { useHeaderScroll } from '@/utils/hooks/HeaderScroll'
 import Cookies from 'js-cookie'
 import { useRouter } from 'next/navigation'
 import { useContext, useEffect, useMemo, useState } from 'react'
+import useLogout from '@/utils/hooks/useLogout'
 import { RiHeartLine, RiLogoutBoxRLine, RiMenuLine, RiUserLine, RiDashboardLine } from 'react-icons/ri'
 import { Button, Col, Container, Row } from 'reactstrap'
 import HeaderCart from '../widgets/headerCart'
@@ -44,16 +45,7 @@ const HeaderOne = () => {
     e.preventDefault()
     isAuthenticated ? router.push('/wishlist') : setOpenAuthModal(true)
   }
-  const handleLogout = (e) => {
-    e.preventDefault()
-    Cookies.remove('uat', { path: '/' })
-    Cookies.remove('account')
-    Cookies.remove('ue')
-    localStorage.clear()
-    setIsAuthenticated(false)
-    router.push('/')
-    router.refresh()
-  }
+  const handleLogout = useLogout(() => setIsAuthenticated(false))
 
   return (
     <header className={`${themeOption?.header?.sticky_header_enable && UpScroll ? 'sticky fixed' : ''}`}>

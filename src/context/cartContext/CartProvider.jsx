@@ -223,6 +223,44 @@ const CartProvider = (props) => {
     }
   };
 
+  // Bundle: agrega un producto tipo bundle al carrito, incluyendo la
+  // composición elegida por el cliente (variantes por item). El backend
+  // valida que cada variante pertenezca al subset permitido en el admin.
+  const addBundleToCart = (product, bundleSelections, qty = 1) => {
+    const price = Number(product?.sale_price ?? product?.price) || 0;
+    const params = {
+      id: null,
+      product,
+      product_id: product?.id,
+      variation: null,
+      variation_id: null,
+      bundle_selections: bundleSelections,
+      quantity: qty,
+      sub_total: qty * price,
+    };
+    setCartProducts((prev) => {
+      // Misma composición (por producto + variante) = suma cantidad.
+      const key = (list) => (list || []).map((s) => `${s.product_id}:${s.variation_id || ""}`).sort().join("|");
+      const target = key(bundleSelections);
+      const idx = prev.findIndex((it) => String(it.product_id) === String(product?.id) && key(it.bundle_selections) === target);
+      if (idx >= 0) {
+        const next = [...prev];
+        const newQty = next[idx].quantity + qty;
+        next[idx] = { ...next[idx], quantity: newQty, sub_total: newQty * price };
+        return next;
+      }
+      return [...prev, params];
+    });
+    if (isCookie) {
+      mutate({
+        product_id: product?.id,
+        variation_id: null,
+        bundle_selections: bundleSelections,
+        quantity: qty,
+      });
+    }
+  };
+
   //Toggle open
   const cartToggleValue = (value) => {
     setCartToggle(value);
@@ -317,6 +355,7 @@ const CartProvider = (props) => {
         clearCart,
         getTotal,
         handleIncDec,
+        addBundleToCart,
         cartToggle,
         cartToggleValue,
         variationModal,
