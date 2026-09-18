@@ -1,12 +1,13 @@
 import AuthModal from '@/components/auth/authModal'
 import ThemeOptionContext from '@/context/themeOptionsContext'
-import request from '@/utils/axiosUtils'
+import request, { sideCookieOptions } from '@/utils/axiosUtils'
 import TabFocusChecker from '@/utils/customFunctions/TabFocus'
 import { ToastNotification } from '@/utils/customFunctions/ToastNotification'
 import Cookies from 'js-cookie'
 import { usePathname, useSearchParams } from 'next/navigation'
 import NextTopLoader from 'nextjs-toploader'
 import { useContext, useEffect, useState } from 'react'
+import ConfettiBurst from './confettiBurst'
 import ExitModal from './exitModal'
 import Footers from './footer'
 import Headers from './header'
@@ -14,7 +15,9 @@ import MobileMenu from './header/widgets/MobileMenu'
 import NewsLetterModal from './newsLetterModal'
 import RecentPurchase from './recentPurchase'
 import TapTop from './tapTop'
-import ThemeCustomizer from './themeCustomizer'
+import WhatsAppButton from './whatsappButton'
+import AnnouncementBar from './announcementBar'
+import { brandText, SITE_TITLE } from '@/utils/seo/siteBranding'
 
 const SubLayout = ({ children }) => {
   const isTabActive = TabFocusChecker()
@@ -33,7 +36,6 @@ const SubLayout = ({ children }) => {
     `/account/refund`,
     `/account/order`,
     `/account/addresses`,
-    `/wishlist`,
   ]
 
   useEffect(() => {
@@ -66,10 +68,7 @@ const SubLayout = ({ children }) => {
   //  Setting the current url in cookies for redirection of protected routes
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      Cookies.set(
-        'currentPath',
-        window.location.pathname + window.location.search
-      )
+      Cookies.set('currentPath', window.location.pathname + window.location.search, sideCookieOptions(60))
     }
   }, [pathName, path])
 
@@ -88,7 +87,7 @@ const SubLayout = ({ children }) => {
   }, [themeColor, themeColor2])
 
   useEffect(() => {
-    const messages = themeOption?.general?.taglines
+    const messages = themeOption?.general?.taglines?.filter((message) => brandText(message, ''))
     let timer
 
     const updateTitle = (index) => {
@@ -106,8 +105,8 @@ const SubLayout = ({ children }) => {
         let value =
           themeOption?.general?.site_title && themeOption?.general?.site_tagline
             ? `${themeOption?.general?.site_title} | ${themeOption?.general?.site_tagline}`
-            : 'Multikart Marketplace: Where Vendors Shine Together'
-        document.title = value
+            : brandText(themeOption?.general?.site_title, SITE_TITLE)
+        document.title = brandText(themeOption?.seo?.meta_title, brandText(value, SITE_TITLE))
         clearTimeout(timer)
       }
     }
@@ -115,22 +114,27 @@ const SubLayout = ({ children }) => {
     return () => {
       clearTimeout(timer)
     }
-  }, [isTabActive, themeOption])
+  }, [isTabActive, themeOption, pathName])
 
   return (
     <>
+      {/* Cinta de anuncios: sobre el header en todas las páginas */}
+      <AnnouncementBar />
       <Headers />
-      {pathName?.split('/')[1].toLowerCase() != 'product' && <MobileMenu />}
+      {/* Bottom navigation is available on every page, product pages included
+          (the product page's floating checkout pill is offset above it). */}
+      <MobileMenu />
       {children}
       <AuthModal />
       {theme != 'full_page' && <Footers />}
-      <ThemeCustomizer />
       <NextTopLoader showSpinner={false} />
+      <ConfettiBurst />
       <RecentPurchase />
       {themeOption?.popup?.news_letter?.is_enable && (
         <NewsLetterModal />
       )}
       <TapTop />
+      <WhatsAppButton />
       {themeOption?.popup?.exit?.is_enable && (
         <ExitModal />
       )}

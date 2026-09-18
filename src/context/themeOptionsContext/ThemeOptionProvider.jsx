@@ -14,6 +14,9 @@ const ThemeOptionProvider = (props) => {
   const [collectionMobile, setCollectionMobile] = useState(false);
   const [themeOption, setThemeOption] = useState({});
   const [variant, setVariant] = useState("");
+  // Producto en pantalla (ficha): el botón flotante de WhatsApp incluye su
+  // referencia en el mensaje. null fuera de la ficha.
+  const [whatsappProduct, setWhatsappProduct] = useState(null);
 
   const { data, isLoading, refetch } = useFetchQuery([ThemeOptionsAPI], () => request({ url: ThemeOptionsAPI }), {
     enabled: false,
@@ -32,7 +35,7 @@ const ThemeOptionProvider = (props) => {
 
   return (
     <>
-      <ThemeOptionContext.Provider value={{ ...props, setVariant, variant, isLoading, openAuthModal, setOpenAuthModal, themeOption, openOffCanvas, paginationDetails, setPaginationDetails, setOpenOffCanvas, cartCanvas, setCartCanvas, mobileSideBar, setMobileSideBar, collectionMobile, setCollectionMobile }}>{props.children}</ThemeOptionContext.Provider>
+      <ThemeOptionContext.Provider value={{ ...props, setVariant, variant, isLoading, openAuthModal, setOpenAuthModal, themeOption, openOffCanvas, paginationDetails, setPaginationDetails, setOpenOffCanvas, cartCanvas, setCartCanvas, mobileSideBar, setMobileSideBar, collectionMobile, setCollectionMobile, whatsappProduct, setWhatsappProduct }}>{props.children}</ThemeOptionContext.Provider>
     </>
   );
 };

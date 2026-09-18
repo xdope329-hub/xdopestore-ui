@@ -1,4 +1,5 @@
 import SettingContext from "@/context/settingContext";
+import { originalPriceToStrike } from "./widgets/priceRules";
 import Link from "next/link";
 import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
@@ -41,9 +42,9 @@ const ProductBox7 = ({ productState }) => {
           </div>
           <h4 className="price">
             {convertCurrency(productState?.product?.sale_price)}{" "}
-            {productState?.product?.discount && (
+            {Number(productState?.product?.discount) > 0 && (
               <>
-                {productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}
+                {originalPriceToStrike(productState) != null && <del>{convertCurrency(originalPriceToStrike(productState))}</del>}
                 <span className="discounted-price">{productState?.product?.discount}% {t("Off")}</span>
               </>
             )}

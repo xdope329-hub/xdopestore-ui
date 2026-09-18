@@ -1,3 +1,4 @@
+import StarRating from '@/components/widgets/starRating';
 import { useState } from 'react';
 
 const ProductRating = ({ classes = {}, totalRating, clickAble, setFieldValue, name }) => {
@@ -19,8 +20,10 @@ const ProductRating = ({ classes = {}, totalRating, clickAble, setFieldValue, na
             ))}
         </ul>
       ) : (
+        // Solo lectura: estrellas llenas según el promedio real del producto
+        // (4.3 → cuatro llenas y el 30 % de la quinta).
         <ul className={`rating ${classes?.customClass ? classes?.customClass : ''}`}>
-          {RatingStar && RatingStar.map((elem) => <li key={elem}>{elem + 1 <= totalRating ? <i className="ri-star-line fill"></i> : <i className="ri-star-line"></i>}</li>)}
+          <StarRating rating={totalRating} tag="li" />
         </ul>
       )}
     </>

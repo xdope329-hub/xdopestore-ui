@@ -12,27 +12,45 @@ const HomeProduct = ({ type, style, slider = false, productIds, product_box_styl
   const { filteredProduct } = useContext(ProductIdsContext);
   const router = useRouter();
 
+  // The saved homepage config may list the same product id more than once —
+  // dedupe before fetching so the slider never sizes itself for phantom items.
+  const uniqueIds = useMemo(() => Array.from(new Set(productIds || [])), [productIds]);
+
   // Check if productIds is defined and not empty
   const {
-    data: products,
+    data: fetchedProducts,
     refetch,
     fetchStatus,
     isLoading,
   } = useFetchQuery(
-    ["NewProds", productIds], // Include productIds in the query key
-    () => request({ url: ProductAPI, params: { ids: productIds?.join(","), status: 1 } }, router),
+    ["NewProds", uniqueIds], // Include productIds in the query key
+    () => request({ url: ProductAPI, params: { ids: uniqueIds?.join(","), status: 1 } }, router),
     {
-      enabled: !!productIds?.length, // Only fetch if productIds has values
+      enabled: !!uniqueIds?.length, // Only fetch if productIds has values
       refetchOnWindowFocus: false,
       select: (res) => res?.data?.data,
     }
   );
 
-  const sliderSettingMain = sliderOptions && sliderOptions(productIds?.length);
+  // Defensive dedupe of the fetched list as well (by product id).
+  const products = useMemo(() => {
+    const seen = new Set();
+    return (fetchedProducts || []).filter((p) => {
+      const key = p?.id ?? p?._id ?? p?.slug;
+      if (key == null || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [fetchedProducts]);
+
+  // Size the carousel from the REAL product count (fetched), falling back to
+  // the deduped id list before data arrives — otherwise react-slick clones
+  // slides to fill empty slots and the same product appears repeated.
+  const sliderSettingMain = sliderOptions && sliderOptions(products?.length || uniqueIds?.length);
 
   useEffect(() => {
     refetch();
-  }, [productIds]);
+  }, [uniqueIds]);
 
   return (
     <>
@@ -92,7 +110,8 @@ const HomeProduct = ({ type, style, slider = false, productIds, product_box_styl
                 {products?.map((product, index) => (
                   <div key={index}>
                     <div className={classForVertical}>
-                      <ProductBox product={product} style={style} />
+                      {/* Las primeras diapositivas están a la vista: foto inmediata. */}
+                      <ProductBox product={product} style={style} priority={index < 4} />
                     </div>
                   </div>
                 ))}
@@ -106,7 +125,9 @@ const HomeProduct = ({ type, style, slider = false, productIds, product_box_styl
             <Row className={rowClass ? rowClass : "row-cols-xl-4 row-cols-md-3 row-cols-2 g-sm-4 g-3 m-0"}>
               {products?.map((product, index) => (
                 <div key={index} className={classForVertical}>
-                  <ProductBox product={product} style={style} />
+                  {/* Primera fila (hasta 4 columnas) a la vista: foto inmediata;
+                      el resto carga en diferido al hacer scroll. */}
+                  <ProductBox product={product} style={style} priority={index < 4} />
                 </div>
               ))}
             </Row>

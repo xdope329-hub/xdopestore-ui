@@ -2,6 +2,7 @@ import request from "@/utils/axiosUtils";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";
 import { useEffect, useState } from "react";
 import MenuList from "./MenuList";
+import { visibleMenuItems } from "./menuRules";
 
 const MainHeaderMenu = () => {
   const [isOpen, setIsOpen] = useState([]);
@@ -14,7 +15,8 @@ const MainHeaderMenu = () => {
     select: (res) => {
       const originalData = res?.data?.data;
       if (!Array.isArray(originalData)) return [];
-      return originalData.map((item) => ({
+      // Sin las secciones que esta tienda no tiene (p. ej. "Blog" → /blogs, 404).
+      return visibleMenuItems(originalData).map((item) => ({
         ...item,
         class: "0",
         link_type: item.link_type ?? "link",

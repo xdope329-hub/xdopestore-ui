@@ -3,8 +3,15 @@
  */
 
 const BASE_API = process.env.API_URL || "http://localhost:5000";
-const TEST_EMAIL = process.env.TEST_EMAIL || "consumer@xdope.com";
-const TEST_PASSWORD = process.env.TEST_PASSWORD || "Consumer@123";
+// Default test credentials exist ONLY for a local API (seeded e2e database).
+// Against any other environment they must come from the environment, so a
+// password that lives in the repository never doubles as a real account.
+const IS_LOCAL_API = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(BASE_API);
+const TEST_EMAIL = process.env.TEST_EMAIL || (IS_LOCAL_API ? "consumer@xdope.com" : "");
+const TEST_PASSWORD = process.env.TEST_PASSWORD || (IS_LOCAL_API ? "Consumer@123" : "");
+if (!TEST_EMAIL || !TEST_PASSWORD) {
+  throw new Error("TEST_EMAIL and TEST_PASSWORD must be set when API_URL is not a localhost API");
+}
 const TEST_NAME = "Test Consumer";
 
 /**
@@ -25,11 +32,27 @@ async function dismissNewsletterModal(page) {
   ]);
 }
 
+// The API rate-limits /login (10 attempts / 15 min per IP). Logging in once
+// per test blew past that after ~10 tests and every later test failed with
+// 429. Cache the session for the life of the worker process; access tokens
+// last 15 min, so refresh the cache a bit before that.
+const SESSION_CACHE_TTL_MS = 10 * 60 * 1000;
+let cachedSession = null;
+
 /**
  * Ensures the test user exists. Tries to login; if 401 registers first then logs in.
  * Returns the token string.
  */
 async function ensureTestUser(page) {
+  if (cachedSession && Date.now() - cachedSession.at < SESSION_CACHE_TTL_MS) {
+    return { token: cachedSession.token, body: cachedSession.body };
+  }
+  const session = await loginOrRegister(page);
+  cachedSession = { ...session, at: Date.now() };
+  return session;
+}
+
+async function loginOrRegister(page) {
   const loginRes = await page.request.post(`${BASE_API}/login`, {
     data: { email: TEST_EMAIL, password: TEST_PASSWORD },
     headers: { "Content-Type": "application/json", Accept: "application/json" },

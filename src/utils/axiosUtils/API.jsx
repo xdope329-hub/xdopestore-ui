@@ -42,6 +42,9 @@ export const CurrencyAPI = "/currency";
 
 // Setting API
 export const SettingAPI = "/settings";
+// Capacidad diaria (cupo de hoy): la tienda decide con esto si vende o solo
+// ofrece WhatsApp (utils/customFunctions/capacityRules.js).
+export const CapacityAPI = "/capacity";
 
 // Wishlist API
 export const WishlistAPI = "/wishlist";
@@ -105,6 +108,8 @@ export const FeedBackAPI = "/question-and-answer/feedback";
 
 // Review API
 export const ReviewAPI = "/review";
+// Productos entregados que el cliente aún no ha calificado.
+export const ReviewPendingAPI = "/review/pending";
 
 // Order Status API
 export const OrderStatusAPI = "/orderStatus";
@@ -118,7 +123,7 @@ export const FaqAPI = "/faq";
 export const RePaymentAPI = "/rePayment";
 
 // Clear Cart Api
-export const ClearCart = "clear/cart";
+export const ClearCart = "/clear/cart";
 
 // Subscribe Api
 
@@ -129,3 +134,4 @@ export const SubscribeAPI = "/subscribe";
 export const OrderInvoiceAPI = "/order/invoice";
 
 export const SyncCart = "/sync/cart";
+export const ShippingAPI = "/shipping";

@@ -1,3 +1,4 @@
+import { safeHttpUrl } from "@/utils/security/safeUrl";
 import Btn from "@/elements/buttons/Btn";
 import Image from "next/image";
 import { useState } from "react";
@@ -41,7 +42,7 @@ const DigitalProductImage = ({ productState }) => {
                       </Btn>
                     )}
                     {productState?.product?.preview_type == "url" ? (
-                      <a className="theme-image-icon btn-md" href={productState?.product?.preview_url} target="_blank">
+                      <a className="theme-image-icon btn-md" href={safeHttpUrl(productState?.product?.preview_url, "#")} target="_blank" rel="noopener noreferrer">
                         <RiShareBoxLine />
                         <span className="ms-2">{t("LivePreview")}</span>
                       </a>

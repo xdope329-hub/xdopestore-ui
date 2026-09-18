@@ -8,12 +8,15 @@ import { ProductAPI } from "@/utils/axiosUtils/API";
 import { Href } from "@/utils/constants";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";;
 import { useRouter } from "next/navigation";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Slider from "react-slick";
 import { Col, Row } from "reactstrap";
+import { selectHomeTabCategories } from "./homeProductTabRules";
 
 const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle, classes, type, title, product_box_style, sliderOptions, paginate, isFilterCategoryDataNested, dynamic, customSelect }) => {
   const router = useRouter();
+  const { t } = useTranslation("common");
   const [activeTab, setActiveTab] = useState(0);
   const [currentCategory, setCurrentCategory] = useState("");
   const { filterCategory } = useContext(CategoryContext);
@@ -22,33 +25,15 @@ const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle,
 
   const [customSelectedId, setCustomSelectedId] = useState("");
 
-  const filterCategoryDataNested = (categoryData, categoryIds) => {
-    if (!categoryData || !categoryIds) return [];
-    const idSet = new Set(categoryIds);
-    const seen = new Set();
-    const result = [];
-    const visit = (category) => {
-      if (seen.has(category.id)) return;
-      if (idSet.has(category.id)) {
-        seen.add(category.id);
-        result.push(category);
-        category.subcategories?.forEach(visit);
-      } else {
-        category.subcategories?.forEach(visit);
-      }
-    };
-    categoryData.forEach(visit);
-    return result;
-  };
-
-  // The API returns a flat list that already includes subcategories — just filter by id directly.
-  const filterCategoryData = (categoryData, categoryIds) => {
-    if (!categoryData || !categoryIds) return [];
-    const idSet = new Set(categoryIds);
-    return categoryData.filter((cat) => idSet.has(cat.id));
-  };
-
-  const filteredCategories = isFilterCategoryDataNested ? filterCategoryDataNested(categoryData, categoryIds) : filterCategoryData(categoryData, categoryIds);
+  // Las categorías que eligió el administrador (Front → Category Products)
+  // se respetan tal cual, también cuando quitó todas. Antes, una lista vacía
+  // o con ids no encontrados caía a "todas las categorías con productos", así
+  // que quitar categorías en el admin no cambiaba nada en la tienda. El API
+  // ya descarta las eliminadas o sin productos (homeProductTabRules.js).
+  const filteredCategories = useMemo(
+    () => selectHomeTabCategories(categoryData, categoryIds, { nested: !!isFilterCategoryDataNested }),
+    [categoryData, categoryIds, isFilterCategoryDataNested]
+  );
 
   // Auto-select the first category as soon as the tab list is available so the
   // storefront shows its products by default (instead of "No Product Found").
@@ -59,9 +44,23 @@ const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle,
     }
   }, [filteredCategories, currentCategory]);
 
-  const { data: product, refetch, fetchStatus, isLoading } = useFetchQuery([currentCategory], () => request({ url: ProductAPI, params: { category_ids: currentCategory || customSelectedId, status: 1, paginate: paginate ? paginate : 4 } }, router), { enabled: !!(currentCategory || customSelectedId), refetchOnWindowFocus: false, select: (res) => res?.data?.data });
+  // Los productos de cada pestaña salen en el orden en que se agregaron en el
+  // admin (created_at ascendente); sin estos parámetros el API devolvía los
+  // más recientes primero.
+  const { data: productRes, refetch, fetchStatus, isLoading } = useFetchQuery([currentCategory], () => request({ url: ProductAPI, params: { category_ids: currentCategory || customSelectedId, status: 1, paginate: paginate ? paginate : 8, sortBy: "asc", field: "created_at" } }, router), { enabled: !!(currentCategory || customSelectedId), refetchOnWindowFocus: false, select: (res) => res?.data });
+  const product = productRes?.data;
+  const totalProducts = productRes?.total ?? 0;
+  // Slug of the active tab's category, for the "view all" link below.
+  const currentCategorySlug = filteredCategories?.find((c) => c?.id === currentCategory)?.slug;
 
   const changeTab = (index, category) => {
+    // Clicking the already-active category (always the case when only one
+    // category is configured) navigates to that category's product page;
+    // clicking a different tab keeps the inline tab-switching behaviour.
+    if (activeTab === index && currentCategory === category?.id && category?.slug) {
+      router.push(`/category/${category.slug}`);
+      return;
+    }
     setActiveTab(index);
     setCurrentCategory(category?.id);
   };
@@ -196,6 +195,13 @@ const HomeProductTab = ({ categoryIds, slider, style, tab_title_class, tabStyle,
               </Row>
             ) : (
               <NoDataFound customClass='no-data-added' title='NoProductFound' />
+            )}
+            {totalProducts > (product?.length || 0) && currentCategorySlug && (
+              <div className='text-center mt-4'>
+                <button type='button' className='btn btn-theme' onClick={() => router.push(`/category/${currentCategorySlug}`)}>
+                  {t("ViewAll")} ({totalProducts})
+                </button>
+              </div>
             )}
           </div>
         </div>

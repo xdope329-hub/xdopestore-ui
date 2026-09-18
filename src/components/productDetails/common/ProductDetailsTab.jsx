@@ -13,6 +13,9 @@ const ProductDetailsTab = ({ productState }) => {
   const { t } = useTranslation("common");
   let [showMore, setShowMore] = useState(false);
   const [activeTab, setActiveTab] = useState(1);
+  // Pestaña de reseñas: solo muestra las APROBADAS por el administrador
+  // (el API filtra por estado). El cliente que compró puede escribir la suya
+  // desde aquí o desde "Mis pedidos" al recibir el producto.
   const ProductDetailsTabTitle = [
     { id: 1, name: "Description" },
     { id: 2, name: "Review" },
@@ -49,6 +52,7 @@ const ProductDetailsTab = ({ productState }) => {
             </Row>
           </div>
         </TabPane>
+
         <TabPane className={activeTab == 3 ? "show active" : ""}>
           <QnATab productState={productState} activeTab={activeTab} />
         </TabPane>

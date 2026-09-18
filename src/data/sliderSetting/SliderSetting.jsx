@@ -204,22 +204,29 @@ export const bookSlider = (length) => {
 
 /* horizontalProductSlider */
 export const horizontalProductSlider = (length) => {
+  // Keep the slot count FIXED and only disable looping when everything fits.
+  // (infinite:false prevents react-slick's clone-duplication; a fixed
+  // slidesToShow keeps a lone product at normal card width instead of
+  // stretching it across the whole row.)
+  const count = length || 1;
   return {
-    loop: true,
+    infinite: count > 4,
     swipeToSlide: true,
-    slidesToShow: length > 4 ? 4 : length,
+    slidesToShow: 4,
     arrows: false,
     responsive: [
       {
         breakpoint: 992,
         settings: {
           slidesToShow: 3,
+          infinite: count > 3,
         },
       },
       {
         breakpoint: 767,
         settings: {
           slidesToShow: 2,
+          infinite: count > 2,
         },
       },
     ],
@@ -227,22 +234,25 @@ export const horizontalProductSlider = (length) => {
 };
 
 export const dynamicHorizontalSlider = (length) => {
+  const count = length || 1;
   return {
-    loop: true,
+    infinite: count > 4,
     swipeToSlide: true,
-    slidesToShow: length > 4 ? 4 : length,
+    slidesToShow: 4,
     arrows: false,
     responsive: [
       {
         breakpoint: 992,
         settings: {
           slidesToShow: 3,
+          infinite: count > 3,
         },
       },
       {
         breakpoint: 767,
         settings: {
           slidesToShow: 2,
+          infinite: count > 2,
         },
       },
     ],
@@ -756,11 +766,15 @@ export const attributeSlider = {
 
 // =========================
 export const BrandSlider = (length) => {
+  // Never show more slots than real brands, and never loop when everything
+  // already fits — otherwise react-slick clones slides and the same brand
+  // appears repeated to fill the row.
+  const count = length || 1;
   return {
     dots: false,
-    loop: true,
+    infinite: count > 5,
     speed: 300,
-    slidesToShow: length > 5 ? 5 : length,
+    slidesToShow: 5,
     swipeToSlide: true,
     responsive: [
       {
@@ -768,7 +782,7 @@ export const BrandSlider = (length) => {
         settings: {
           slidesToShow: 5,
           slidesToScroll: 5,
-          loop: true,
+          infinite: count > 5,
         },
       },
       {
@@ -776,7 +790,7 @@ export const BrandSlider = (length) => {
         settings: {
           slidesToShow: 4,
           slidesToScroll: 4,
-          loop: true,
+          infinite: count > 4,
         },
       },
       {
@@ -784,6 +798,7 @@ export const BrandSlider = (length) => {
         settings: {
           slidesToShow: 3,
           slidesToScroll: 3,
+          infinite: count > 3,
         },
       },
       {
@@ -791,6 +806,7 @@ export const BrandSlider = (length) => {
         settings: {
           slidesToShow: 2,
           slidesToScroll: 2,
+          infinite: count > 2,
         },
       },
     ],

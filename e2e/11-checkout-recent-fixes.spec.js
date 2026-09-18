@@ -171,20 +171,57 @@ test.describe("Checkout — recent fixes", () => {
       if (msg.type() === "error") consoleErrors.push(msg.text());
     });
 
+    await page.locator("#checkout-terms-accepted").check();
+
     await placeOrderBtn.click();
 
     // Toast with the server message
     const toast = page.locator('.Toastify__toast, [class*="toast"], .toast-message').first();
     await expect(toast).toBeVisible({ timeout: 8000 });
 
-    // Next.js dev overlay must NOT have rendered. Its DOM marker is
-    // `nextjs-portal` / `__next-build-watcher` — and it sets an iframe.
-    const nextOverlay = page.locator("nextjs-portal, [data-nextjs-dialog-overlay]");
+    // Next.js dev overlay must NOT have rendered. Since Next 15.4 the
+    // `nextjs-portal` element is always mounted in dev (it hosts the dev
+    // tools button), so look for an actual error dialog inside it instead.
+    const nextOverlay = page.locator('nextjs-portal [role="dialog"], nextjs-portal [data-nextjs-dialog], [data-nextjs-dialog-overlay]');
     expect(await nextOverlay.count()).toBe(0);
 
     // We tolerate informational console.warn but not console.error from our
     // own component. (Next.js itself may log unrelated errors in dev.)
     const ours = consoleErrors.filter((line) => line.includes("[PlaceOrder]"));
     expect(ours).toEqual([]);
+  });
+
+  test("un cupón escrito pero no aplicado no viaja al pago ni bloquea el pedido", async ({ page }) => {
+    await seedCartAndTwoAddresses(page);
+
+    // Capturar el cuerpo del pago sin crear una orden real.
+    let initializeBody = null;
+    await page.route("**/payment/initialize", async (route) => {
+      initializeBody = route.request().postDataJSON();
+      await route.fulfill({ status: 422, contentType: "application/json", body: JSON.stringify({ message: "capturado por el test" }) });
+    });
+
+    await page.goto("/checkout");
+    await page.waitForSelector(".checkout-details, .checkout-right-box", { timeout: 15000 });
+    await page.waitForTimeout(2500);
+
+    // Escribir un cupón inválido y dejar el foco en el campo (sin "Aplicar").
+    const couponInput = page.locator('input[name="coupon"]').first();
+    await couponInput.fill("INVALIDCOUPON999");
+
+    const paymentRadio = page.locator('input[type="radio"][name="payment_method"]').first();
+    if (await paymentRadio.isVisible()) await paymentRadio.click({ force: true });
+    await page.waitForTimeout(1500);
+
+    const placeOrderBtn = page.locator(".order-btn").first();
+    if (!(await placeOrderBtn.isEnabled())) test.skip(true, "Place Order disabled in this state");
+    await page.locator("#checkout-terms-accepted").check();
+    await placeOrderBtn.click();
+    await expect.poll(() => initializeBody, { timeout: 10000 }).not.toBeNull();
+
+    expect(initializeBody.coupon_code).toBe("");
+    expect("coupon" in initializeBody).toBe(false);
+    // Ningún aviso de cupón inválido: el único error visible es el del test.
+    await expect(page.locator(".Toastify__toast--error").filter({ hasText: /cup[oó]n|coupon/i })).toHaveCount(0);
   });
 });

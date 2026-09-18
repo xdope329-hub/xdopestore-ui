@@ -20,7 +20,7 @@ const RightVariationModal = ({ cloneVariation }) => {
       </div>
       <div className="price-text">
         <h3>
-          <span className="text-dark fw-normal">MRP:</span>
+          <span className="text-dark fw-normal">{t("MRP")}:</span>
           {cloneVariation?.selectedVariation ? convertCurrency(cloneVariation?.selectedVariation?.sale_price) : convertCurrency(cloneVariation?.product?.sale_price)}
           {(cloneVariation?.selectedVariation?.discount ?? cloneVariation?.product?.discount) ? (
             <del>{cloneVariation?.selectedVariation ? convertCurrency(cloneVariation?.selectedVariation?.price) : convertCurrency(cloneVariation?.product?.price)}</del>

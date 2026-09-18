@@ -15,7 +15,9 @@ import ProductBox8 from "./ProductBox8";
 import ProductBox9 from "./ProductBox9";
 import ProductBoxHorizontal from "./ProductBoxHorizontal";
 
-const ProductBox = ({ style = "vertical", product, boxStyle }) => {
+// `priority`: la tarjeta está visible al abrir la página → su foto se pide
+// de inmediato en vez de en diferido (ver widgets/ProductImage).
+const ProductBox = ({ style = "vertical", product, boxStyle, priority = false }) => {
   const path = useSearchParams();
   const theme = path.get("theme");
   const { themeOption, setVariant, variant } = useContext(ThemeOptionContext);
@@ -60,7 +62,7 @@ const ProductBox = ({ style = "vertical", product, boxStyle }) => {
   }, [theme]);
 
   return <>
-  {style == "vertical" && variant == "product_box_one" ? <ProductBox1 productState={productState} setProductState={setProductState} /> : style == "vertical" && variant == "product_box_two" ? <ProductBox2 productState={productState} setProductState={setProductState} /> : style == "vertical" && variant == "product_box_three" ? <ProductBox3 productState={productState} setProductState={setProductState} /> : style == "vertical" && variant == "product_box_four" ? <ProductBox4 productState={productState} /> : style == "vertical" && variant == "product_box_five" ? <ProductBox5 productState={productState} setProductState={setProductState} /> : style == "vertical" && variant == "product_box_six" ? <ProductBox6 productState={productState} /> : style == "vertical" && variant == "product_box_seven" ? <ProductBox7 productState={productState} /> : style == "vertical" && variant == "product_box_eight" ? <ProductBox8 productState={productState} /> : style == "vertical" && variant == "product_box_nine" ? <ProductBox9 productState={productState} setProductState={setProductState} /> : style == "vertical" && variant == "product_box_ten" ? <ProductBox10 productState={productState} /> : style == "vertical" && variant == "product_box_eleven" ? <ProductBox11 productState={productState} setProductState={setProductState} /> : style == "vertical" && variant == "product_box_twelve" ? <ProductBox12 setProductState={setProductState} productState={productState} /> : style == "horizontal" && <ProductBoxHorizontal productState={productState} style={boxStyle} />}</>;
+  {style == "vertical" && variant == "product_box_one" ? <ProductBox1 productState={productState} setProductState={setProductState} /> : style == "vertical" && variant == "product_box_two" ? <ProductBox2 productState={productState} setProductState={setProductState} priority={priority} /> : style == "vertical" && variant == "product_box_three" ? <ProductBox3 productState={productState} setProductState={setProductState} /> : style == "vertical" && variant == "product_box_four" ? <ProductBox4 productState={productState} /> : style == "vertical" && variant == "product_box_five" ? <ProductBox5 productState={productState} setProductState={setProductState} /> : style == "vertical" && variant == "product_box_six" ? <ProductBox6 productState={productState} /> : style == "vertical" && variant == "product_box_seven" ? <ProductBox7 productState={productState} /> : style == "vertical" && variant == "product_box_eight" ? <ProductBox8 productState={productState} /> : style == "vertical" && variant == "product_box_nine" ? <ProductBox9 productState={productState} setProductState={setProductState} /> : style == "vertical" && variant == "product_box_ten" ? <ProductBox10 productState={productState} /> : style == "vertical" && variant == "product_box_eleven" ? <ProductBox11 productState={productState} setProductState={setProductState} /> : style == "vertical" && variant == "product_box_twelve" ? <ProductBox12 setProductState={setProductState} productState={productState} /> : style == "horizontal" && <ProductBoxHorizontal productState={productState} style={boxStyle} />}</>;
 };
 
 export default ProductBox;

@@ -47,13 +47,16 @@ const DetailTitle = ({ params, data }) => {
             {`${t("OrderNumber")}: #${params}`}
           </h5>
           <div className="right-option">
-            {(data?.payment_status === "FAILED" || data?.payment_status === "PENDING") && data?.order_status && data?.order_status?.slug != "cancelled" && data?.payment_method != "cod" && (
+            {/* El API guarda el estado del pago en minúsculas (pending,
+                completed, rejected, cancelled, refunded); comparar en
+                mayúsculas dejaba el botón de reintentar pago siempre oculto. */}
+            {["pending", "rejected", "cancelled", "failed"].includes(String(data?.payment_status || "").toLowerCase()) && data?.order_status && data?.order_status?.slug != "cancelled" && data?.payment_method != "cod" && (
               <a className="btn btn-md fw-bold text-light theme-bg-color" onClick={() => setModal(true)}>
                 {t("PayNow")}
                 <RiRefreshLine className="ms-2" />
               </a>
             )}
-            {data?.invoice_url && data?.payment_status && data?.payment_status === "COMPLETED" && (
+            {data?.invoice_url && ["completed", "paid"].includes(String(data?.payment_status || "").toLowerCase()) && (
               <a onClick={() => InvoiceMutate({ order_number: data?.order_number })} size="md" className="btn fw-bold text-light theme-bg-color ms-auto">
                 {t("Invoice")} <RiDownload2Fill className="ms-2" />
               </a>

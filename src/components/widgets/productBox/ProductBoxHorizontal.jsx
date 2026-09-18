@@ -1,4 +1,5 @@
 import SettingContext from "@/context/settingContext";
+import { originalPriceToStrike } from "./widgets/priceRules";
 import { ImagePath } from "@/utils/constants";
 import Link from "next/link";
 import React, { useContext } from "react";
@@ -25,7 +26,7 @@ const ProductBoxHorizontal = ({ productState, style }) => {
               </Link>
             )}
             <Link href={`/product/ ${productState?.product?.slug}`}>
-              <h2>{productState?.selectedVariation ? productState?.selectedVariation?.name : productState?.product?.name}</h2>
+              <h2>{productState?.product?.name}</h2>
             </Link>
             {productState?.product?.short_description && <p>{productState?.product?.short_description}</p>}
             <ProductBoxVariantAttribute productState={productState} showVariableType={["color", "rectangle", "circle", "radio", "dropdown", "image"]} />
@@ -48,7 +49,7 @@ const ProductBoxHorizontal = ({ productState, style }) => {
               {productState?.product?.discount ? (
                 <>
                   {convertCurrency(productState?.product?.sale_price)}
-                  {productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}
+                  {originalPriceToStrike(productState) != null && <del>{convertCurrency(originalPriceToStrike(productState))}</del>}
                 </>
               ) : (
                 convertCurrency(productState?.product?.price)

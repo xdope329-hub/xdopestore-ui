@@ -26,7 +26,7 @@ const FooterCategories = () => {
           ))}
         </ul>
       ) : (
-        <NoDataFound customClass={"no-data-footer"} title={"NoCategoryFound"} />
+        null
       )}
     </div>
   );

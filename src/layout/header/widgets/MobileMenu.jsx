@@ -1,14 +1,37 @@
+import WhatsAppCapacityLink from "@/components/widgets/capacity/WhatsAppCapacityLink";
+import CartContext from "@/context/cartContext";
+import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
+import WishlistContext from "@/context/wishlistContext";
 import { Href } from "@/utils/constants";
-import { t } from "i18next";
+import useBumpOnIncrease from "@/utils/hooks/useBumpOnIncrease";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useContext, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { RiHeartLine, RiHome2Line, RiSearch2Line, RiShoppingBagLine, RiUserLine } from "react-icons/ri";
 
 const MobileMenu = () => {
+  // Hook de react-i18next, no el `t` global de i18next: el singleton del
+  // servidor renderizaba "Home" y el cliente "Inicio", y cada página
+  // registraba un error de hidratación de React.
+  const { t } = useTranslation("common");
   const { setOpenAuthModal, setCartCanvas } = useContext(ThemeOptionContext);
+  const { cartProducts } = useContext(CartContext) || {};
+  const cartCount = cartProducts?.length || 0;
+  const cartBumped = useBumpOnIncrease(cartCount);
+  // Sin cupo hoy (Ajustes → Capacidad) el carrito se sustituye por WhatsApp.
+  const { capacityReached } = useContext(SettingContext) || {};
+
+  // Wishlist indicator: show a count badge on the bottom-nav item whenever
+  // the wishlist has products, and bump it when something is added.
+  const { wishlistIds, wishlistProducts } = useContext(WishlistContext) || {};
+  const wishlistCount = useMemo(() => {
+    const fromIds = wishlistIds ? Object.keys(wishlistIds).length : 0;
+    return fromIds || (wishlistProducts?.length ?? 0);
+  }, [wishlistIds, wishlistProducts]);
+  const wishlistBumped = useBumpOnIncrease(wishlistCount);
 
   const isAuthenticated = Cookies.get("uat");
   const router = useRouter();
@@ -17,7 +40,7 @@ const MobileMenu = () => {
     handleActive(5);
   };
   const handleWishlist = () => {
-    isAuthenticated ? router.push("/wishlist") : setOpenAuthModal(true);
+    router.push("/wishlist");
     handleActive(4);
   };
   const [active, setActive] = useState(1);
@@ -40,14 +63,24 @@ const MobileMenu = () => {
           </Link>
         </li>
         <li className={active == "3" ? "active" : ""}>
-          <a href={Href} onClick={() => setCartCanvas(true)}>
-            <RiShoppingBagLine />
-            <span>{t("Cart")}</span>
-          </a>
+          {capacityReached ? (
+            <WhatsAppCapacityLink label style={{ position: "relative" }} />
+          ) : (
+            <a href={Href} onClick={() => setCartCanvas(true)} style={{ position: "relative" }}>
+              <span className={cartBumped ? "cart-bump" : ""} style={{ display: "inline-flex", position: "relative" }}>
+                <RiShoppingBagLine />
+                {cartCount > 0 && <span className="mobile-cart-badge">{cartCount}</span>}
+              </span>
+              <span>{t("Cart")}</span>
+            </a>
+          )}
         </li>
         <li className={active == "4" ? "active" : ""}>
-          <a href={Href} onClick={() => handleWishlist()}>
-            <RiHeartLine />
+          <a href={Href} onClick={() => handleWishlist()} style={{ position: "relative" }}>
+            <span className={wishlistBumped ? "cart-bump" : ""} style={{ display: "inline-flex", position: "relative" }}>
+              <RiHeartLine />
+              {wishlistCount > 0 && <span className="mobile-cart-badge">{wishlistCount}</span>}
+            </span>
             <span>{t("Wishlist")}</span>
           </a>
         </li>

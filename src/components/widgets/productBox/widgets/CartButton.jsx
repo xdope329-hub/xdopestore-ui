@@ -1,14 +1,19 @@
+import WhatsAppCapacityLink from "@/components/widgets/capacity/WhatsAppCapacityLink";
 import CartContext from "@/context/cartContext";
+import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
 import Btn from "@/elements/buttons/Btn";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RiAddLine, RiDeleteBinLine, RiSubtractLine } from "react-icons/ri";
 import { Input } from "reactstrap";
+import { openExternal } from "@/utils/security/safeUrl";
 
-const CartButton = ({ productState, text, classes, iconClass = true, quantity = false, selectedVariation }) => {
+const CartButton = ({ productState, text, classes, iconClass = true, quantity = false, selectedVariation, disabled = false, disabledLabel }) => {
   const { cartProducts, handleIncDec } = useContext(CartContext);
   const { cartCanvas, setCartCanvas } = useContext(ThemeOptionContext);
+  // Sin cupo hoy (Ajustes → Capacidad) el botón de compra pasa a WhatsApp.
+  const { capacityReached } = useContext(SettingContext) || {};
   const [variationModal, setVariationModal] = useState("");
   const { t } = useTranslation("common");
   const [productQty, setProductQty] = useState(0);
@@ -34,19 +39,29 @@ const CartButton = ({ productState, text, classes, iconClass = true, quantity = 
     }
   }, [getSelectedVariant]);
 
-  const externalProductLink = (link) => {
-    if (link) {
-      window.open(link, "_blank");
-    }
-  };
+  // CMS-provided URL: only http(s) is opened, and never with a window handle.
+  const externalProductLink = (link) => openExternal(link);
+
+  // Producto con variantes sin talla/color elegidos en la tarjeta: el botón
+  // queda deshabilitado con la pista, en TODOS los layouts (antes solo el 2).
+  const hasVariants = Array.isArray(productState?.product?.variations) && productState.product.variations.length > 0;
+  const variantMissing = hasVariants && !(selectedVariation || productState?.selectedVariation);
+  const isDisabled = disabled || variantMissing;
+  const disabledText = disabledLabel || (variantMissing ? t("SelectVariantFirst") : undefined);
 
   return (
     <>
-      {!productState?.product?.is_external ? (
+      {!productState?.product?.is_external && capacityReached ? (
+        <WhatsAppCapacityLink className={quantity ? "add-button add_cart capacity-add-button" : `btn btn-transparent ${classes ? classes : ""}`} text={text ? t("CapacityOrderByWhatsApp") : undefined} />
+      ) : !productState?.product?.is_external ? (
         <>
           {quantity ? (
             <>
-              {productState?.product?.stock_status === "in_stock" ? (
+              {isDisabled ? (
+                <button id={`add-to-cart${productState?.product?.id}`} type="button" className="add-button add_cart" title={disabledText} disabled>
+                  {disabledText || text}
+                </button>
+              ) : productState?.product?.stock_status === "in_stock" ? (
                 <button
                   id={`add-to-cart${productState?.product?.id}`}
                   className="add-button add_cart"
@@ -91,6 +106,13 @@ const CartButton = ({ productState, text, classes, iconClass = true, quantity = 
                 </div>
               )}
             </>
+          ) : isDisabled ? (
+            // Producto con variantes cuya talla/color aun no se ha elegido en
+            // la miniatura: se muestra el icono pero sin poder pulsarlo.
+            <button type="button" id={`select-variant-${productState?.product?.id}`} className={`btn btn-transparent variant-required ${classes ? classes : ""}`} title={disabledText} aria-label={disabledText} disabled>
+              <i className="ri-shopping-cart-line"></i>
+              {text ? <span> {text}</span> : null}
+            </button>
           ) : productState?.product?.stock_status == "in_stock" ? (
             <Btn
               color="transparent"
@@ -98,7 +120,7 @@ const CartButton = ({ productState, text, classes, iconClass = true, quantity = 
               className={`${classes ? classes : ""}  ${productQty > 0 ? "active" : ""}`}
               iconClass={iconClass ? iconClass : <RiAddLine />}
               onClick={() => {
-                productState?.product?.external_url ? window.open(productState?.product?.external_url, "_blank") : setCartCanvas(true);
+                productState?.product?.external_url ? openExternal(productState?.product?.external_url) : setCartCanvas(true);
                 handleIncDec(1, productState?.product, productQty, setProductQty, setIsOpen, productState);
                 productState?.product?.type === "classified" ? setVariationModal(productState?.product?.id) : setCartCanvas(!cartCanvas);
               }}

@@ -1,19 +1,23 @@
 import { handleModifier } from "@/utils/validation/ModifiedErrorMessage";
-import { ErrorMessage } from "formik";
+import { ErrorMessage, getIn } from "formik";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { FormFeedback, FormGroup, Input, InputGroup, InputGroupText, Label } from "reactstrap";
 
 const ReactstrapFormikInput = ({ field: { ...fields }, form: { touched, errors }, ...props }) => {
   const { t } = useTranslation("common");
+  // getIn resuelve nombres anidados ("shipping_address.title"): con la
+  // lectura plana errors[name] esos campos nunca mostraban su error.
+  const fieldError = getIn(errors, fields.name);
+  const fieldTouched = getIn(touched, fields.name);
   return (
     <>
       {props.label ? (
         <>
           <FormGroup floating>
-            <Input {...props} {...fields} value={fields.value ?? ""} invalid={Boolean(touched[fields.name] && errors[fields.name])} valid={Boolean(touched[fields.name] && !errors[fields.name])} autoComplete="off" />
+            <Input {...props} {...fields} value={fields.value ?? ""} invalid={Boolean(fieldTouched && fieldError)} valid={Boolean(fieldTouched && !fieldError)} autoComplete="off" />
             <Label htmlFor={props.id}>{t(props.label)}</Label>
-            {touched[fields.name] && errors[fields.name] ? <FormFeedback>{t(handleModifier(errors[fields.name]))}</FormFeedback> : ""}
+            {fieldTouched && fieldError ? <FormFeedback>{t(handleModifier(fieldError))}</FormFeedback> : ""}
           </FormGroup>
         </>
       ) : props.inputaddon ? (
@@ -24,8 +28,8 @@ const ReactstrapFormikInput = ({ field: { ...fields }, form: { touched, errors }
             {...fields}
             {...props}
             value={fields.value ?? ""}
-            invalid={Boolean(touched[fields.name] && errors[fields.name])}
-            valid={Boolean(touched[fields.name] && !errors[fields.name])}
+            invalid={Boolean(fieldTouched && fieldError)}
+            valid={Boolean(fieldTouched && !fieldError)}
             autoComplete="off"
             readOnly={props.readOnly ? true : false}
             onInput={(e) => {
@@ -36,7 +40,7 @@ const ReactstrapFormikInput = ({ field: { ...fields }, form: { touched, errors }
             }}
           />
           {props.postprefix && <InputGroupText>{props.postprefix}</InputGroupText>}
-          {touched[fields.name] && errors[fields.name] ? <FormFeedback>{t(handleModifier(errors[fields.name]))}</FormFeedback> : ""}
+          {fieldTouched && fieldError ? <FormFeedback>{t(handleModifier(fieldError))}</FormFeedback> : ""}
           {props?.errormsg && (
             <ErrorMessage
               name={fields.name}
@@ -52,14 +56,14 @@ const ReactstrapFormikInput = ({ field: { ...fields }, form: { touched, errors }
         <>
           {props.type == "color" ? (
             <div className="color-box">
-              <Input disabled={props.disable ? props.disable : false} {...fields} {...props} value={fields.value ?? ""} invalid={Boolean(touched[fields.name] && errors[fields.name])} valid={Boolean(touched[fields.name] && !errors[fields.name])} autoComplete="off" />
-              {touched[fields.name] && errors[fields.name] ? <FormFeedback>{t(handleModifier(errors[fields.name]))}</FormFeedback> : ""}
+              <Input disabled={props.disable ? props.disable : false} {...fields} {...props} value={fields.value ?? ""} invalid={Boolean(fieldTouched && fieldError)} valid={Boolean(fieldTouched && !fieldError)} autoComplete="off" />
+              {fieldTouched && fieldError ? <FormFeedback>{t(handleModifier(fieldError))}</FormFeedback> : ""}
               <h6>{fields.value}</h6>
             </div>
           ) : (
             <>
-              <Input disabled={props.disable ? props.disable : false} {...fields} {...props} value={fields.value ?? ""} invalid={Boolean(touched[fields.name] && errors[fields.name])} valid={Boolean(touched[fields.name] && !errors[fields.name])} autoComplete="off" />
-              {touched[fields.name] && errors[fields.name] ? <FormFeedback>{t(handleModifier(errors[fields.name]))}</FormFeedback> : ""}
+              <Input disabled={props.disable ? props.disable : false} {...fields} {...props} value={fields.value ?? ""} invalid={Boolean(fieldTouched && fieldError)} valid={Boolean(fieldTouched && !fieldError)} autoComplete="off" />
+              {fieldTouched && fieldError ? <FormFeedback>{t(handleModifier(fieldError))}</FormFeedback> : ""}
               {props?.errormsg && (
                 <ErrorMessage
                   name={fields.name}

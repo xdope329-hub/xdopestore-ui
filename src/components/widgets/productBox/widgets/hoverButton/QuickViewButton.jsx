@@ -1,22 +1,10 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import VariationModal from "../variationModal";
-
-const QuickViewButton = ({ productstate, hideAction, className }) => {
-  const { t } = useTranslation("common");
-  const [variationModal, setVariationModal] = useState("");
-  return (
-    <>
-      {!hideAction?.includes("view") && (
-        <div className={className ? className : ""} title={t("ViewProduct")} onClick={() => setVariationModal(productstate.id)}>
-          <a>
-            <i className="ri-search-line" />
-          </a>
-        </div>
-      )}
-      <VariationModal setVariationModal={setVariationModal} variationModal={variationModal} productObj={productstate} />
-    </>
-  );
-};
+/**
+ * Quick-view ("Ver producto") hover icon — intentionally disabled storewide.
+ * The trigger used to open a variation quick-view modal from the product
+ * image hover; product cards now link straight to the product page instead.
+ * Kept as a component (returning null) so ProductBox variants that render it
+ * don't need changes, and it can be restored easily if ever wanted again.
+ */
+const QuickViewButton = () => null;
 
 export default QuickViewButton;

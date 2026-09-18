@@ -1,4 +1,5 @@
 import SettingContext from "@/context/settingContext";
+import { originalPriceToStrike } from "./widgets/priceRules";
 import Link from "next/link";
 import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
@@ -33,9 +34,9 @@ const ProductBox12 = ({ productState, setProductState }) => {
             {productState?.selectedVariation ? convertCurrency(Number(productState?.selectedVariation.sale_price).toFixed(2)) : convertCurrency(Number(productState?.product?.sale_price))}
             {productState?.selectedVariation
               ? productState?.selectedVariation.discount
-              : productState?.product?.discount && (
+              : Number(productState?.product?.discount) > 0 && (
                   <>
-                    {productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}
+                    {originalPriceToStrike(productState) != null && <del>{convertCurrency(originalPriceToStrike(productState))}</del>}
                     <span className="discounted-price">
                       {productState?.selectedVariation ? productState?.selectedVariation.discount : productState?.product?.discount}% {t("Off")}
                     </span>
@@ -58,9 +59,9 @@ const ProductBox12 = ({ productState, setProductState }) => {
               {productState?.selectedVariation ? convertCurrency(Number(productState?.selectedVariation.sale_price).toFixed(2)) : convertCurrency(Number(productState?.product?.sale_price).toFixed(2))}
               {productState?.selectedVariation
                 ? productState?.selectedVariation.discount
-                : productState?.product?.discount && (
+                : Number(productState?.product?.discount) > 0 && (
                     <>
-                      {productState?.selectedVariation?.price != productState?.selectedVariation?.sale_price || (productState?.product?.price != productState?.product?.sale_price && <del>{convertCurrency(productState?.product?.price)}</del>)}
+                      {originalPriceToStrike(productState) != null && <del>{convertCurrency(originalPriceToStrike(productState))}</del>}
                       <span className="discounted-price">
                         {productState?.selectedVariation ? productState?.selectedVariation.discount : productState?.product?.discount}% {t("Off")}
                       </span>

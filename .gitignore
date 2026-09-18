@@ -7,6 +7,7 @@ pnpm-debug.log*
 
 # Next.js build output
 .next/
+.next-qa-review/
 out/
 !.next/cache/images/**
 

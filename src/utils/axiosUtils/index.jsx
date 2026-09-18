@@ -1,39 +1,25 @@
 import Cookies from "js-cookie";
+import { ACCESS_COOKIE, REFRESH_COOKIE, createSessionStore, isAuthEndpoint, shouldAttemptRefresh } from "./session";
 
 const getBaseURL = () => process.env.API_PROD_URL || "http://localhost:5000";
 
-// Cookie keys used throughout the storefront. Kept as constants so any future
-// migration (e.g. to httpOnly cookies set by the API) only needs to change
-// one place.
-const ACCESS_COOKIE = "uat";
-const REFRESH_COOKIE = "urt";
+// Toda la lógica de sesión vive en session.js (pura y testeable); aquí solo
+// se conecta con js-cookie y el localStorage del navegador.
+const session = createSessionStore(
+  Cookies,
+  () => (typeof window !== "undefined" ? window.localStorage : null),
+  { secure: typeof window !== "undefined" && window.location?.protocol === "https:" }
+);
 
-const getAccessToken = () => {
-  if (typeof document === "undefined") return "";
-  try { return Cookies.get(ACCESS_COOKIE) || ""; } catch { return ""; }
-};
-const getRefreshToken = () => {
-  if (typeof document === "undefined") return "";
-  try { return Cookies.get(REFRESH_COOKIE) || ""; } catch { return ""; }
-};
-
-// Persist a fresh token pair from either /login, /register, or /refresh.
-// Callers only need to hand us whatever the API returned - we normalise the
-// key names. `access_token` OR `token` both work.
-export function saveSession({ access_token, token, refresh_token }) {
-  const at = access_token || token;
-  if (at) Cookies.set(ACCESS_COOKIE, at, { path: "/", expires: 7 });
-  if (refresh_token) Cookies.set(REFRESH_COOKIE, refresh_token, { path: "/", expires: 30 });
-}
-
-export function clearSession() {
-  Cookies.remove(ACCESS_COOKIE, { path: "/" });
-  Cookies.remove(REFRESH_COOKIE, { path: "/" });
-  if (typeof window !== "undefined") {
-    try { localStorage.removeItem("account"); } catch {}
-    try { localStorage.removeItem("cart"); } catch {}
-  }
-}
+export const getAccessToken = session.getAccessToken;
+export const getRefreshToken = session.getRefreshToken;
+export const saveSession = session.saveSession;
+export const clearSession = session.clearSession;
+export const dropStaleRefreshToken = session.dropStaleRefreshToken;
+export const sideCookieOptions = session.sideCookieOptions;
+export const saveAccountSummary = session.saveAccountSummary;
+export const getAccountSummary = session.getAccountSummary;
+export { ACCESS_COOKIE, REFRESH_COOKIE, isAuthEndpoint, shouldAttemptRefresh };
 
 // Shared in-flight refresh promise. If ten requests all get 401 at the same
 // time we still only make ONE /refresh call, not ten.
@@ -108,12 +94,13 @@ const request = async ({ url, method = "get", data, params, responseType, header
       return opts;
     };
 
-    let first = await performFetch(fullUrl, buildOpts(getAccessToken()));
+    const sentToken = getAccessToken();
+    let first = await performFetch(fullUrl, buildOpts(sentToken));
 
-    // Transparently refresh on 401 exactly once. Skip the retry for endpoints
-    // that intentionally return 401 (login, refresh) so we don't loop.
-    const isAuthEndpoint = /\/(login|register|refresh|logout)(\?|$)/.test(url || "");
-    if (first.status === 401 && !isAuthEndpoint && getRefreshToken()) {
+    // Renovación transparente en 401, una sola vez, y SOLO si la petición
+    // salió autenticada: un invitado que toca un endpoint protegido recibe
+    // su 401 tal cual (ver shouldAttemptRefresh en session.js).
+    if (shouldAttemptRefresh({ status: first.status, url, sentToken, refreshToken: getRefreshToken() })) {
       const newAccess = await doRefresh();
       if (newAccess) {
         first = await performFetch(fullUrl, buildOpts(newAccess));
@@ -123,6 +110,21 @@ const request = async ({ url, method = "get", data, params, responseType, header
   } catch (error) {
     return { data: null, status: 0, ok: false, error };
   }
+};
+
+/**
+ * Cierre de sesión ÚNICO para toda la tienda (header, página de cuenta…):
+ * revoca el token de renovación en el servidor (sin bloquear la UI) y borra
+ * todo rastro local — ambos tokens incluidos. Un logout que solo quite la
+ * cookie de acceso deja viva la renovación silenciosa y el siguiente 401
+ * vuelve a iniciar sesión con la cuenta anterior.
+ */
+export const logout = () => {
+  const refresh = getRefreshToken();
+  if (refresh) {
+    request({ url: "/logout", method: "post", data: { refresh_token: refresh } }).catch(() => {});
+  }
+  clearSession();
 };
 
 export default request;

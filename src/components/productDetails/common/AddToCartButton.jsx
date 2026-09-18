@@ -1,14 +1,27 @@
+import CapacityNotice from "@/components/widgets/capacity/CapacityNotice";
+import SettingContext from "@/context/settingContext";
 import Btn from "@/elements/buttons/Btn";
+import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { RiShoppingCartLine } from "react-icons/ri";
+import { openExternal } from "@/utils/security/safeUrl";
 
-const AddToCartButton = ({ productState, addToCart, isLoading, buyNow, extraOption }) => {
+// `whatsappButton`: "Consultar por WhatsApp" de la ficha (ProductContent); la
+// barra fija de compra no lo pasa y sigue igual.
+const AddToCartButton = ({ productState, addToCart, isLoading, buyNow, extraOption, whatsappButton = null }) => {
   const { t } = useTranslation("common");
-  const externalProductLink = (link) => {
-    if (link) {
-      window.open(link, "_blank");
-    }
-  };
+  // CMS-provided URL: only http(s) is opened, and never with a window handle.
+  const externalProductLink = (link) => openExternal(link);
+  // Sin cupo hoy (Ajustes → Capacidad): en lugar de comprar, WhatsApp. La
+  // barra fija (extraOption === false) solo muestra el botón.
+  const { capacityReached } = useContext(SettingContext) || {};
+  if (capacityReached && !productState?.product?.is_external) {
+    return (
+      <div className="product-buy-btn-group">
+        <CapacityNotice compact buttonOnly={extraOption === false} />
+      </div>
+    );
+  }
   return (
     <div className="product-buy-btn-group">
       {!productState?.product?.is_external ? (
@@ -45,9 +58,10 @@ const AddToCartButton = ({ productState, addToCart, isLoading, buyNow, extraOpti
               </>
             )
           ) : null}
+          {extraOption !== false ? whatsappButton : null}
         </>
       ) : (
-        <Btn className="btn-md bg-theme scroll-button" onClick={externalProductLink(productState.product.external_url)}>
+        <Btn className="btn-md bg-theme scroll-button" onClick={() => externalProductLink(productState?.product?.external_url)}>
           {productState?.product?.external_button_text ? productState?.product?.external_button_text : t("BuyNow")}
         </Btn>
       )}

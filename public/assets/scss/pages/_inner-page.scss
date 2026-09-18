@@ -11543,6 +11543,9 @@
         height: 100%;
         background-color: rgba(black, 0.2);
         z-index: 1;
+        // Decorative hover overlay only — must not swallow clicks on the
+        // product image link underneath (theme-product-7 / Product Box Eight).
+        pointer-events: none;
       }
     }
 

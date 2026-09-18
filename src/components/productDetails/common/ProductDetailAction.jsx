@@ -81,7 +81,7 @@ const ProductDetailAction = ({ productState, setProductState, extraOption, isDis
         <>
           <ProductWholesale productState={productState} />
           <h4>
-            {"Total Price:"} <span className="theme-color">{convertCurrency(productState?.totalPrice)}</span>
+            {t("TotalPrice")}: <span className="theme-color">{convertCurrency(productState?.totalPrice)}</span>
           </h4>
         </>
       ) : null}

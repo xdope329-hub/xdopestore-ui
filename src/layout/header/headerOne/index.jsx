@@ -1,7 +1,11 @@
 'use client'
+import SettingContext from '@/context/settingContext'
 import ThemeOptionContext from '@/context/themeOptionsContext'
 import WishlistContext from '@/context/wishlistContext'
+import WhatsAppCapacityLink from '@/components/widgets/capacity/WhatsAppCapacityLink'
 import { useHeaderScroll } from '@/utils/hooks/HeaderScroll'
+import { getAccountSummary, logout } from '@/utils/axiosUtils'
+import { safeHttpUrl } from '@/utils/security/safeUrl'
 import Cookies from 'js-cookie'
 import { useRouter } from 'next/navigation'
 import { useContext, useEffect, useMemo, useState } from 'react'
@@ -14,12 +18,46 @@ import MainHeaderMenu from '../widgets/mainHeaderMenu'
 import TopBar from '../widgets/TopBar'
 import { useTranslation } from 'react-i18next'
 
+// Dashboard shortcut target. Build-time public value; the link is hidden
+// when unset (the old code pointed at a hard-coded http://localhost:3001).
+const ADMIN_URL = safeHttpUrl(process.env.NEXT_PUBLIC_ADMIN_URL)
+
 const HeaderOne = () => {
   const { themeOption, setOpenAuthModal, openAuthModal, mobileSideBar, setMobileSideBar } = useContext(ThemeOptionContext)
   const { wishlistIds, wishlistProducts } = useContext(WishlistContext)
+  // Sin cupo hoy (Ajustes → Capacidad) el carrito se sustituye por WhatsApp.
+  const { capacityReached } = useContext(SettingContext) || {}
   const UpScroll = useHeaderScroll(false)
   const { t } = useTranslation('common')
   const router = useRouter()
+  const pathname = usePathname()
+
+  // Close the mobile drawer whenever the route changes — this handles every
+  // navigation from inside the drawer (menu links, etc.). Submenu toggles
+  // don't change the path, so they correctly leave the drawer open.
+  useEffect(() => {
+    setMobileSideBar(false)
+  }, [pathname])
+
+  // Swipe-to-close: the drawer slides in from the left, so a leftward drag
+  // (or a clear horizontal swipe) dismisses it, like a native side menu.
+  const touchRef = useRef(null)
+  const onDrawerTouchStart = (e) => {
+    const touch = e.changedTouches[0]
+    touchRef.current = { x: touch.clientX, y: touch.clientY }
+  }
+  const onDrawerTouchEnd = (e) => {
+    if (!touchRef.current) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - touchRef.current.x
+    const dy = t.clientY - touchRef.current.y
+    touchRef.current = null
+    // Mostly-horizontal leftward swipe past a threshold → close.
+    if (dx < -60 && Math.abs(dx) > Math.abs(dy)) {
+      setMobileSideBar(false)
+    }
+  }
+
   const wishlistCount = useMemo(() => {
     const fromIds = wishlistIds ? Object.keys(wishlistIds).length : 0
     return fromIds || (wishlistProducts?.length ?? 0)
@@ -29,12 +67,9 @@ const HeaderOne = () => {
   const [isAdmin, setIsAdmin] = useState(false)
   useEffect(() => {
     setIsAuthenticated(!!Cookies.get('uat'))
-    try {
-      const account = JSON.parse(Cookies.get('account') || '{}')
-      setIsAdmin(account?.role?.name === 'admin')
-    } catch {
-      setIsAdmin(false)
-    }
+    // Cosmetic only (shows the dashboard shortcut); real authorization is
+    // enforced by the API on every request.
+    setIsAdmin(getAccountSummary()?.role?.name === 'admin')
   }, [openAuthModal])
 
   const handleProfileClick = (e) => {
@@ -43,7 +78,7 @@ const HeaderOne = () => {
   }
   const handleWishlistClick = (e) => {
     e.preventDefault()
-    isAuthenticated ? router.push('/wishlist') : setOpenAuthModal(true)
+    router.push('/wishlist')
   }
   const handleLogout = useLogout(() => setIsAuthenticated(false))
 
@@ -69,7 +104,17 @@ const HeaderOne = () => {
                     <div id="mainnav">
                       <div className="header-nav-middle">
                         <div className="main-nav navbar navbar-expand-xl navbar-light navbar-sticky">
-                          <div className={`offcanvas offcanvas-collapse order-xl-2 ${mobileSideBar ? 'show' : ''}`}>
+                          {mobileSideBar && (
+                            <div
+                              className="offcanvas-backdrop fade show d-xl-none"
+                              onClick={() => setMobileSideBar(false)}
+                            />
+                          )}
+                          <div
+                            className={`offcanvas offcanvas-collapse order-xl-2 ${mobileSideBar ? 'show' : ''}`}
+                            onTouchStart={onDrawerTouchStart}
+                            onTouchEnd={onDrawerTouchEnd}
+                          >
                             <div className="offcanvas-header navbar-shadow">
                               <h5>{t('Menu')}</h5>
                               <Button close className="lead" id="toggle_menu_btn" type="button" onClick={() => setMobileSideBar(false)}>
@@ -94,16 +139,16 @@ const HeaderOne = () => {
                           </a>
                         </li>
                         <li className="onhover-div">
-                          <HeaderCart />
+                          {capacityReached ? <WhatsAppCapacityLink /> : <HeaderCart />}
                         </li>
                         <li className="onhover-div">
                           <a href="#" onClick={handleProfileClick}>
                             <RiUserLine />
                           </a>
                         </li>
-                        {isAuthenticated && isAdmin && (
+                        {isAuthenticated && isAdmin && ADMIN_URL && (
                           <li className="onhover-div">
-                            <a href="http://localhost:3001" target="_blank" title={t("AdminPanel")}>
+                            <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer" title={t("AdminPanel")}>
                               <RiDashboardLine />
                             </a>
                           </li>

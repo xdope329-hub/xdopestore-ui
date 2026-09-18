@@ -8,6 +8,7 @@ import Breadcrumb from "@/utils/commonComponents/breadcrumb";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";;
 import { useRouter, useSearchParams } from "next/navigation";
 import { Col, TabContent, TabPane } from "reactstrap";
+import { orderFromTrackingResponse } from "./orderTrackingRules";
 import TrackOrderDetails from "./TrackOrderDetails";
 
 const OrderDetailsTracking = () => {
@@ -16,10 +17,12 @@ const OrderDetailsTracking = () => {
   let emailPhone = search.get("email_or_phone");
 
   const router = useRouter();
-  const { data, isLoading } = useFetchQuery([TrackingAPI], () => request({ url: TrackingAPI, params: { order_number: orderNumber, email_or_phone: emailPhone } }, router), {
+  // Seguimiento público: número de pedido + correo o teléfono de la compra
+  // (GET /trackOrder). Un 401/404 no es un pedido: se muestra "no encontrado".
+  const { data, isLoading } = useFetchQuery([TrackingAPI, orderNumber, emailPhone], () => request({ url: TrackingAPI, params: { order_number: orderNumber, email_or_phone: emailPhone } }, router), {
     enabled: true,
     refetchOnWindowFocus: false,
-    select: (res) => res?.data,
+    select: orderFromTrackingResponse,
   });
 
   if (isLoading) return <Loader />;

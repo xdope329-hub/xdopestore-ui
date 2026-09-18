@@ -4,11 +4,14 @@ import { Href } from "@/utils/constants";
 import CartContext from "@/context/cartContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
 import syncLocalCart from "@/utils/customFunctions/SyncLocalCart";
-import { saveSession } from "@/utils/axiosUtils";
-import { YupObject, emailSchema, passwordSchema } from "@/utils/validation/ValidationSchema";
+import { saveAccountSummary, saveSession } from "@/utils/axiosUtils";
+import { safeRedirectPath } from "@/utils/security/safeRedirect";
+import { YupObject, emailSchema, passwordSchema, recaptchaSchema } from "@/utils/validation/ValidationSchema";
+import CaptchaField, { RECAPTCHA_SITE_KEY } from "@/components/auth/common/CaptchaField";
+import GoogleLoginButton from "@/components/auth/common/GoogleLoginButton";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import Cookies from "js-cookie";
-import React, { useContext, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Label } from "reactstrap";
 import { useRouter } from "next/navigation";
@@ -22,8 +25,15 @@ const LoginForm = ({ setState }) => {
   const { setOpenAuthModal } = useContext(ThemeOptionContext);
   const { refetch: cartRefetch } = useContext(CartContext) || {};
   const router = useRouter();
+  const captchaRef = useRef(null);
 
-  const handleSubmit = async (values) => {
+  const resetCaptcha = (setFieldValue) => {
+    if (!RECAPTCHA_SITE_KEY) return;
+    captchaRef.current?.reset?.();
+    setFieldValue && setFieldValue("recaptcha", "");
+  };
+
+  const handleSubmit = async (values, { setFieldValue }) => {
     setIsSubmitting(true);
     setShowBoxMessage("");
     try {
@@ -37,8 +47,8 @@ const LoginForm = ({ setState }) => {
         // Store both access + refresh via the shared helper so this modal
         // and the page-based login stay in lock-step.
         saveSession(data || {});
-        Cookies.set("account", JSON.stringify(data?.data || {}));
-        localStorage.setItem("account", JSON.stringify(data?.data || {}));
+        // Only a small, non-sensitive summary is kept client-side (never the tokens).
+        saveAccountSummary(data?.data);
 
         // Merge the guest cart into the now-authenticated user's cart
         // before we close the modal / navigate, so items persist.
@@ -48,17 +58,20 @@ const LoginForm = ({ setState }) => {
         setOpenAuthModal && setOpenAuthModal(false);
         const callbackUrl = Cookies.get("CallBackUrl");
         if (callbackUrl) {
-          Cookies.remove("CallBackUrl");
-          router.push(callbackUrl);
+          Cookies.remove("CallBackUrl", { path: "/" });
+          // Cookie values are untrusted: only same-origin paths are followed.
+          router.push(safeRedirectPath(callbackUrl, "/"));
         } else {
           router.refresh();
         }
       } else {
         setShowBoxMessage(data?.message || "InvalidCredentials");
+        resetCaptcha(setFieldValue);
       }
     } catch (err) {
       console.error("Login error:", err);
       setShowBoxMessage("LoginFailed");
+      resetCaptcha(setFieldValue);
     } finally {
       setIsSubmitting(false);
     }
@@ -67,22 +80,29 @@ const LoginForm = ({ setState }) => {
   return (
     <Formik
       initialValues={{
-        email: "consumer@xdope.com",
-        password: "Consumer@123",
+        email: "",
+        password: "",
+        recaptcha: "",
       }}
       validationSchema={YupObject({
         email: emailSchema,
         password: passwordSchema,
+        ...(RECAPTCHA_SITE_KEY ? { recaptcha: recaptchaSchema } : {}),
       })}
       onSubmit={handleSubmit}
     >
-      {({ errors, touched }) => (
+      {({ values, errors, touched, setFieldValue, submitCount }) => (
         <Form className="auth-form-box">
           {showBoxMessage && (
             <div role="alert" className="alert alert-danger login-alert">
               <i className="ri-error-warning-line"></i> {t(showBoxMessage, { defaultValue: showBoxMessage })}
             </div>
           )}
+          {/* Google sign-in first — the fastest path for most shoppers. */}
+          <GoogleLoginButton onError={setShowBoxMessage} />
+          <div className="auth-divider" aria-hidden="true">
+            <span>{t("OrContinueWithEmail")}</span>
+          </div>
           <div className="auth-box mb-3">
             <Label htmlFor="email">{t("Email")}</Label>
             <Field name="email" className="form-control" id="email" placeholder={t("Email")} />
@@ -97,9 +117,13 @@ const LoginForm = ({ setState }) => {
               <div className="invalid-feedback d-block">{errors.password}</div>
             )}
             <a href={Href} className="forgot" onClick={() => setState("forgot")}>
-              {t("ForgotYourPassword")}?
+              {t("ForgotYourPassword")}
             </a>
           </div>
+          <CaptchaField innerRef={captchaRef} onChange={(token) => setFieldValue("recaptcha", token)} />
+          {submitCount > 0 && errors.recaptcha && (
+            <div className="invalid-feedback d-block mb-2">{errors.recaptcha}</div>
+          )}
           <Btn loading={isSubmitting} type="submit" disabled={isSubmitting}>
             {isSubmitting ? t("LoggingIn") : t("Login")}
           </Btn>

@@ -1,80 +1,29 @@
-import { Form } from "formik";
-import { Col, Input, Label, ModalFooter, Row } from "reactstrap";
+import AddressFields from "@/components/widgets/addressForm/AddressFields";
 import Btn from "@/elements/buttons/Btn";
+import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
+import { Form, useFormikContext } from "formik";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import SearchableSelectInput from "@/utils/commonComponents/inputFields/SearchableSelectInput";
-import SimpleInputField from "@/components/widgets/inputFields/SimpleInputField";
-import { AllCountryCode } from "@/data/CountryCode";
+import { Col, Input, Label, ModalFooter, Row } from "reactstrap";
 
-const SelectForm = ({ values, setFieldValue, isLoading, data, setModal, isFooterDisplay = true }) => {
+// Modal de dirección del checkout (usuario logueado). Los campos viven en
+// el componente compartido AddressFields; aquí solo queda lo propio del
+// modal: aviso de campos obligatorios, checkbox "predeterminada" y footer.
+const SelectForm = ({ values, setFieldValue, isLoading, data, setModal, isFooterDisplay = true, submitTitle = "Submit", showDefault = true }) => {
   const { t } = useTranslation("common");
+  // Intento de guardar con campos obligatorios vacíos → aviso claro.
+  const { errors, submitCount } = useFormikContext();
+  useEffect(() => {
+    if (submitCount > 0 && Object.keys(errors || {}).length) {
+      ToastNotification("error", t("CompleteRequiredFields"));
+    }
+  }, [submitCount]); // eslint-disable-line
   return (
     <Form>
       <Row className="g-3">
-        <SimpleInputField
-          nameList={[
-            { name: "title", placeholder: t("AddressLabelPlaceholder"), toplabel: "AddressLabel", colprops: { xs: 12 }, require: "true" },
-            { name: "street", placeholder: t("EnterAddress"), toplabel: "Address", colprops: { xs: 12 }, require: "true" },
-          ]}
-        />
-        <Col xs='12'>
-          <div className="country-input position-relative phone-field">
-            <SimpleInputField nameList={[{ name: "phone", type: "number", placeholder: t("EnterPhoneNumber"), require: "true", toplabel: "Phone", colclass: "country-input-box" }]} />
-            <SearchableSelectInput
-              nameList={[
-                {
-                  toplabel: "Country",
-                  name: "country_code",
-                  notitle: "true",
-                  inputprops: {
-                    name: "country_code",
-                    id: "country_code",
-                    options: AllCountryCode,
-                  },
-                },
-              ]}
-            />
-          </div>
-        </Col>
+        <AddressFields values={values} setFieldValue={setFieldValue} data={data} />
 
-        <SearchableSelectInput
-          nameList={[
-            {
-              name: "country_id",
-              require: "true",
-              title: "Country",
-              label: "Country",
-              colprops: { sm: 6 },
-              inputprops: {
-                name: "country_id",
-                id: "country_id",
-                options: data,
-                defaultOption: t("SelectState"),
-              },
-            },
-            {
-              name: "state_id",
-              require: "true",
-              title: "State",
-              label: "State",
-              colprops: { sm: 6 },
-              inputprops: {
-                name: "state_id",
-                id: "state_id",
-                options: values?.["country_id"] ? data?.filter((country) => Number(country.id) === Number(values?.["country_id"]))?.[0]?.["state"] : [],
-                defaultOption: t("SelectState"),
-              },
-              disabled: values?.["country_id"] ? false : true,
-            },
-          ]}
-        />
-        <SimpleInputField
-          nameList={[
-            { name: "city", placeholder: t("EnterCity"), toplabel: "City", colprops: { xxl: 6, lg: 12, sm: 6 }, require: "true" },
-            { name: "pincode", placeholder: t("EnterPincode"), toplabel: "Pincode", colprops: { xxl: 6, lg: 12, sm: 6 }, require: "true" },
-          ]}
-        />
-
+        {showDefault && (
         <Col xs={12}>
           <div className="form-box form-checkbox">
             <Input
@@ -90,11 +39,12 @@ const SelectForm = ({ values, setFieldValue, isLoading, data, setModal, isFooter
             </Label>
           </div>
         </Col>
+        )}
 
         {isFooterDisplay && (
           <ModalFooter className="ms-auto justify-content-end save-back-button">
             <Btn size="md" className="btn-outline fw-bold" title="Cancel" onClick={() => setModal(false)} />
-            <Btn className="btn-solid" type="submit" title="Submit" loading={Number(isLoading)} />
+            <Btn className="btn-solid" type="submit" title={submitTitle} loading={Number(isLoading)} disabled={!!isLoading} />
           </ModalFooter>
         )}
       </Row>

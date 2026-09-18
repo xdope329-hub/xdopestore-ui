@@ -1,6 +1,7 @@
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
+import { fireConfettiAsync } from "@/utils/customFunctions/Confetti";
 import { useRouter } from "next/navigation";
 import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,10 +18,12 @@ const StickyCheckoutButtons = ({ productState, setProductState, extraOption, isD
   const addToCart = () => {
     setCartCanvas(true);
     handleIncDec(productState?.productQty, productState?.product, false, false, false, productState);
+    fireConfettiAsync();
   };
   const buyNow = () => {
     handleIncDec(productState?.productQty, productState?.product, false, false, false, productState);
     router.push(`/checkout`);
+    fireConfettiAsync();
   };
 
   return (
@@ -29,7 +32,7 @@ const StickyCheckoutButtons = ({ productState, setProductState, extraOption, isD
         <>
           <ProductWholesale productState={productState} />
           <h4>
-            {"Total Price:"} <span className="theme-color">{convertCurrency(productState?.totalPrice)}</span>
+            {t("TotalPrice")}: <span className="theme-color">{convertCurrency(productState?.totalPrice)}</span>
           </h4>
         </>
       ) : null}

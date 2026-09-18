@@ -3,7 +3,10 @@
 export const fallbackLng = "es";
 // Only EN, ES
 export const languages = ["es", "en"];
-export const defaultNS = "translation";
+// The only namespace that actually exists is common.json — it must be the
+// default, otherwise bare i18next.t() calls (toasts, cart messages) look up
+// a nonexistent "translation" namespace and silently fall back to English.
+export const defaultNS = "common";
 
 export function getOptions(lng = fallbackLng, ns = defaultNS) {
   return {

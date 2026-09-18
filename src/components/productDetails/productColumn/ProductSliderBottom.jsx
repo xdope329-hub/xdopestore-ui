@@ -1,8 +1,7 @@
 import React from "react";
 import { Col, Row } from "reactstrap";
-import SwiperCore, { Navigation } from "swiper/core";
+import { Navigation } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
-SwiperCore.use([Navigation]);
 
 const ProductSliderBottom = ({ productState }) => {
   return (
@@ -10,7 +9,7 @@ const ProductSliderBottom = ({ productState }) => {
       <Row>
         <Col xs="12" className="p-0">
           <div className="slider-nav">
-            <Swiper navigation={{ prevEl: ".swiper-button-prev", nextEl: ".swiper-button-next" }} slidesPerView={1} spaceBetween={10} className="main-slider swiper-horizontal">
+            <Swiper modules={[Navigation]} navigation={{ prevEl: ".swiper-button-prev", nextEl: ".swiper-button-next" }} slidesPerView={1} spaceBetween={10} className="main-slider swiper-horizontal">
               <div className="swiper-button-prev"></div>
               <div className="swiper-button-next"></div>
               {productState?.product?.product_galleries?.map((img, index) => (

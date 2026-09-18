@@ -145,9 +145,11 @@ const ProductBoxVariantAttribute = ({ productState, setProductState, productBox1
     let tempSelected = selectedOptions;
     let tempSoldOutAttributesIds = [];
     setSoldOutAttributesIds((prev) => tempSoldOutAttributesIds);
-    const index = tempSelected?.findIndex((item) => Number(item.attribute_id) === Number(tempVal?.attribute_id));
+    // Ids como texto: son ObjectId de Mongo, Number() los volvía NaN y la
+    // talla/color elegidos en la tarjeta nunca resolvían a una variante.
+    const index = tempSelected?.findIndex((item) => String(item.attribute_id) === String(tempVal?.attribute_id));
     if (index === -1) {
-      tempSelected.push({ id: Number(tempVal?.id), attribute_id: Number(tempVal?.attribute_id) });
+      tempSelected.push({ id: tempVal?.id, attribute_id: tempVal?.attribute_id });
       setSelectedOptions(tempSelected);
     } else {
       tempSelected[index].id = tempVal?.id;

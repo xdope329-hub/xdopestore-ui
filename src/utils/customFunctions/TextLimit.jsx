@@ -1,4 +1,5 @@
 import React from "react";
+import { trustedHtml } from "@/utils/security/sanitizeHtml";
 
 const TextLimit = ({ value, maxLength, tag, classes }) => {
   if (!value) {
@@ -33,8 +34,9 @@ const containsHtmlTags = (value) => {
   return htmlRegex.test(value);
 };
 
-const sanitizeAndTrustHtml = (htmlString) => {
-  return { __html: htmlString };
-};
+// Product descriptions are CMS HTML: sanitised with DOMPurify (and never
+// emitted raw during SSR). Truncating with substring can leave broken tags -
+// the sanitiser also repairs those.
+const sanitizeAndTrustHtml = (htmlString) => trustedHtml(htmlString);
 
 export default TextLimit;

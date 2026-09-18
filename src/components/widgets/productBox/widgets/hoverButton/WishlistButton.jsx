@@ -1,8 +1,7 @@
 import WishlistContext from "@/context/wishlistContext";
-import ThemeOptionContext from "@/context/themeOptionsContext";
 import Btn from "@/elements/buttons/Btn";
 import { audioFile, Href } from "@/utils/constants";
-import Cookies from "js-cookie";
+import { getWishlistProductId } from "@/utils/customFunctions/SyncLocalWishlist";
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RiHeartFill, RiHeartLine } from "react-icons/ri";
@@ -10,22 +9,17 @@ import { RiHeartFill, RiHeartLine } from "react-icons/ri";
 const WishlistButton = ({ productstate, customClass, hideAction, customAnchor }) => {
   const { t } = useTranslation("common");
   const [addToWishlistAudio] = useState(() => (typeof window !== "undefined" ? new Audio(audioFile) : null));
-  const { setOpenAuthModal } = useContext(ThemeOptionContext);
   const { addToWishlist, removeWishlist, wishlistIds } = useContext(WishlistContext);
 
-  const productId = String(productstate?.id || productstate?._id || "");
+  const productId = getWishlistProductId(productstate);
   const isWishlisted = !!wishlistIds?.[productId];
 
   const handelWishlist = () => {
-    if (Cookies.get("uat")) {
-      addToWishlistAudio?.play();
-      if (isWishlisted) {
-        removeWishlist(productId, wishlistIds[productId]);
-      } else {
-        addToWishlist(productstate);
-      }
+    addToWishlistAudio?.play();
+    if (isWishlisted) {
+      removeWishlist(productId, wishlistIds[productId]);
     } else {
-      setOpenAuthModal(true);
+      addToWishlist(productstate);
     }
   };
 

@@ -1,3 +1,4 @@
+import { getIn } from "formik";
 import useOutsideDropdown from "@/utils/hooks/useOutsideDropdown";
 import Image from "next/image";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -11,8 +12,9 @@ const ReactstrapSelectInput = ({ field, form: { touched, errors, setFieldValue }
   const [selectedItems, setSelectedItems] = useState();
   const [list, setList] = useState([]);
   const { ref, isComponentVisible, setIsComponentVisible } = useOutsideDropdown();
-  let error = errors[field.name];
-  let touch = touched[field.name];
+  // getIn resuelve nombres anidados ("shipping_address.state_id").
+  let error = getIn(errors, field.name);
+  let touch = getIn(touched, field.name);
   // On initial mount setting options data
   useEffect(() => {
     setList(props.inputprops.options);
@@ -92,7 +94,7 @@ const ReactstrapSelectInput = ({ field, form: { touched, errors, setFieldValue }
     <>
       {props.label && (
         <Label htmlFor={props.inputprops.id}>
-          {props.label}
+          {t(props.label)}
         </Label>
       )}
       <div className="custom-select-box cursor-pointer" ref={ref}>

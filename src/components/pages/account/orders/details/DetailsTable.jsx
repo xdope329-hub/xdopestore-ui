@@ -8,15 +8,19 @@ import RefundModal from "./RefundModal";
 import { Href } from "@/utils/constants";
 import Btn from "@/elements/buttons/Btn";
 import { CapitalizeMultiple } from "@/utils/customFunctions/Capitalize";
+import { refundButtonState } from "./refundRules";
 
-const DetailsTable = ({ data }) => {
+// `readOnly`: seguimiento público sin sesión → sin columna ni modal de reembolso.
+const DetailsTable = ({ data, refetch, readOnly = false }) => {
   const { t } = useTranslation("common");
   const { convertCurrency } = useContext(SettingContext);
   const [modal, setModal] = useState("");
   const [storeData, setStoreData] = useState("");
   const onModalOpen = (product) => {
     setStoreData(product);
-    setModal(product?.id);
+    // Las líneas del pedido no tienen `id` propio: con `product.id` el modal
+    // recibía undefined y nunca se abría.
+    setModal(product?.product_id || product?.id || "refund");
   };
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const toggle = (index) =>
@@ -40,7 +44,7 @@ const DetailsTable = ({ data }) => {
                     <th scope="col">{t("Price")}</th>
                     <th scope="col">{t("Quantity")}</th>
                     <th scope="col">{t("Subtotal")}</th>
-                    <th scope="col">{t("RefundStatus")}</th>
+                    {!readOnly && <th scope="col">{t("RefundStatus")}</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -52,6 +56,15 @@ const DetailsTable = ({ data }) => {
                           </td>
                           <td>
                             <h6>{product?.pivot?.variation ? product?.pivot?.variation?.name : product?.name}</h6>
+                            {/* Variante comprada (Color, Talla…) y SKU, guardados en el pedido. */}
+                            {product?.variation_attributes?.length > 0 && (
+                              <div className="text-content" style={{ fontSize: "13px" }}>
+                                {product.variation_attributes.map((attr, i) => (
+                                  <span key={i} className="me-2">{attr?.name ? <><strong>{attr.name}:</strong> </> : null}{attr?.value}</span>
+                                ))}
+                              </div>
+                            )}
+                            {product?.sku && <div className="text-content" style={{ fontSize: "13px" }}><strong>SKU:</strong> {product.sku}</div>}
                           </td>
                           <td>
                             <h6>{convertCurrency(product?.pivot?.single_price)}</h6>
@@ -62,28 +75,40 @@ const DetailsTable = ({ data }) => {
                           <td>
                             <h6>{convertCurrency(product?.pivot?.subtotal)}</h6>
                           </td>
+                          {!readOnly && (
                           <td>
-                            {data.payment_status && product?.is_return === 1 && data.payment_status && data.payment_status === "COMPLETED" && data.order_status && data.order_status.slug == "delivered" && !product?.pivot?.refund_status ? (
-                              <a className="btn btn-solid" href={Href} onClick={() => onModalOpen(product)}>
-                                {t("Refund")}
-                              </a>
-                            ) : product.is_return === 0 ? (
-                              <span>{t("NonRefundable")}</span>
-                            ) : product?.pivot?.refund_status ? (
-                              <div className={`status-${product?.pivot?.refund_status?.toLowerCase()}`}>
-                                <span>{CapitalizeMultiple(product?.pivot?.refund_status)}</span>
-                              </div>
-                            ) : (
-                              <>
-                              <div className="black-tooltip" id={"refunded" + i}>
-                                {!product?.pivot?.refund_status && <Btn className="btn-solid disabled"> {t("Refund")}</Btn>}
-                              </div>
-                                <Tooltip isOpen={tooltipOpen[i]} target={"refunded" + i} toggle={() => toggle(i)}>
-                                {t("EnableAfterDelivery")}
-                              </Tooltip>
-                              </>
-                            )}
+                            {(() => {
+                              // Regla en refundRules.js: antes se comparaba `is_return === 1`
+                              // y el API mandaba `true`, así que el botón nunca se habilitaba.
+                              const refund = refundButtonState({ product, order: data });
+                              if (refund.state === "refund") {
+                                return (
+                                  <a className="btn btn-solid" href={Href} onClick={() => onModalOpen(product)}>
+                                    {t("Refund")}
+                                  </a>
+                                );
+                              }
+                              if (refund.state === "non_refundable") return <span>{t("NonRefundable")}</span>;
+                              if (refund.state === "requested") {
+                                return (
+                                  <div className={`status-${refund.status}`}>
+                                    <span>{t(`Refund_${refund.status}`, { defaultValue: CapitalizeMultiple(refund.status) })}</span>
+                                  </div>
+                                );
+                              }
+                              return (
+                                <>
+                                  <div className="black-tooltip" id={"refunded" + i}>
+                                    <Btn className="btn-solid disabled"> {t("Refund")}</Btn>
+                                  </div>
+                                  <Tooltip isOpen={tooltipOpen[i]} target={"refunded" + i} toggle={() => toggle(i)}>
+                                    {t("EnableAfterDelivery")}
+                                  </Tooltip>
+                                </>
+                              );
+                            })()}
                           </td>
+                          )}
                         </tr>
                       ))
                     : null}
@@ -93,7 +118,7 @@ const DetailsTable = ({ data }) => {
           </div>
         </CardBody>
       </Card>
-      <RefundModal modal={modal} setModal={setModal} storeData={storeData} />
+      {!readOnly && <RefundModal modal={modal} setModal={setModal} storeData={storeData} orderId={data?.id} onSubmitted={refetch} />}
     </>
   );
 };

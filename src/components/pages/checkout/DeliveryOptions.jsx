@@ -12,6 +12,8 @@ const DeliveryOptions = ({ values, setFieldValue }) => {
   useEffect(() => {
     if (settingData?.delivery?.default?.title && settingData?.delivery?.default?.description) {
       setFieldValue("delivery_description", `${settingData?.delivery?.default?.title} | ${settingData?.delivery?.default?.description}`);
+      // La opción marcada es la estándar: sin franja horaria.
+      setFieldValue("isTimeSlot", false);
       setDefaultDe(1);
     }
   }, [settingData]);
@@ -49,7 +51,8 @@ const DeliveryOptions = ({ values, setFieldValue }) => {
               </div>
             </div>
           </Col>
-          {settingData?.delivery?.same_day_delivery && (
+          {/* !!: con un 0 guardado React pintaba un "0" suelto en la tarjeta */}
+          {!!settingData?.delivery?.same_day_delivery && (
             <>
               <Col xxl={6}>
                 <div className="delivery-option">

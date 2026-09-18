@@ -1,4 +1,5 @@
 import SettingContext from "@/context/settingContext";
+import { couponBenefitLabel, isFreeShippingCoupon } from "@/utils/customFunctions/couponLabel";
 import Btn from "@/elements/buttons/Btn";
 import request from "@/utils/axiosUtils";
 import { CouponAPI } from "@/utils/axiosUtils/API";
@@ -13,33 +14,49 @@ import { RiCouponLine } from "react-icons/ri";
 import { Col, Input, Row } from "reactstrap";
 import CouponModal from "./CouponModal";
 
-const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values, appliedCoupon, setAppliedCoupon, errorCoupon, mutate, isLoading }) => {
+// `mutate` es el recompute del sidebar: POST /checkout con TODO el contexto
+// del pedido (productos del invitado, ciudad, cupón). Llamar al API solo con
+// { coupon_code } hacía que el invitado recibiera "carrito vacío".
+const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values, appliedCoupon, setAppliedCoupon, errorCoupon, mutate, isLoading, sessionToken }) => {
   const { t } = useTranslation("common");
   const { convertCurrency } = useContext(SettingContext);
-  const onCouponApply = (value) => {
-    setFieldValue("coupon", value);
-    setStoreCoupon(value);
-  };
   const [toggle, setToggle] = useState(false);
   const router = useRouter();
-  const { data: couponData, isLoading: couponLoader } = useFetchQuery([CouponAPI], () => request({ url: CouponAPI, params: { status: 1 } }, router), {
+
+  // Vista de cliente (cupones vigentes, sin límites de uso ni contadores),
+  // también para invitados: /coupon/public no exige sesión. El catálogo
+  // completo de /coupon es solo para administradores.
+  const { data: couponData } = useFetchQuery([`${CouponAPI}/public`], () => request({ url: `${CouponAPI}/public` }, router), {
     enabled: true,
     refetchOnWindowFocus: false,
-    select: (data) => data.data.data,
+    select: (res) => res?.data?.data ?? [],
   });
+
+  // Escribir el código solo actualiza el campo: el API se consulta al
+  // pulsar "Aplicar", no en cada tecla.
+  const onCouponChange = (value) => {
+    setFieldValue("coupon", value);
+  };
+
   const removeCoupon = () => {
     setAppliedCoupon(null);
     setFieldValue("coupon", "");
     setStoreCoupon("");
     mutate && mutate({ coupon_code: "" });
   };
+
   const onCouponApplyClick = () => {
-    if (!storeCoupon) return;
-    setFieldValue("coupon", storeCoupon);
-    mutate && mutate({ coupon_code: storeCoupon });
+    const code = String(values?.coupon || "").trim();
+    if (!code) {
+      ToastNotification("error", t("EnterCouponCode"));
+      return;
+    }
+    setFieldValue("coupon", code);
+    mutate && mutate({ coupon_code: code });
   };
-  const onCopyCode = (couponData) => {
-    navigator.clipboard.writeText(couponData);
+
+  const onCopyCode = (code) => {
+    navigator.clipboard.writeText(code);
     ToastNotification("success", "CodeCopiedToClipboard");
   };
 
@@ -47,9 +64,11 @@ const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values,
     <div className="promo-code-box">
       <div className="promo-title">
         <h5>{t("PromoCode")}</h5>
-        <a href={Href} onClick={() => setToggle(true)}>
-          <RiCouponLine /> {t("ViewAll")}
-        </a>
+        {couponData?.length > 0 && (
+          <a href={Href} onClick={() => setToggle(true)}>
+            <RiCouponLine /> {t("ViewAll")}
+          </a>
+        )}
       </div>
       <Row className="g-sm-3 g-2 mb-3">
         {couponData?.slice(0, 2).map((item, i) => (
@@ -57,6 +76,7 @@ const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values,
             <div className="coupon-box">
               <div className="card-name">
                 <h6>{item?.title}</h6>
+                <p className="coupon-benefit mb-0">{couponBenefitLabel(item, { t, format: convertCurrency })}</p>
               </div>
               <div className="coupon-content">
                 <div className="coupon-apply">
@@ -73,7 +93,14 @@ const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values,
           <Image src={`${ImagePath}/offer.gif`} className="img-fluid" height={20} width={20} alt="offer" />
           <div>
             <h4>
-              {t("Yousaved")} <span>{convertCurrency(data?.data?.coupon_total_discount || 0)}</span> {t("withthiscode")} 🎉 <p>{t("CouponApplied")}</p>
+              {isFreeShippingCoupon(data?.data?.applied_coupon) ? (
+                t("CouponFreeShippingApplied")
+              ) : (
+                <>
+                  {t("Yousaved")} <span>{convertCurrency(data?.data?.coupon_total_discount || 0)}</span> {t("withthiscode")}
+                </>
+              )}{" "}
+              🎉 <p>{t("CouponApplied")}</p>
             </h4>
           </div>
           <a style={{ cursor: "pointer" }} className="close-coupon" onClick={() => removeCoupon()}>
@@ -83,13 +110,14 @@ const ApplyCoupon = ({ data, setFieldValue, storeCoupon, setStoreCoupon, values,
       ) : (
         <>
           <div className="coupon-input-box">
-            <Input type="text" value={values['coupon']} placeholder={t("EnterCoupon")} onChange={(e) => onCouponApply(e.target.value)} />
+            <Input type="text" name="coupon" value={values["coupon"] || ""} placeholder={t("EnterCoupon")} onChange={(e) => onCouponChange(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onCouponApplyClick(); } }} />
             <div>
-              <Btn className="apply-button" onClick={onCouponApplyClick}>
+              <Btn className="apply-button" onClick={onCouponApplyClick} disabled={Boolean(isLoading)}>
                 {t("ApplyNow")}
               </Btn>
             </div>
           </div>
+          {errorCoupon ? <p className="text-danger coupon-error mt-2 mb-0" style={{ fontSize: "13px" }}>{t(errorCoupon, { defaultValue: errorCoupon })}</p> : null}
         </>
       )}
       <CouponModal couponData={couponData} onCopyCode={onCopyCode} toggle={toggle} setToggle={setToggle} />

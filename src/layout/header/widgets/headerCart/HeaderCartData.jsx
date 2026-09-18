@@ -6,6 +6,8 @@ import React, { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RiCloseFill } from "react-icons/ri";
 import HeaderCartBottom from "./HeaderCartBottom";
+import { useQuery } from "@tanstack/react-query";
+import request from "@/utils/axiosUtils";
 
 const HeaderCartData = () => {
   const { themeOption, setCartCanvas, cartCanvas } = useContext(ThemeOptionContext);
@@ -13,7 +15,17 @@ const HeaderCartData = () => {
   const { cartProducts, getTotal } = useContext(CartContext);
   const { t } = useTranslation("common");
   const [shippingCal, setShippingCal] = useState(0);
-  const [shippingFreeAmt, setShippingFreeAmt] = useState(0);
+  const { data: shippingConfig } = useQuery({
+    queryKey: ["mini-cart-shipping-threshold"],
+    queryFn: async () => {
+      const result = await request({ url: "/shipping/quote", params: { subtotal: 0 } });
+      if (!result.ok) throw new Error("Shipping quote unavailable");
+      return result.data;
+    },
+    enabled: cartProducts.length > 0,
+    staleTime: 60000,
+  });
+  const shippingFreeAmt = shippingConfig?.free_shipping_threshold;
   const [confetti, setConfetti] = useState(0);
   const confettiItems = Array.from({ length: 150 }, (_, index) => index);
   const [modal, setModal] = useState(false);
@@ -34,7 +46,6 @@ const HeaderCartData = () => {
   }, [themeOption]);
 
   useEffect(() => {
-    setShippingFreeAmt(settingData?.general?.min_order_free_shipping);
     cartProducts?.forEach((elem) => {
       if (elem?.variation) {
         elem.variation.selected_variation = elem?.variation?.attribute_values?.map((values) => values.value).join("/");
@@ -45,10 +56,15 @@ const HeaderCartData = () => {
   useEffect(() => {
     const total = getTotal(cartProducts);
     
-    const shippingFreeAmount = settingData?.general?.min_order_free_shipping || shippingFreeAmt;
+    const shippingFreeAmount = Number(shippingFreeAmt);
+    if (!Number.isFinite(shippingFreeAmount) || shippingFreeAmount <= 0) {
+      setShippingCal(0);
+      setConfetti(0);
+      return;
+    }
     const tempCal = (total * 100) / shippingFreeAmount;
 
-    if (tempCal > 100) {
+    if (tempCal >= 100) {
       setShippingCal(100);
       if (confetti === 0) {
         setConfetti(1);

@@ -6,6 +6,7 @@ import useIsMobile from "@/utils/hooks/useIsMobile";
 import React from "react";
 import { RiInstagramLine } from "react-icons/ri";
 import Slider from "react-slick";
+import { safeHttpUrl } from "@/utils/security/safeUrl";
 
 const MIN_SLIDES = 14;
 
@@ -27,7 +28,7 @@ const HomeSocialMedia = ({ media, title, classes, sliderClass, type, sliderOptio
           <Slider {...socialSliderSettings} className={sliderClass ? sliderClass : ""}>
             {slides.map((banner, index) => (
               <div className="h-100" key={index}>
-                <a href={banner.redirect_link?.link} tabIndex="0" target="_blank">
+                <a href={safeHttpUrl(banner.redirect_link?.link, "#")} tabIndex="0" target="_blank" rel="noopener noreferrer">
                   <div className="instagram-box bg-size h-100" style={{ backgroundImage: `url(${pickImg(banner) ? storageURL + pickImg(banner) : banner.original_url})` }}>
                     <img src={pickImg(banner) ? storageURL + pickImg(banner) : banner.original_url} className="bg-img d-none" alt="img" />
                     <div className="overlay">

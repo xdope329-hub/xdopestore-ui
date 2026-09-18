@@ -1,3 +1,4 @@
+import { safeHttpUrl } from "@/utils/security/safeUrl";
 import Btn from "@/elements/buttons/Btn";
 import Link from "next/link";
 import React from "react";
@@ -18,7 +19,7 @@ const DigitalImageOptions = ({ product }) => {
           </div>
         ) : product.preview_type == "url" && product.preview_url ? (
           <div className="preview-btn">
-            <Link href={product.preview_url} target="_blank">
+            <Link href={safeHttpUrl(product.preview_url, "#")} target="_blank" rel="noopener noreferrer">
               <span>
                 <i className="ri-share-box-line"></i> {"live_preview"}{" "}
               </span>

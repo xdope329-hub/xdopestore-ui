@@ -1,8 +1,10 @@
 import RatingBox from "@/components/collection/collectionSidebar/RatingBox";
+import { discountPercent, originalPriceToStrike } from "@/components/widgets/productBox/widgets/priceRules";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
 import { Href } from "@/utils/constants";
+import { fireConfettiAsync } from "@/utils/customFunctions/Confetti";
 import { useRouter } from "next/navigation";
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +16,7 @@ import QuestionAnswerModal from "./allModal/QuestionAnswerModal";
 import SizeModal from "./allModal/SizeModal";
 import ProductAttribute from "./productAttribute/ProductAttribute";
 import ProductDetailAction from "./ProductDetailAction";
+import WhatsAppInquiryButton from "./WhatsAppInquiryButton";
 
 const ProductContent = ({ productState, setProductState, productAccordion, noDetails, noQuantityButtons, noModals }) => {
   const { t } = useTranslation("common");
@@ -24,10 +27,12 @@ const ProductContent = ({ productState, setProductState, productAccordion, noDet
   const addToCart = () => {
     setCartCanvas(true);
     handleIncDec(productState?.productQty, productState?.product, false, false, false, productState);
+    fireConfettiAsync();
   };
   const buyNow = () => {
     handleIncDec(productState?.productQty, productState?.product, false, false, false, productState);
     router.push(`/checkout`);
+    fireConfettiAsync();
   };
   const [modal, setModal] = useState("");
   const activeModal = {
@@ -40,7 +45,8 @@ const ProductContent = ({ productState, setProductState, productAccordion, noDet
     <>
       {!noDetails && (
         <>
-          <h2 className="main-title">{productState?.selectedVariation?.name ?? productState?.product?.name}</h2>
+          <h2 className="main-title">{productState?.product?.name}</h2>
+          {productState?.selectedVariation?.name ? <p className="selected-variant-name">{productState.selectedVariation.name}</p> : null}
           {!productState?.product?.is_external && (
             <div className="product-rating">
               <RatingBox totalRating={productState?.selectedVariation?.rating_count ?? productState?.product?.rating_count} />
@@ -52,14 +58,14 @@ const ProductContent = ({ productState, setProductState, productAccordion, noDet
           )}
           <div className="price-text">
             <h3>
-              <span className="text-dark fw-normal">MRP:</span>
+              <span className="text-dark fw-normal">{t("MRP")}:</span>
               {productState?.selectedVariation?.sale_price ? convertCurrency(productState?.selectedVariation?.sale_price) : convertCurrency(productState?.product?.sale_price)}
 
-              {productState?.selectedVariation?.discount || productState?.product?.discount ? <del>{productState?.selectedVariation ? convertCurrency(productState?.selectedVariation?.price) : convertCurrency(productState?.product?.price)}</del> : null}
+              {originalPriceToStrike(productState) != null ? <del>{convertCurrency(originalPriceToStrike(productState))}</del> : null}
 
-              {productState?.selectedVariation?.discount || productState?.product?.discount ? (
+              {discountPercent(productState) != null ? (
                 <span className="discounted-price">
-                  {productState?.selectedVariation ? productState?.selectedVariation?.discount : productState?.product?.discount} % {t("Off")}
+                  {discountPercent(productState)} % {t("Off")}
                 </span>
               ) : null}
             </h3>

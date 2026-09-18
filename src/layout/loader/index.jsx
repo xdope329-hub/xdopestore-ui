@@ -1,5 +1,6 @@
 "use client";
 import SettingContext from "@/context/settingContext";
+import i18next from "i18next";
 import { useContext } from "react";
 
 const CROSSES = [30, 90, 150, 210, 270, 330].map((angle) => {
@@ -57,7 +58,7 @@ const EmbroideryLoader = () => (
         style={{ transformBox: "fill-box", transformOrigin: "center" }}
       />
     </svg>
-    <p className="emb-label">Loading</p>
+    <p className="emb-label">{i18next.t("Loading", { defaultValue: "Cargando" })}</p>
   </div>
 );
 

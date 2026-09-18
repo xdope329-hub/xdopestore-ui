@@ -6,31 +6,34 @@ import { useMutation } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { useContext } from "react";
-import request from "../axiosUtils";
+import request, { saveAccountSummary, saveSession } from "../axiosUtils";
+import { safeRedirectPath } from "../security/safeRedirect";
+import { transformLocalCart } from "../customFunctions/SyncLocalCart";
 import { SyncCart, VerifyTokenAPI } from "../axiosUtils/API";
 import useCreate from "./useCreate";
 
 const LoginWithMobileHandle = (responseData, router, refetch, CallBackUrl, mutate, cartRefetch, setShowBoxMessage, addToWishlist, setOpenAuthModal, setState) => {
   setState("login");
   if (responseData.status === 200 || responseData.status === 201) {
-    Cookies.set("uat", responseData.data?.access_token, { path: "/", expires: new Date(Date.now() + 24 * 60 * 6000) });
-    if (typeof window !== "undefined") {
-      Cookies.set("account", JSON.stringify(responseData.data));
-      localStorage.setItem("account", JSON.stringify(responseData.data));
-    }
+    // Mismo guardado de sesión que el login por contraseña (access + refresh).
+    saveSession(responseData.data || {});
+    saveAccountSummary(responseData.data?.data);
 
     const oldCartValue = JSON.parse(localStorage.getItem("cart"))?.items;
-    oldCartValue?.length > 0 && mutate(transformLocalStorageData(oldCartValue));
+    if (oldCartValue?.length > 0) {
+      const cart = transformLocalCart(oldCartValue);
+      mutate({ cart, items: cart });
+    }
     refetch();
     setOpenAuthModal(false);
     cartRefetch();
-    router.push("/account/dashboard");
     const wishListID = Cookies.get("wishListID");
     const productObj = { id: wishListID };
     wishListID ? addToWishlist(productObj) : null;
-    router.push(`/${CallBackUrl}`);
     Cookies.remove("wishListID");
+    Cookies.remove("CallBackUrl", { path: "/" });
     localStorage.removeItem("cart");
+    router.push(CallBackUrl);
   } else {
     setShowBoxMessage(responseData.response.data.message);
   }
@@ -44,7 +47,7 @@ const useOtpVerification = (setState) => {
   const { setOpenAuthModal } = useContext(ThemeOptionContext);
   const { mutate } = useCreate(SyncCart, false, false, "No");
   const { addToWishlist } = useContext(WishlistContext);
-  const CallBackUrl = Cookies.get("CallBackUrl") ? Cookies.get("CallBackUrl") : Cookies.set("CallBackUrl", "/");
+  const CallBackUrl = safeRedirectPath(Cookies.get("CallBackUrl"), "/account/dashboard");
   const { refetch } = useContext(AccountContext);
   const { refetch: cartRefetch } = useContext(CartContext);
   const router = useRouter();

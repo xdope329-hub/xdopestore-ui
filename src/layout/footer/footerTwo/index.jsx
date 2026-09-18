@@ -9,9 +9,11 @@ import FooterNewsLetter from "../widgets/FooterNewsLetter";
 import FooterStoreInformation from "../widgets/FooterStoreInformation";
 import FooterUsefulLinks from "../widgets/FooterUsefulLinks";
 import SubFooter from "../widgets/SubFooter";
+import useFooterSections from "../widgets/useFooterSections";
 
 const FooterTwo = () => {
   const { t } = useTranslation("common");
+  const { hasCategories, hasUsefulLinks, hasHelpCenter } = useFooterSections();
   const [openClose, setOpenClose] = useState({
     helpCenter: false,
     categories: false,
@@ -38,9 +40,8 @@ const FooterTwo = () => {
                   <FooterAbout />
                 </div>
               </Col>
-              <Col lg="6" className="subscribe-wrapper">
-                <FooterNewsLetter style="simple" />
-              </Col>
+              {/* Boletín oculto — FooterNewsLetter retorna null; la columna
+                  se elimina para no dejar el hueco del layout. */}
               <Col lg="3">
                 <FooterStoreInformation icon={false} />
               </Col>
@@ -53,24 +54,30 @@ const FooterTwo = () => {
           <section className="small-section section-t-space">
             <Row className=" footer-theme2">
               <Col className="p-set">
-                <div className="footer-link" onClick={() => toggle("categories")}>
-                  <div className={`footer-title ${openClose?.categories ? "show" : ""}`}>
-                    <h4>{t("Categories")}</h4>
+                {hasCategories && (
+                  <div className="footer-link" onClick={() => toggle("categories")}>
+                    <div className={`footer-title ${openClose?.categories ? "show" : ""}`}>
+                      <h4>{t("Categories")}</h4>
+                    </div>
+                    <FooterCategories />
                   </div>
-                  <FooterCategories />
-                </div>
-                <div className="footer-link-b" onClick={() => toggle("useFulLinks")}>
-                  <div className={`footer-title ${openClose?.useFulLinks ? "show" : ""}`}>
-                    <h4>{t("UsefulLinks")}</h4>
+                )}
+                {hasUsefulLinks && (
+                  <div className="footer-link-b" onClick={() => toggle("useFulLinks")}>
+                    <div className={`footer-title ${openClose?.useFulLinks ? "show" : ""}`}>
+                      <h4>{t("UsefulLinks")}</h4>
+                    </div>
+                    <FooterUsefulLinks />
                   </div>
-                  <FooterUsefulLinks />
-                </div>
-                <div className="footer-link-b" onClick={() => toggle("helpCenter")}>
-                  <div className={`footer-title ${openClose?.helpCenter ? "show" : ""}`}>
-                    <h4>{t("HelpCenter")}</h4>
+                )}
+                {hasHelpCenter && (
+                  <div className="footer-link-b" onClick={() => toggle("helpCenter")}>
+                    <div className={`footer-title ${openClose?.helpCenter ? "show" : ""}`}>
+                      <h4>{t("HelpCenter")}</h4>
+                    </div>
+                    <FooterHelpCenter />
                   </div>
-                  <FooterHelpCenter />
-                </div>
+                )}
               </Col>
             </Row>
           </section>

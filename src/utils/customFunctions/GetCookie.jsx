@@ -1,15 +1,17 @@
+// Reads a single cookie by name. Each value is decoded on its own inside a
+// try/catch: a stray "%" in ANY cookie used to make decodeURIComponent throw
+// for the whole jar and crash the caller (denial of service from a cookie).
 export default function getCookie(cname) {
-  let name = cname + "=";
-  if (document?.cookie) {
-    let decodedCookie = decodeURIComponent(document?.cookie);
-    let ca = decodedCookie.split(";");
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i];
-      while (c.charAt(0) == " ") {
-        c = c.substring(1);
-      }
-      if (c.indexOf(name) == 0) {
-        return c.substring(name.length, c.length);
+  if (typeof document === "undefined" || !document.cookie) return "";
+  const prefix = `${cname}=`;
+  for (const part of document.cookie.split(";")) {
+    const c = part.trim();
+    if (c.startsWith(prefix)) {
+      const raw = c.slice(prefix.length);
+      try {
+        return decodeURIComponent(raw);
+      } catch {
+        return raw;
       }
     }
   }
@@ -17,10 +19,5 @@ export default function getCookie(cname) {
 }
 
 export function checkCookie() {
-  let username = getCookie("username");
-  if (username != "" && username) {
-    return true;
-  } else {
-    return false;
-  }
+  return Boolean(getCookie("username"));
 }

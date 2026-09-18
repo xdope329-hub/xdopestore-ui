@@ -1,4 +1,4 @@
-import request from "@/utils/axiosUtils";
+import request, { dropStaleRefreshToken } from "@/utils/axiosUtils";
 import { SelfAPI } from "@/utils/axiosUtils/API";
 import useFetchQuery from "@/utils/hooks/useFetchQuery";;
 import Cookies from "js-cookie";
@@ -15,6 +15,12 @@ const AccountProvider = (props) => {
       return res?.data;
     },
   });
+
+  // Política "invitado es invitado": sesión vencida al cargar = visitante
+  // invitado. Ver dropStaleRefreshToken en axiosUtils.
+  useEffect(() => {
+    dropStaleRefreshToken();
+  }, []);
 
   useEffect(() => {
     cookies && refetch() ;

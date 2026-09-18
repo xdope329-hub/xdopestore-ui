@@ -1,28 +1,22 @@
 import WishlistContext from "@/context/wishlistContext";
-import ThemeOptionContext from "@/context/themeOptionsContext";
 import { Href } from "@/utils/constants";
-import Cookies from "js-cookie";
+import { getWishlistProductId } from "@/utils/customFunctions/SyncLocalWishlist";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { RiHeartFill, RiHeartLine } from "react-icons/ri";
 
 const AddToWishlist = ({ productObj, customClass }) => {
   const { t } = useTranslation("common");
-  const { setOpenAuthModal } = useContext(ThemeOptionContext);
   const { addToWishlist, removeWishlist, wishlistIds } = useContext(WishlistContext);
 
-  const productId = String(productObj?.id || productObj?._id || "");
+  const productId = getWishlistProductId(productObj);
   const isWishlisted = !!wishlistIds?.[productId];
 
   const handelWishlist = () => {
-    if (Cookies.get("uat")) {
-      if (isWishlisted) {
-        removeWishlist(productId, wishlistIds[productId]);
-      } else {
-        addToWishlist(productObj);
-      }
+    if (isWishlisted) {
+      removeWishlist(productId, wishlistIds[productId]);
     } else {
-      setOpenAuthModal(true);
+      addToWishlist(productObj);
     }
   };
 

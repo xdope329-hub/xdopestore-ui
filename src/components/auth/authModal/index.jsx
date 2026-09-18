@@ -25,8 +25,6 @@ const AuthModal = () => {
     setLogOrNew(!logOrNew);
   };
 
-  const protectedRoutes = [`/account/dashboard`, `/account/notifications`, `/account/point`, `/account/refund`, `/account/order`, `/account/addresses`, `/wishlist`];
-
   useEffect(() => {
     if (state == "forgot") {
       setTitle("ForgotPassword");

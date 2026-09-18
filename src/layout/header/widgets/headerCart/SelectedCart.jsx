@@ -1,6 +1,7 @@
 import HandleQuantity from "@/components/cart/HandleQuantity";
 import Avatar from "@/components/widgets/Avatar";
 import { placeHolderImage } from "@/components/widgets/Placeholder";
+import { getCartLineImage } from "@/utils/customFunctions/cartLineImage";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
@@ -12,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import { RiDeleteBinLine, RiPencilLine } from "react-icons/ri";
 
 const SelectedCart = ({ modal, setSelectedVariation, setModal }) => {
-  const { convertCurrency } = useContext(SettingContext);
+  const { convertCurrency, capacityReached } = useContext(SettingContext);
   const { setCartCanvas } = useContext(ThemeOptionContext);
   const { cartProducts, removeCart, getTotal } = useContext(CartContext);
   const { t } = useTranslation("common");
@@ -48,11 +49,14 @@ const SelectedCart = ({ modal, setSelectedVariation, setModal }) => {
             <li className="product-box-contain" key={i}>
               <div className="media">
                 <Link href={`/product/${elem?.product?.slug}`}>
-                  <Avatar customClass={""} data={elem?.variation?.variation_image ?? elem?.product?.product_thumbnail} placeHolder={placeHolderImage} name={elem?.product?.name} height={72} width={87} />
+                  <Avatar customClass={""} data={getCartLineImage(elem)} placeHolder={placeHolderImage} name={elem?.product?.name} height={72} width={87} />
                 </Link>
                 <div className="media-body">
                   <Link href={`/product/${elem?.product?.slug}`}>
-                    <h4>{elem?.variation?.name ?? elem?.product?.name}</h4>
+                    <h4>
+                      {elem?.product?.name}
+                      {elem?.variation?.name ? <small className="d-block text-content">{elem.variation.name}</small> : null}
+                    </h4>
                   </Link>
                   <h4 className="quantity">
                     <span>{convertCurrency(elem?.variation?.sale_price ?? elem?.product?.sale_price)}</span>
@@ -88,15 +92,17 @@ const SelectedCart = ({ modal, setSelectedVariation, setModal }) => {
                 <Link href={`/cart`} className="btn view-cart" onClick={() => setCartCanvas(false)}>
                   {t("ViewCart")}
                 </Link>
-                <Link
-                  href={"/checkout"}
-                  className="btn checkout"
-                  onClick={() => {
-                    setCartCanvas(false), handelCheckout;
-                  }}
-                >
-                  {t("Checkout")}
-                </Link>
+                {!capacityReached && (
+                  <Link
+                    href={"/checkout"}
+                    className="btn checkout"
+                    onClick={() => {
+                      setCartCanvas(false), handelCheckout;
+                    }}
+                  >
+                    {t("Checkout")}
+                  </Link>
+                )}
               </div>
             </li>
           </ul>

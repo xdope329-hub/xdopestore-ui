@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
-import request from "../axiosUtils";
+import request, { sideCookieOptions } from "../axiosUtils";
 import { LoginPhnAPI } from "../axiosUtils/API";
 
 const useHandlePhnLogin = (setShowBoxMessage, setState) => {
@@ -10,8 +10,9 @@ const useHandlePhnLogin = (setShowBoxMessage, setState) => {
     mutationFn: (data) => request({ url: LoginPhnAPI, method: "post", data }),
     onSuccess: (responseData, requestData) => {
       if (responseData.status === 200) {
-        Cookies.set("uc", requestData.country_code);
-        Cookies.set("up", requestData.phone);
+        // Short-lived, SameSite=Lax, Secure on https - never a bare Cookies.set.
+        Cookies.set("uc", requestData.country_code, sideCookieOptions());
+        Cookies.set("up", requestData.phone, sideCookieOptions());
         setState("otp");
       } else {
         setShowBoxMessage(responseData.response.data.message);

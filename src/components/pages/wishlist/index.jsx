@@ -1,5 +1,6 @@
 "use client";
 import NoDataFound from "@/components/widgets/NoDataFound";
+import { useRouter } from "next/navigation";
 import WrapperComponent from "@/components/widgets/WrapperComponent";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
@@ -8,6 +9,8 @@ import WishlistContext from "@/context/wishlistContext";
 import Loader from "@/layout/loader";
 import Breadcrumbs from "@/utils/commonComponents/breadcrumb";
 import { Href } from "@/utils/constants";
+import { getWishlistProductId } from "@/utils/customFunctions/SyncLocalWishlist";
+import Cookies from "js-cookie";
 import Link from "next/link";
 import { useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,14 +21,24 @@ import emptyImage from "/public/assets/svg/empty-items.svg";
 const WishlistContent = () => {
   const { wishlistProducts, WishlistAPILoading, removeWishlist } = useContext(WishlistContext);
   const { t } = useTranslation("common");
-  const { setCartCanvas, openAuthModal } = useContext(ThemeOptionContext);
+  const { setCartCanvas, openAuthModal, setOpenAuthModal } = useContext(ThemeOptionContext);
   const { handleIncDec, openCartSidebar } = useContext(CartContext);
+  const router = useRouter();
   const removeFromWishlist = (product) => {
-    removeWishlist(product.id, product.id);
+    removeWishlist(getWishlistProductId(product), product.id);
   };
   const { convertCurrency } = useContext(SettingContext);
 
+  // Un producto con talla/color no puede ir al carrito sin elegirlas: el
+  // botón lleva a la ficha. Antes entraba una línea sin variante y el
+  // cliente solo se enteraba al "Realizar pedido".
+  const needsVariant = (product) => Array.isArray(product?.variations) && product.variations.length > 0;
+  const cartButtonTitle = (product) => (needsVariant(product) ? t("ChooseVariantFirst") : t("AddToCart"));
   const addToCart = (product) => {
+    if (needsVariant(product)) {
+      router.push(`/product/${product?.slug}`);
+      return;
+    }
     setCartCanvas(true);
     handleIncDec(1, product);
   };
@@ -43,6 +56,14 @@ const WishlistContent = () => {
     <>
       <Breadcrumbs title={"Wishlist"} subNavigation={[{ name: "Wishlist" }]} />
       <WrapperComponent classes={{ sectionClass: "wishlist-section section-b-space", row: "g-sm-3 g-2", col: "table-responsive", fluidClass: "container" }} colProps={{ sm: "12" }}>
+        {!Cookies.get("uat") && wishlistProducts?.length > 0 && (
+          <div className="alert alert-light border d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4" role="status">
+            <span>{t("GuestWishlistSyncPrompt")}</span>
+            <button type="button" className="btn btn-solid btn-sm" onClick={() => setOpenAuthModal(true)}>
+              {t("SignInToSync")}
+            </button>
+          </div>
+        )}
         {WishlistAPILoading ? (
           <Loader />
         ) : wishlistProducts?.length > 0 ? (
@@ -69,7 +90,7 @@ const WishlistContent = () => {
                       <Link href={`/product/${product?.slug}`}>{product?.name}</Link>
                       <div className="mobile-cart-content row">
                         <div className="col">
-                          <p>{product?.stock_status?.replaceAll("_", " ")}</p>
+                          <p>{product?.stock_status === "out_of_stock" ? t("OutOfStock") : t("InStock")}</p>
                         </div>
                         <div className="col">
                           <h2>
@@ -81,7 +102,7 @@ const WishlistContent = () => {
                             <button className="icon btn p-0 border-0 bg-transparent" onClick={() => removeFromWishlist(product)}>
                               <RiCloseLine />
                             </button>
-                            <button className="cart btn p-0 border-0 bg-transparent" onClick={() => addToCart(product)}>
+                            <button className="cart btn p-0 border-0 bg-transparent" onClick={() => addToCart(product)} title={cartButtonTitle(product)} aria-label={cartButtonTitle(product)}>
                               <RiShoppingCartLine />
                             </button>
                           </div>
@@ -94,7 +115,7 @@ const WishlistContent = () => {
                       </h2>
                     </td>
                     <td>
-                      <p>{product?.stock_status?.replaceAll("_", " ")}</p>
+                      <p>{product?.stock_status === "out_of_stock" ? t("OutOfStock") : t("InStock")}</p>
                     </td>
 
                     <td>
@@ -102,7 +123,7 @@ const WishlistContent = () => {
                         <button className="icon btn p-0 border-0 bg-transparent" onClick={() => removeFromWishlist(product)}>
                           <RiCloseLine />
                         </button>
-                        <button className="cart btn p-0 border-0 bg-transparent" onClick={() => addToCart(product)}>
+                        <button className="cart btn p-0 border-0 bg-transparent" onClick={() => addToCart(product)} title={cartButtonTitle(product)} aria-label={cartButtonTitle(product)}>
                           <RiShoppingCartLine />
                         </button>
                       </div>

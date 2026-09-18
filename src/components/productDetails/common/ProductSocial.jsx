@@ -8,30 +8,34 @@ const ProductSocial = ({ productState }) => {
   const { themeOption } = useContext(ThemeOptionContext);
   
   const { t } = useTranslation( 'common');
-  const baseUrl = process?.env?.FRONT_URL;
+  // Build links from the storefront's own origin. The old code read
+  // process.env.FRONT_URL, which is never defined client-side, so every
+  // shared link came out as "undefined//product/...". Handlers only run on
+  // click (browser), so window is always available here.
+  const productShareUrl = (slug) => `${window.location.origin}/product/${slug}`;
   const shareOnFacebook = (slug) => {
-    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(baseUrl + "/" + '/product/' + slug)}`;
+    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productShareUrl(slug))}`;
     window.open(facebookShareUrl, '_blank');
   };
 
   const shareOnTwitter = (slug) => {
-    const twitterShareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(baseUrl + "/" + '/product/' + slug)}`;
+    const twitterShareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(productShareUrl(slug))}`;
     window.open(twitterShareUrl, '_blank');
   };
 
   const shareOnLinkedIn = (slug) => {
-    const linkedInShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(baseUrl +"/" + '/product/' + slug)}`;
+    const linkedInShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(productShareUrl(slug))}`;
     window.open(linkedInShareUrl, '_blank');
   };
 
   const shareOnWhatsApp = (slug) => {
-    const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(baseUrl + "/" +'/product/' + slug)}`;
+    const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(productShareUrl(slug))}`;
     window.open(whatsappShareUrl, '_blank');
   };
 
   const shareViaEmail = (slug) => {
     const subject = 'Check out this awesome product!';
-    const body = `I thought you might be interested in this product: ${baseUrl + "/" +'/product/' + slug}`;
+    const body = `I thought you might be interested in this product: ${productShareUrl(slug)}`;
     const emailShareUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = emailShareUrl; // Use location.href to open the default email client
   };

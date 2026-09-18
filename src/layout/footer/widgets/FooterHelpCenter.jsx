@@ -21,7 +21,7 @@ const FooterHelpCenter = () => {
           ))}
         </ul>
       ) : (
-        <NoDataFound customClass={"no-data-footer"} title={"NoLinkFound"} />
+        null
       )}
     </div>
   );
