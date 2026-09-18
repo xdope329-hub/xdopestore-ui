@@ -38,7 +38,7 @@ const ProductImageOutside = ({ productState, setProductState, direction }) => {
                 <ProductInformation productState={productState} />
                 <ProductDeliveryInformation productState={productState} />
                 <PaymentOptions productState={productState} />
-                {productState?.product?.cross_sell_products?.length > 0 && <ProductBundle productState={productState} setProductState={setProductState} />}
+                {(productState?.product?.cross_sell_products?.length > 0 || productState?.product?.type === "bundle") && <ProductBundle productState={productState} setProductState={setProductState} />}
               </div>
               <div className="image-outside-thumbnail">
                 <OutsideImageSlider productState={productState} sliderRef2={sliderRef2} nav1={nav1} setNav2={setNav2} />

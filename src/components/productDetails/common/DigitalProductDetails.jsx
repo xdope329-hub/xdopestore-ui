@@ -20,7 +20,7 @@ const ProductDetails = ({ productState }) => {
           {themeOption?.product?.social_share && productState?.product?.social_share ? <ProductSocial productState={productState} /> : null}
         </div>
       </Col>
-      {productState?.product?.cross_sell_products?.length > 0 && (
+      {(productState?.product?.cross_sell_products?.length > 0 || productState?.product?.type === "bundle") && (
         <Col xs={12} className="related-product-2">
           <ProductBundle productState={productState} />
         </Col>

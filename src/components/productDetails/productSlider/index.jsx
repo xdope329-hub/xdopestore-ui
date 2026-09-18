@@ -31,7 +31,7 @@ const ProductSlider = ({ productState, setProductState }) => {
                   <ProductInformation productState={productState} />
                   <ProductDeliveryInformation productState={productState} />
                   <PaymentOptions productState={productState} />
-                  {productState?.product?.cross_sell_products?.length > 0 && <ProductBundle productState={productState} setProductState={setProductState} />}
+                  {(productState?.product?.cross_sell_products?.length > 0 || productState?.product?.type === "bundle") && <ProductBundle productState={productState} setProductState={setProductState} />}
                 </div>
               </div>
               <WrapperComponent classes={{ sectionClass: "tab-product section-b-space product-details-contain m-0 px-0", fluidClass: "container" }} customCol={true}>
