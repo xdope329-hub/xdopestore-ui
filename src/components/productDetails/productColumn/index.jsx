@@ -37,7 +37,7 @@ const ProductColumn = ({ productState, setProductState, direction }) => {
               <ProductStatus productState={productState} />
               <WishlistCompareShare productState={productState} />
               {productState?.product.status && productState?.product?.sale_starts_at && productState?.product?.sale_expired_at && <OfferTimer productState={productState} />}
-              {productState?.product?.cross_sell_products?.length > 0 && <ProductBundle productState={productState} setProductState={setProductState} />}
+              {(productState?.product?.cross_sell_products?.length > 0 || productState?.product?.type === "bundle") && <ProductBundle productState={productState} setProductState={setProductState} />}
             </div>
           </Col>
         </Row>

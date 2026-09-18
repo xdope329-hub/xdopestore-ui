@@ -10,7 +10,6 @@ import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RiQuestionnaireLine, RiRulerLine, RiTruckLine } from "react-icons/ri";
 import AddToCartButton from "./AddToCartButton";
-import BundleSelector from "./BundleSelector";
 import DeliveryReturnModal from "./allModal/DeliveryReturnModal";
 import QuestionAnswerModal from "./allModal/QuestionAnswerModal";
 import SizeModal from "./allModal/SizeModal";
@@ -107,15 +106,13 @@ const ProductContent = ({ productState, setProductState, productAccordion, noDet
           {productState?.product.status && !productAccordion && <>{(productState?.product?.variations?.length > 0 && productState?.product?.attributes?.length > 0) && <ProductAttribute productState={productState} setProductState={setProductState} />}</>}
         </>
       )}
-      {!productAccordion && (
-        productState?.product?.type === "bundle" ? (
-          <BundleSelector productState={productState} />
-        ) : (
-          <div className="product-buttons">
-            <ProductDetailAction productState={productState} setProductState={setProductState} />
-            <AddToCartButton productState={productState} isLoading={isLoading} addToCart={addToCart} buyNow={buyNow} />
-          </div>
-        )
+      {/* Bundle: la compra se hace desde ProductBundle (Contenido del bundle),
+          que exige variantes y usa el precio fijo del bundle. */}
+      {!productAccordion && productState?.product?.type !== "bundle" && (
+        <div className="product-buttons">
+          <ProductDetailAction productState={productState} setProductState={setProductState} />
+          <AddToCartButton productState={productState} isLoading={isLoading} addToCart={addToCart} buyNow={buyNow} />
+        </div>
       )}
     </>
   );

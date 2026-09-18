@@ -27,7 +27,7 @@ const Product4Image = ({ productState, setProductState }) => {
           <ProductInformation productState={productState} />
           <ProductDeliveryInformation productState={productState} />
           <PaymentOptions productState={productState} />
-          {productState?.product?.cross_sell_products?.length > 0 && (
+          {(productState?.product?.cross_sell_products?.length > 0 || productState?.product?.type === "bundle") && (
             <Col xs={12} className="related-product-2">
               <ProductBundle productState={productState} setProductState={setProductState} />
             </Col>
