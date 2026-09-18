@@ -1,6 +1,6 @@
 import { placeHolderImage } from "@/components/widgets/Placeholder";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RiHeadphoneLine, RiVideoLine } from "react-icons/ri";
 import ProductMainImage from "../common/ProductMainImage";
@@ -12,34 +12,31 @@ import SlickArrowRight from "../common/SlickArrowRight";
 
 const ThumbnailProductImage = ({ productState, slideToShow }) => {
   const { t } = useTranslation("common");
-  const [state, setState] = useState({ nav1: null, nav2: null });
+  // Callback refs en vez de useRef+setState en useEffect: setear al mismo
+  // instance no dispara re-render (React compara por Object.is), así que no
+  // hay bucle infinito de updates (React error #185) cuando el Slider se
+  // remonta al llegar la galería.
+  const [slider1, setSlider1] = useState(null);
+  const [slider2, setSlider2] = useState(null);
   const [videoType, setVideoType] = useState(["video/mp4", "video/webm", "video/ogg"]);
   const [audioType, setAudioType] = useState(["audio/mpeg", "audio/wav", "audio/ogg"]);
-  const slider1 = useRef();
-  const slider2 = useRef();
-  const { nav1, nav2 } = state;
   const currentVariation = productState?.selectedVariation?.variation_galleries?.length ? productState?.selectedVariation?.variation_galleries : productState?.product?.product_galleries;
+  const hasGallery = Array.isArray(currentVariation) && currentVariation.length > 0;
 
   useEffect(() => {
-    setState({
-      nav1: slider1.current,
-      nav2: slider2.current,
-    });
-  }, []);
-  useEffect(() => {
-    if (!slider1.current) return;
+    if (!slider1) return;
     const variation = productState?.selectedVariation;
     if (!variation) return;
     if (variation.variation_galleries?.length) {
       // Variation has its own images — go to first slide
-      slider1.current.slickGoTo(0);
+      slider1.slickGoTo(0);
     } else if (variation.variation_image?.id) {
       const index = productState?.product?.product_galleries?.findIndex(
         (object) => object.id === variation.variation_image.id
       );
-      if (index >= 0) slider1.current.slickGoTo(index);
+      if (index >= 0) slider1.slickGoTo(index);
     }
-  }, [productState?.selectedVariation?.id]);
+  }, [productState?.selectedVariation?.id, slider1]);
 
   let thumbnailSlider = {
     loop: false,
@@ -85,7 +82,8 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
                   {productState?.product.is_featured ? <li className="featured">{t("Featured")}</li> : ""}
                 </ul>
               ) : null}
-              <Slider asNavFor={nav2} ref={slider1} prevArrow={<SlickArrowLeft />} nextArrow={<SlickArrowRight />}>
+              {hasGallery && (
+              <Slider asNavFor={slider2} ref={setSlider1} prevArrow={<SlickArrowLeft />} nextArrow={<SlickArrowRight />}>
                 {currentVariation?.map((image, i) => (
                   <div key={i}>
                     <div className="slider-image">
@@ -108,14 +106,15 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
                   </div>
                 ))}
               </Slider>
-              {!currentVariation?.length && <ProductMainImage src={productState?.product?.product_thumbnail ? productState?.product?.product_thumbnail?.original_url : placeHolderImage} alt={productState?.product?.name} />}
+              )}
+              {!hasGallery && <ProductMainImage src={productState?.product?.product_thumbnail ? productState?.product?.product_thumbnail?.original_url : placeHolderImage} alt={productState?.product?.name} />}
 
               {productState?.product?.product_type == "digital" && <DigitalImageOptions product={productState?.product} />}
             </div>
           </Col>
           <Col xs={12}>
-            {
-              <Slider {...thumbnailSlider} className="slider-nav no-arrow thumbnail-slider-box" asNavFor={nav1} ref={slider2} slidesToShow={productState.product?.product_galleries?.length <= 3 ? productState.product?.product_galleries?.length : slideToShow}>
+            {hasGallery && (
+              <Slider {...thumbnailSlider} className="slider-nav no-arrow thumbnail-slider-box" asNavFor={slider1} ref={setSlider2} slidesToShow={currentVariation.length <= 3 ? currentVariation.length : slideToShow}>
                 {currentVariation?.map((image, i) => (
                   <div key={i} className="slider-image">
                     {videoType.includes(image.mime_type) ? (
@@ -137,7 +136,7 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
                   </div>
                 ))}
               </Slider>
-            }
+            )}
           </Col>
         </Row>
       </div>
