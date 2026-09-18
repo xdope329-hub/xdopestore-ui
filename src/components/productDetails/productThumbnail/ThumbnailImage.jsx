@@ -22,6 +22,11 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
   const [audioType, setAudioType] = useState(["audio/mpeg", "audio/wav", "audio/ogg"]);
   const currentVariation = productState?.selectedVariation?.variation_galleries?.length ? productState?.selectedVariation?.variation_galleries : productState?.product?.product_galleries;
   const hasGallery = Array.isArray(currentVariation) && currentVariation.length > 0;
+  // Slick no reinicializa `slidesToShow` cuando cambia en vivo (p.ej. de 1 a
+  // 3 al elegir una variante con más imágenes): los thumbnails se salen del
+  // track y quedan apilados. Con este key el Slider se remonta cuando cambia
+  // la cantidad de slides y Slick recalcula el layout desde cero.
+  const gallerySignature = hasGallery ? String(currentVariation.length) : "empty";
 
   useEffect(() => {
     if (!slider1) return;
@@ -83,7 +88,7 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
                 </ul>
               ) : null}
               {hasGallery && (
-              <Slider asNavFor={slider2} ref={setSlider1} prevArrow={<SlickArrowLeft />} nextArrow={<SlickArrowRight />}>
+              <Slider key={`main-${gallerySignature}`} asNavFor={slider2} ref={setSlider1} prevArrow={<SlickArrowLeft />} nextArrow={<SlickArrowRight />}>
                 {currentVariation?.map((image, i) => (
                   <div key={i}>
                     <div className="slider-image">
@@ -114,7 +119,7 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
           </Col>
           <Col xs={12}>
             {hasGallery && (
-              <Slider {...thumbnailSlider} className="slider-nav no-arrow thumbnail-slider-box" asNavFor={slider1} ref={setSlider2} slidesToShow={currentVariation.length <= 3 ? currentVariation.length : slideToShow}>
+              <Slider key={`nav-${gallerySignature}`} {...thumbnailSlider} className="slider-nav no-arrow thumbnail-slider-box" asNavFor={slider1} ref={setSlider2} slidesToShow={currentVariation.length <= 3 ? currentVariation.length : slideToShow}>
                 {currentVariation?.map((image, i) => (
                   <div key={i} className="slider-image">
                     {videoType.includes(image.mime_type) ? (
