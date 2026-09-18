@@ -10,6 +10,7 @@ import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RiQuestionnaireLine, RiRulerLine, RiTruckLine } from "react-icons/ri";
 import AddToCartButton from "./AddToCartButton";
+import BundleSelector from "./BundleSelector";
 import DeliveryReturnModal from "./allModal/DeliveryReturnModal";
 import QuestionAnswerModal from "./allModal/QuestionAnswerModal";
 import SizeModal from "./allModal/SizeModal";
@@ -107,10 +108,14 @@ const ProductContent = ({ productState, setProductState, productAccordion, noDet
         </>
       )}
       {!productAccordion && (
-        <div className="product-buttons">
-          <ProductDetailAction productState={productState} setProductState={setProductState} />
-          <AddToCartButton productState={productState} isLoading={isLoading} addToCart={addToCart} buyNow={buyNow} whatsappButton={<WhatsAppInquiryButton productState={productState} />} />
-        </div>
+        productState?.product?.type === "bundle" ? (
+          <BundleSelector productState={productState} />
+        ) : (
+          <div className="product-buttons">
+            <ProductDetailAction productState={productState} setProductState={setProductState} />
+            <AddToCartButton productState={productState} isLoading={isLoading} addToCart={addToCart} buyNow={buyNow} />
+          </div>
+        )
       )}
     </>
   );

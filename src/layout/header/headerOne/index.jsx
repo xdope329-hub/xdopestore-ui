@@ -7,8 +7,9 @@ import { useHeaderScroll } from '@/utils/hooks/HeaderScroll'
 import { getAccountSummary, logout } from '@/utils/axiosUtils'
 import { safeHttpUrl } from '@/utils/security/safeUrl'
 import Cookies from 'js-cookie'
-import { usePathname, useRouter } from 'next/navigation'
-import { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useContext, useEffect, useMemo, useState } from 'react'
+import useLogout from '@/utils/hooks/useLogout'
 import { RiHeartLine, RiLogoutBoxRLine, RiMenuLine, RiUserLine, RiDashboardLine } from 'react-icons/ri'
 import { Button, Col, Container, Row } from 'reactstrap'
 import HeaderCart from '../widgets/headerCart'
@@ -79,16 +80,7 @@ const HeaderOne = () => {
     e.preventDefault()
     router.push('/wishlist')
   }
-  const handleLogout = (e) => {
-    e.preventDefault()
-    // Cierre de sesión compartido: revoca el refresh en el servidor y borra
-    // AMBOS tokens. Quitar solo `uat` dejaba vivo `urt`, y el siguiente 401
-    // (p. ej. en un checkout de invitado) volvía a iniciar sesión solo.
-    logout()
-    setIsAuthenticated(false)
-    router.push('/')
-    router.refresh()
-  }
+  const handleLogout = useLogout(() => setIsAuthenticated(false))
 
   return (
     <header className={`${themeOption?.header?.sticky_header_enable && UpScroll ? 'sticky fixed' : ''}`}>
