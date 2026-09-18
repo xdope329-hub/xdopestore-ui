@@ -11,10 +11,11 @@ import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 import i18next from "i18next";
 import Cookies from "js-cookie";
 import Link from "next/link";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Col, Row } from "reactstrap";
 import VariantDropDown from "./VariantDropDown";
+import { selectedBundleVariation, variationId } from "./variantOptions";
 
 // FrequentlyBoughtTogether tiene dos modos:
 // 1) Producto normal: lista los cross_sell_products del catálogo y arma un
@@ -23,7 +24,7 @@ import VariantDropDown from "./VariantDropDown";
 //    producto padre, restringe las variantes a las permitidas por el admin
 //    y cobra el precio FIJO del bundle (product.sale_price). Se agrega al
 //    carrito como una sola línea de bundle vía CartContext.addBundleToCart.
-const ProductBundle = ({ productState, setProductState }) => {
+const ProductBundleContent = ({ productState, compact = false }) => {
   const analytics = useAnalytics();
   const { t } = useTranslation("common");
   const isLogin = Cookies.get("uat");
@@ -35,7 +36,7 @@ const ProductBundle = ({ productState, setProductState }) => {
   const isBundle = parent?.type === "bundle";
   const bundlePrice = Number(parent?.sale_price ?? parent?.price ?? 0);
 
-  const { data: addData, mutate, isLoading } = useCreate(AddToCartAPI, false, false, "No", (response, variables) => {
+  const { mutate, isPending: isLoading } = useCreate(AddToCartAPI, false, false, "No", (response, variables) => {
     if (response?.ok) analytics?.ecommerce("add_to_cart", [variables]);
   });
 
@@ -54,11 +55,14 @@ const ProductBundle = ({ productState, setProductState }) => {
 
   // Bundle: en modo bundle cada item forma parte de la compra por defecto.
   // Cross-sell: el cliente elige con el checkbox qué agregar.
-  const [checkedIds, setCheckedIds] = useState([]);
-  useEffect(() => {
-    if (isBundle) setCheckedIds(items.map((it) => String(it.product.id)));
-  }, [isBundle, items]);
+  const [checkedProductIds, setCheckedIds] = useState([]);
+  const checkedIds = isBundle ? items.map((it) => String(it.product.id))
+    : checkedProductIds.filter((id) => items.some((it) => String(it.product.id) === id));
   const [variationByProduct, setVariationByProduct] = useState({});
+  const selectedVariations = Object.fromEntries(items.map((it) => {
+    const pid = String(it.product.id);
+    return [pid, selectedBundleVariation(it, variationByProduct[pid])];
+  }));
 
   const onProductCheck = (event) => {
     event.stopPropagation();
@@ -66,10 +70,8 @@ const ProductBundle = ({ productState, setProductState }) => {
     if (event.target.checked) setCheckedIds((prev) => Array.from(new Set([...prev, productId])));
     else setCheckedIds((prev) => prev.filter((id) => id !== productId));
   };
-  const onVariantSelected = (productId, raw) => {
-    let variation = raw;
-    try { if (typeof raw === "string") variation = JSON.parse(raw); } catch (_) {}
-    setVariationByProduct((prev) => ({ ...prev, [String(productId)]: variation || null }));
+  const onVariantSelected = (productId, variation) => {
+    setVariationByProduct((prev) => ({ ...prev, [String(productId)]: variationId(variation) }));
   };
 
   // ¿Faltan variantes por elegir en los items marcados?
@@ -77,7 +79,7 @@ const ProductBundle = ({ productState, setProductState }) => {
     const pid = String(it.product.id);
     if (!checkedIds.includes(pid)) return false;
     const hasVariants = Array.isArray(it.product.variations) && it.product.variations.length > 0;
-    return hasVariants && !variationByProduct[pid];
+    return hasVariants && !selectedVariations[pid];
   });
 
   // Total mostrado: bundle -> precio fijo; cross-sell -> suma de precios
@@ -88,11 +90,11 @@ const ProductBundle = ({ productState, setProductState }) => {
     return items.reduce((sum, it) => {
       const pid = String(it.product.id);
       if (!checkedIds.includes(pid)) return sum;
-      const variation = variationByProduct[pid];
+      const variation = selectedVariations[pid];
       const unit = Number(variation?.sale_price ?? variation?.price ?? it.product?.sale_price ?? it.product?.price ?? 0);
       return sum + unit;
     }, 0);
-  }, [items, checkedIds, variationByProduct, isBundle, bundlePrice]);
+  }, [items, checkedIds, selectedVariations, isBundle, bundlePrice]);
 
   const canBuy = checkedIds.length > 0 && !missingVariant;
 
@@ -104,7 +106,7 @@ const ProductBundle = ({ productState, setProductState }) => {
     if (isBundle) {
       const selections = items.map((it) => {
         const pid = String(it.product.id);
-        const variation = variationByProduct[pid];
+        const variation = selectedVariations[pid];
         return { product_id: pid, variation_id: variation ? String(variation.id || variation._id) : null };
       });
       addBundleToCart?.(parent, selections);
@@ -115,7 +117,7 @@ const ProductBundle = ({ productState, setProductState }) => {
     items.forEach((it) => {
       const pid = String(it.product.id);
       if (!checkedIds.includes(pid)) return;
-      const variation = variationByProduct[pid] || null;
+      const variation = selectedVariations[pid] || null;
       const unit = Number(variation?.sale_price ?? variation?.price ?? it.product?.sale_price ?? it.product?.price ?? 0);
       const variationId = variation ? String(variation.id || variation._id) : null;
       const index = cloneCart.findIndex((c) => String(c?.product_id) === pid && String(c?.variation_id || "") === String(variationId || ""));
@@ -131,7 +133,7 @@ const ProductBundle = ({ productState, setProductState }) => {
         const params = { product: it.product, product_id: it.product.id, variation, variation_id: variationId, quantity: 1, sub_total: unit };
         setCartProducts((prev) => [...prev, params]);
       }
-      const obj = { product: it.product, product_id: it.product.id, quantity: 1, sub_total: unit, variation_id: variationId };
+      const obj = { product: it.product, product_id: it.product.id, variation, quantity: 1, sub_total: unit, variation_id: variationId };
       if (isLogin) mutate(obj); else analytics?.ecommerce("add_to_cart", [obj]);
     });
   };
@@ -143,17 +145,17 @@ const ProductBundle = ({ productState, setProductState }) => {
       <h4 className="sub-title">{t(isBundle ? "Contenido del bundle" : "FrequentlyBoughtTogether")}</h4>
       <div className="bundle">
         <Row className="bundle-image-box g-3">
-          {items.map((it, i) => {
+          {items.map((it) => {
             const pid = String(it.product.id);
             const hasVariants = Array.isArray(it.product.variations) && it.product.variations.length > 0;
             const filteredProductForVariants = it.allowedIds.length
               ? { ...it.product, variations: (it.product.variations || []).filter((v) => it.allowedIds.includes(String(v.id || v._id))) }
               : it.product;
-            const variation = variationByProduct[pid];
+            const variation = selectedVariations[pid];
             const displayPrice = Number(variation?.sale_price ?? variation?.price ?? it.product?.sale_price ?? it.product?.price ?? 0);
             const checked = checkedIds.includes(pid);
             return (
-              <Col xl="6" lg="12" sm="6" key={i}>
+              <Col xl={compact ? 12 : 6} lg="12" sm={compact ? 12 : 6} key={pid}>
                 <div className="bundle-box">
                   {!isBundle && (
                     <div className="form-check">
@@ -171,8 +173,8 @@ const ProductBundle = ({ productState, setProductState }) => {
                         <h4>{it.product?.name}</h4>
                       </Link>
                     </div>
-                    {hasVariants && (it.product.attributes?.length > 0 || isBundle) ? (
-                      <VariantDropDown product={filteredProductForVariants} selectedOption={(v) => onVariantSelected(pid, v)} />
+                    {hasVariants ? (
+                      <VariantDropDown product={filteredProductForVariants} value={variationId(variation)} selectedOption={(v) => onVariantSelected(pid, v)} />
                     ) : null}
                     {!isBundle && <h3>{convertCurrency(displayPrice)}</h3>}
                   </div>
@@ -190,5 +192,8 @@ const ProductBundle = ({ productState, setProductState }) => {
     </div>
   );
 };
+
+// Navigating to another product must never reuse the previous size choices.
+const ProductBundle = (props) => <ProductBundleContent key={props.productState?.product?.id || props.productState?.product?._id} {...props} />;
 
 export default ProductBundle;

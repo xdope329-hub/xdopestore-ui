@@ -3,7 +3,12 @@ export const ANALYTICS_CURRENCY = "COP";
 
 export function resolveMeasurementId(settings, fallback = "") {
   const config = settings?.analytics?.google_analytics;
-  if (config?.status !== undefined && ![true, 1, "1", "true"].includes(config.status)) return "";
+  // The admin checkbox persists ["on"] when checked and [] when unchecked.
+  // Older settings use booleans/numbers. Only explicit enabled values qualify.
+  const status = Array.isArray(config?.status)
+    ? (config.status.length === 1 ? config.status[0] : false)
+    : config?.status;
+  if (config?.status !== undefined && ![true, 1, "1", "true", "on"].includes(status)) return "";
   const id = String(config?.measurement_id || fallback).trim();
   return /^G-[A-Z0-9]+$/.test(id) ? id : "";
 }

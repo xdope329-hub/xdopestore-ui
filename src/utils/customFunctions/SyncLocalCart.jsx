@@ -22,6 +22,12 @@ export const transformLocalCart = (items) =>
     product_id: item?.product_id ?? item?.product?.id,
     variation_id: item?.variation_id || "",
     quantity: item?.quantity ?? 1,
+    ...(item?.product?.type === "bundle" ? {
+      bundle_selections: (item.bundle_selections || []).map((selection) => ({
+        product_id: selection.product_id?.id || selection.product_id?._id || selection.product_id,
+        variation_id: selection.variation_id || null,
+      })),
+    } : {}),
   }));
 
 // Pushes any pending guest cart items up to the authenticated user's

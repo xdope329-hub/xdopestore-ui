@@ -16,6 +16,25 @@ test("configuration accepts GA4 IDs, admin takes precedence, and disabled means 
   for (const id of ["UA-123-4", "GTM-123", 'G-X\"><script>', "invalid"]) assert.equal(resolveMeasurementId(config(true, id)), "");
 });
 
+test("admin checkbox settings enable the tag and queue events with the saved measurement ID", () => {
+  const settings = config(["on"], "G-LXZF7GG5E3");
+  const browser = fakeBrowser();
+  const client = createAnalyticsClient(resolveMeasurementId(settings), browser);
+  assert.ok(client);
+  client.pageView();
+  assert.equal(browser.dataLayer.find((args) => args[0] === "config")[1], "G-LXZF7GG5E3");
+  assert.equal(events(browser, "page_view")[0][2].send_to, "G-LXZF7GG5E3");
+  for (const status of ["on", [true], [1], ["1"], ["true"]]) {
+    assert.equal(resolveMeasurementId(config(status)), "G-STORE123");
+  }
+});
+
+test("unchecked and unrecognized admin checkbox values keep analytics disabled, even with a fallback", () => {
+  for (const status of [[], [undefined], [null], [false], [0], ["0"], ["false"], ["off"], ["unexpected"], ["on", "off"], "off"]) {
+    assert.equal(resolveMeasurementId(config(status), "G-FALLBACK"), "");
+  }
+});
+
 test("items use base COP, selected variant price, actual cart quantity and allowlisted fields", () => {
   const line = { product, quantity: 2, variation: { name: "Negro / M", sale_price: "45000" }, email: "private@example.com", sub_total: 1 };
   assert.deepEqual(ecommerceParams([line]), {
