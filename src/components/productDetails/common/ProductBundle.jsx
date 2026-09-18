@@ -163,7 +163,12 @@ const ProductBundleContent = ({ productState, compact = false }) => {
 
   if (!items.length) return null;
 
-  const colProps = { xl: compact ? 12 : 6, lg: "12", sm: compact ? 12 : 6 };
+  // 2 tarjetas por fila desde sm en adelante (excepto en modo compact, que
+  // vive en un sidebar angosto). El `lg: 12` anterior forzaba una columna en
+  // el breakpoint lg y las tarjetas del FBT quedaban apiladas verticalmente.
+  const colProps = compact
+    ? { xs: 12 }
+    : { xs: 12, sm: 6, lg: 6, xl: 6 };
   const productLink = (product, children) => <Link href={`/product/${product?.slug || ""}`}>{children}</Link>;
   const card = ({ product, checkbox = null, label = null, variant = null, price = null, linked = true }) => {
     const image = <Avatar customClass={"img-fluid"} data={product?.product_thumbnail} name={product?.name} placeHolder={placeHolderImage} height={70} width={70} />;
