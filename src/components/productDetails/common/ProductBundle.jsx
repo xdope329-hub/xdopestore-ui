@@ -32,7 +32,10 @@ const ProductBundle = ({ productState, setProductState }) => {
 
   const onProductCheck = (event) => {
     event.stopPropagation();
-    const productId = Number(event?.target?.value);
+    // Los ids de producto son ObjectId (string). Number() los convertía a
+    // NaN, así que ninguna selección se identificaba y el precio siempre
+    // quedaba en 0 con el botón deshabilitado.
+    const productId = String(event?.target?.value);
     if (event.target.checked) {
       setSelectedProductIds((prev) => [...prev, productId]);
     } else {
@@ -40,9 +43,9 @@ const ProductBundle = ({ productState, setProductState }) => {
     }
   };
   useEffect(() => {
-    const selected = filteredProduct?.filter((elem) => selectedProductIds?.includes(elem?.id));
+    const selected = (filteredProduct || []).filter((elem) => selectedProductIds.includes(String(elem?.id)));
     setSelectedProducts(selected);
-    const newTotal = selected.reduce((sum, item) => sum + item.sale_price, 0);
+    const newTotal = selected.reduce((sum, item) => sum + Number(item?.sale_price || item?.price || 0), 0);
     setTotal(newTotal);
   }, [selectedProductIds, filteredProduct]);
 
