@@ -17,10 +17,12 @@ const bundle = { ...base, bundle_items: [
   { product_id: child, allowed_variation_ids: [largeId] },
   { product_id: secondChild, allowed_variation_ids: [] },
 ] };
+// "Frecuentemente comprados juntos": producto simple de 90.000 con un relacionado con tallas.
+const crossSellParent = { ...base, type: 'simple', bundle_items: [], cross_sell_products: [child.id] };
 test.setTimeout(90000);
 
-async function openProduct(page, { layout = 'product_thumbnail', crossSell = false, signedIn = false, width = 1280 } = {}) {
-  const parent = crossSell ? { ...base, type: 'simple', bundle_items: [], cross_sell_products: [child.id] } : bundle;
+async function openProduct(page, { layout = 'product_thumbnail', crossSell = false, signedIn = false, width = 1280, parentOverride = null } = {}) {
+  const parent = parentOverride || (crossSell ? crossSellParent : bundle);
   const settings = structuredClone(settingsFixture);
   settings.values.activation.guest_checkout = true;
   settings.values.payment_methods = [{ name: 'cod', status: true }];
@@ -44,7 +46,12 @@ async function openProduct(page, { layout = 'product_thumbnail', crossSell = fal
     else if (path === '/product') json = { data: [child], total: 1 };
     else if (path.startsWith('/product/')) json = parent;
     else if (path === '/checkout/terms') json = { source: 'bundled', version: 'bundled-2026-08-27', path: '/terms-and-conditions' };
-    else if (path === '/checkout') json = { total: 90000, sub_total: 90000, shipping_total: 0, shipping_quote: { amount: 0 }, cart: [] };
+    else if (path === '/checkout') {
+      // Invitados envían sus líneas: el resumen debe sumarlas todas (el servidor real las reprecia).
+      const posted = req.method() === 'POST' ? req.postDataJSON()?.products || [] : [];
+      const sum = posted.length ? posted.reduce((acc, line) => acc + Number(line.sub_total || 0), 0) : 90000;
+      json = { total: sum, sub_total: sum, shipping_total: 0, shipping_quote: { amount: 0 }, cart: [] };
+    }
     else if (path === '/payment/initialize') {
       state.payments.push(req.postDataJSON());
       status = 503;
@@ -58,7 +65,10 @@ async function openProduct(page, { layout = 'product_thumbnail', crossSell = fal
       if (req.method() === 'POST') {
         const body = req.postDataJSON();
         state.adds.push(body);
-        state.rows.push({ ...body, id: 'cart-line' });
+        // Como el servidor: la línea vuelve poblada con su producto, variante y subtotal.
+        const product = [parent, child, secondChild].find((p) => p.id === String(body.product_id)) || parent;
+        const variation = (product.variations || []).find((v) => v.id === String(body.variation_id || '')) || null;
+        state.rows.push({ ...body, id: `cart-line-${state.rows.length + 1}`, product, variation, sub_total: Number(variation?.sale_price ?? product.sale_price) * Number(body.quantity || 1) });
         status = 201;
       }
       json = { items: state.rows, total: state.rows.reduce((sum, line) => sum + line.sub_total, 0) };
@@ -99,24 +109,93 @@ for (const { layout, width } of [{ layout: 'product_thumbnail', width: 1280 }, {
   });
 }
 
-for (const signedIn of [false, true]) {
-  test(`cross-sell without attributes uses the chosen price in cart and GA4 (${signedIn ? 'account' : 'guest'})`, async ({ page }) => {
-    const state = await openProduct(page, { crossSell: true, signedIn });
+// Paquete: la ficha (siempre incluida) más el relacionado marcado con su talla.
+const idOf = (value) => (value == null ? null : String(value?._id ?? value?.id ?? value));
+const packageOf = (lines) => lines.map(({ product_id, variation_id, quantity }) => ({ product_id: idOf(product_id), variation_id: idOf(variation_id), quantity }));
+const expectedPackage = [{ product_id: base.id, variation_id: null, quantity: 1 }, { product_id: child.id, variation_id: largeId, quantity: 1 }];
+
+async function buildPackage(page) {
+  const boxes = page.locator('.bundle .bundle-box');
+  await expect(boxes).toHaveCount(2);
+  await expect(boxes.nth(0)).toContainText('QA Bundle');
+  await expect(boxes.nth(0).locator('input[type="checkbox"]')).toBeChecked();
+  await expect(boxes.nth(0).locator('input[type="checkbox"]')).toBeDisabled();
+  await expect(page.locator('.bundle .total-price')).toContainText('90.000');
+  await expect(page.locator('.bundle-btn')).toBeDisabled();
+  await boxes.nth(1).locator('input[type="checkbox"]').check();
+  await expect(page.locator('.bundle-btn')).toBeDisabled();
+  await page.locator('.bundle select').selectOption(largeId);
+  await expect(page.locator('.bundle .total-price')).toContainText('170.000');
+  await expect(page.locator('.bundle-btn')).toBeEnabled();
+}
+
+async function seedGuestDraft(page) {
+  await page.evaluate(() => {
+    const address = { id: 'guest-1', title: 'Casa', street: 'Calle 10 # 20-30', city: 'Bogotá', phone: '3001234567', country_code: '57', country_id: '48', state_id: '1', pincode: '110111' };
+    sessionStorage.setItem('xdope_checkout_guest_draft', JSON.stringify({ name: 'QA Buyer', email: 'qa@example.com', phone: '3001234567', country_code: '57', guest_addresses: [address], shipping_address_id: address.id, billing_address_id: address.id }));
+  });
+}
+
+for (const { signedIn, layout } of [{ signedIn: false, layout: 'product_thumbnail' }, { signedIn: true, layout: 'product_thumbnail' }, { signedIn: false, layout: 'product_accordion' }]) {
+  test(`the package adds this product plus the chosen related product (${signedIn ? 'account' : 'guest'}, ${layout})`, async ({ page }, testInfo) => {
+    const state = await openProduct(page, { crossSell: true, signedIn, layout });
     await expect.poll(() => page.evaluate(() => (window.dataLayer || []).some((args) => args[0] === 'config'))).toBe(true);
-    await page.locator('.bundle input[type="checkbox"]').check();
-    await expect(page.locator('.bundle-btn')).toBeDisabled();
-    await expect(page.locator('.bundle select option').filter({ hasText: 'Large' })).toHaveCount(1);
-    await page.locator('.bundle select').selectOption(largeId);
-    await expect(page.locator('.bundle .total-price')).toContainText('80.000');
+    await buildPackage(page);
+    await page.screenshot({ path: testInfo.outputPath('package-selected.png') });
     await page.locator('.bundle-btn').click();
     await expect.poll(() => page.evaluate(() => (window.dataLayer || []).filter((args) => args[0] === 'event' && args[1] === 'add_to_cart').length)).toBe(1);
     const event = await page.evaluate(() => window.dataLayer.find((args) => args[0] === 'event' && args[1] === 'add_to_cart')[2]);
-    expect(event).toMatchObject({ value: 80000, items: [{ price: 80000, item_variant: 'Large' }] });
-    const line = signedIn ? state.adds[0] : await page.evaluate(() => JSON.parse(localStorage.getItem('cart')).items[0]);
-    expect(line).toMatchObject({ variation_id: largeId, sub_total: 80000 });
+    expect(event).toMatchObject({ value: 170000, items: [{ item_id: base.id, price: 90000, quantity: 1 }, { item_id: child.id, price: 80000, quantity: 1, item_variant: 'Large' }] });
+    if (signedIn) {
+      expect(packageOf(state.adds)).toEqual(expectedPackage);
+    } else {
+      const items = await page.evaluate(() => JSON.parse(localStorage.getItem('cart')).items);
+      expect(packageOf(items)).toEqual(expectedPackage);
+      expect(items.map((line) => line.sub_total)).toEqual([90000, 80000]);
+    }
     expect(state.errors).toEqual([]);
   });
 }
+
+test('the package follows the variant chosen for this product', async ({ page }) => {
+  const fixture = catalog.data[0];
+  const parentOverride = { ...crossSellParent, type: 'classified', attributes: fixture.attributes, variations: fixture.variations };
+  const state = await openProduct(page, { crossSell: true, parentOverride });
+  const boxes = page.locator('.bundle .bundle-box');
+  // La ficha abre con la variante vendible más barata (Brown, 15).
+  await expect(boxes.nth(0)).toContainText('Brown');
+  await expect(page.locator('.bundle .total-price')).toContainText('15');
+  await boxes.nth(1).locator('input[type="checkbox"]').check();
+  await page.locator('.bundle select').selectOption(largeId);
+  await expect(page.locator('.bundle .total-price')).toContainText('80.015');
+  await page.locator('li[title="Green"] img').first().click();
+  await expect(boxes.nth(0)).toContainText('Green');
+  await expect(page.locator('.bundle .total-price')).toContainText('80.016');
+  await page.locator('.bundle-btn').click();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('cart') || '{}').items?.length)).toBe(2);
+  const items = await page.evaluate(() => JSON.parse(localStorage.getItem('cart')).items);
+  expect(packageOf(items)).toEqual([{ product_id: base.id, variation_id: String(fixture.variations[1].id), quantity: 1 }, { product_id: child.id, variation_id: largeId, quantity: 1 }]);
+  expect(items.map((line) => line.sub_total)).toEqual([16, 80000]);
+  expect(state.errors).toEqual([]);
+});
+
+test('guest package reaches checkout with both lines and their sum', async ({ page }, testInfo) => {
+  const state = await openProduct(page, { crossSell: true });
+  await buildPackage(page);
+  await page.locator('.bundle-btn').click();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('cart') || '{}').items?.length)).toBe(2);
+  await seedGuestDraft(page);
+  await page.goto(`${baseURL}/checkout`);
+  await expect(page.locator('.checkout-details .qty > li')).toHaveCount(2);
+  await expect(page.locator('.list-total .count')).toContainText('170.000');
+  await expect(page.locator('.box-loader')).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('package-checkout.png'), fullPage: true });
+  await page.locator('#checkout-terms-accepted').check();
+  await page.locator('.order-btn').click();
+  await expect.poll(() => state.payments.length).toBe(1);
+  expect(packageOf(state.payments[0].products)).toEqual(expectedPackage);
+  expect(state.errors).toEqual([]);
+});
 
 test('guest bundle choices reach checkout and survive signing in', async ({ page }) => {
   const state = await openProduct(page);

@@ -15,11 +15,15 @@ import { useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Col, Row } from "reactstrap";
 import VariantDropDown from "./VariantDropDown";
-import { selectedBundleVariation, variationId } from "./variantOptions";
+import { selectedBundleVariation, variationId, variationLabel } from "./variantOptions";
+import { lineUnitPrice, mergeCartLines, packageLines, packageMissingVariant, packageTotal } from "./crossSellPackage";
 
 // FrequentlyBoughtTogether tiene dos modos:
-// 1) Producto normal: lista los cross_sell_products del catálogo y arma un
-//    total con la suma de sale_price de las variantes/productos elegidos.
+// 1) Producto normal ("Frecuentemente comprados juntos"): el paquete es el
+//    producto de la ficha, con la variante elegida en la página, más los
+//    cross_sell_products marcados. El total suma todas esas líneas y al
+//    comprar cada una entra al carrito con su propio precio, así el checkout
+//    cobra el paquete completo (reglas puras en crossSellPackage.js).
 // 2) Producto tipo bundle (type === 'bundle'): lista los bundle_items del
 //    producto padre, restringe las variantes a las permitidas por el admin
 //    y cobra el precio FIJO del bundle (product.sale_price). Se agrega al
@@ -28,17 +32,19 @@ const ProductBundleContent = ({ productState, compact = false }) => {
   const analytics = useAnalytics();
   const { t } = useTranslation("common");
   const isLogin = Cookies.get("uat");
-  const { cartProducts, setCartProducts, addBundleToCart } = useContext(CartContext);
-  const { convertCurrency } = useContext(SettingContext);
+  const { cartProducts, setCartProducts, addBundleToCart, refetch } = useContext(CartContext);
+  const { convertCurrency, capacityReached } = useContext(SettingContext);
   const { filteredProduct } = useContext(ProductIdsContext);
 
   const parent = productState?.product;
   const isBundle = parent?.type === "bundle";
   const bundlePrice = Number(parent?.sale_price ?? parent?.price ?? 0);
+  // Variante del producto de la ficha: la elige el selector de atributos de la página.
+  const parentVariation = productState?.selectedVariation || null;
+  const parentHasVariants = Array.isArray(parent?.variations) && parent.variations.length > 0;
 
-  const { mutate, isPending: isLoading } = useCreate(AddToCartAPI, false, false, "No", (response, variables) => {
-    if (response?.ok) analytics?.ecommerce("add_to_cart", [variables]);
-  });
+  const { mutateAsync } = useCreate(AddToCartAPI, false, false, "No");
+  const [busy, setBusy] = useState(false);
 
   // Items en pantalla (con producto poblado y variantes permitidas).
   const items = useMemo(() => {
@@ -74,33 +80,29 @@ const ProductBundleContent = ({ productState, compact = false }) => {
     setVariationByProduct((prev) => ({ ...prev, [String(productId)]: variationId(variation) }));
   };
 
-  // ¿Faltan variantes por elegir en los items marcados?
-  const missingVariant = items.some((it) => {
-    const pid = String(it.product.id);
-    if (!checkedIds.includes(pid)) return false;
-    const hasVariants = Array.isArray(it.product.variations) && it.product.variations.length > 0;
-    return hasVariants && !selectedVariations[pid];
-  });
+  // Paquete (cross-sell): la ficha primero y luego cada relacionado marcado.
+  const packageInput = { parent, parentVariation, items, checkedIds, selectedVariations };
+  const lines = isBundle ? [] : packageLines(packageInput);
 
-  // Total mostrado: bundle -> precio fijo; cross-sell -> suma de precios
-  // (usa el precio de la variante elegida cuando aplica).
-  const total = useMemo(() => {
-    if (!checkedIds.length) return 0;
-    if (isBundle) return bundlePrice;
-    return items.reduce((sum, it) => {
-      const pid = String(it.product.id);
-      if (!checkedIds.includes(pid)) return sum;
-      const variation = selectedVariations[pid];
-      const unit = Number(variation?.sale_price ?? variation?.price ?? it.product?.sale_price ?? it.product?.price ?? 0);
-      return sum + unit;
-    }, 0);
-  }, [items, checkedIds, selectedVariations, isBundle, bundlePrice]);
+  // ¿Faltan variantes por elegir? Bundle: en cada item. Paquete: en la ficha
+  // o en algún relacionado marcado.
+  const missingVariant = isBundle
+    ? items.some((it) => Array.isArray(it.product.variations) && it.product.variations.length > 0 && !selectedVariations[String(it.product.id)])
+    : packageMissingVariant(packageInput);
+
+  // Total mostrado: bundle -> precio fijo; paquete -> ficha + marcados.
+  const total = isBundle ? (checkedIds.length ? bundlePrice : 0) : packageTotal(lines);
 
   const canBuy = checkedIds.length > 0 && !missingVariant;
 
-  const addBundle = () => {
+  const addBundle = async () => {
     if (!canBuy) {
-      ToastNotification("error", i18next.t("Elige las variantes de cada producto del bundle"));
+      ToastNotification("error", i18next.t(isBundle ? "Elige las variantes de cada producto del bundle" : "SelectVariantFirst"));
+      return;
+    }
+    // Sin cupo hoy la tienda vende solo por WhatsApp (misma regla que handleIncDec).
+    if (capacityReached) {
+      ToastNotification("error", i18next.t("CapacityReachedToast"));
       return;
     }
     if (isBundle) {
@@ -112,39 +114,85 @@ const ProductBundleContent = ({ productState, compact = false }) => {
       addBundleToCart?.(parent, selections);
       return;
     }
-    // Cross-sell: agrega cada producto marcado con su variante.
-    const cloneCart = [...cartProducts];
-    items.forEach((it) => {
-      const pid = String(it.product.id);
-      if (!checkedIds.includes(pid)) return;
-      const variation = selectedVariations[pid] || null;
-      const unit = Number(variation?.sale_price ?? variation?.price ?? it.product?.sale_price ?? it.product?.price ?? 0);
-      const variationId = variation ? String(variation.id || variation._id) : null;
-      const index = cloneCart.findIndex((c) => String(c?.product_id) === pid && String(c?.variation_id || "") === String(variationId || ""));
-      if (index !== -1) {
-        const stockQty = variation?.quantity ?? cloneCart[index]?.product?.quantity;
-        if (stockQty < cloneCart[index]?.quantity + 1) {
-          ToastNotification("error", i18next.t("StockLimitMessage", { qty: stockQty }));
-          return;
+    // Paquete: la ficha y cada relacionado marcado son líneas independientes
+    // (una línea igual ya en el carrito suma cantidad). Si alguna supera el
+    // stock no se agrega nada.
+    const { stockError } = mergeCartLines(cartProducts, lines);
+    if (stockError) {
+      ToastNotification("error", i18next.t("StockLimitMessage", { qty: stockError.qty }));
+      return;
+    }
+    setCartProducts((prev) => mergeCartLines(prev, lines).cart);
+    if (!isLogin) {
+      analytics?.ecommerce("add_to_cart", lines);
+      ToastNotification("success", i18next.t("AddedToCart"));
+      return;
+    }
+    // Con sesión el carrito vive en el servidor: una petición por línea, en
+    // orden; la última respuesta (carrito completo) reemplaza el estado local.
+    setBusy(true);
+    try {
+      const added = [];
+      let serverCart = null;
+      let failure = null;
+      for (const line of lines) {
+        const response = await mutateAsync({ product_id: line.product_id, variation_id: line.variation_id, quantity: line.quantity })
+          .catch((error) => ({ ok: false, data: error?.response?.data }));
+        if (!response?.ok) {
+          failure = response;
+          break;
         }
-        const next = { ...cloneCart[index], quantity: cloneCart[index].quantity + 1, sub_total: (cloneCart[index].quantity + 1) * unit };
-        setCartProducts((prev) => prev.map((c, i) => (i === index ? next : c)));
-      } else {
-        const params = { product: it.product, product_id: it.product.id, variation, variation_id: variationId, quantity: 1, sub_total: unit };
-        setCartProducts((prev) => [...prev, params]);
+        added.push(line);
+        if (Array.isArray(response?.data?.items)) serverCart = response.data.items;
       }
-      const obj = { product: it.product, product_id: it.product.id, variation, quantity: 1, sub_total: unit, variation_id: variationId };
-      if (isLogin) mutate(obj); else analytics?.ecommerce("add_to_cart", [obj]);
-    });
+      if (serverCart) setCartProducts(serverCart);
+      else if (failure) refetch?.();
+      if (added.length) analytics?.ecommerce("add_to_cart", added);
+      if (failure) ToastNotification("error", failure?.data?.message || i18next.t("PackageAddFailed"));
+      else ToastNotification("success", i18next.t("AddedToCart"));
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (!items.length) return null;
+
+  const colProps = { xl: compact ? 12 : 6, lg: "12", sm: compact ? 12 : 6 };
+  const productLink = (product, children) => <Link href={`/product/${product?.slug || ""}`}>{children}</Link>;
+  const card = ({ product, checkbox = null, label = null, variant = null, price = null, linked = true }) => {
+    const image = <Avatar customClass={"img-fluid"} data={product?.product_thumbnail} name={product?.name} placeHolder={placeHolderImage} height={70} width={70} />;
+    const title = <h4>{product?.name}</h4>;
+    return (
+      <div className="bundle-box">
+        {checkbox && <div className="form-check">{checkbox}</div>}
+        <div className="bundle-image">{linked ? productLink(product, image) : image}</div>
+        <div className="bundle-content">
+          {label && <span className="text-content d-block">{label}</span>}
+          <div>{linked ? productLink(product, title) : title}</div>
+          {variant}
+          {price !== null && <h3>{convertCurrency(price)}</h3>}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="bordered-box pt-2">
       <h4 className="sub-title">{t(isBundle ? "Contenido del bundle" : "FrequentlyBoughtTogether")}</h4>
       <div className="bundle">
         <Row className="bundle-image-box g-3">
+          {!isBundle && (
+            <Col {...colProps}>
+              {card({
+                product: parent,
+                linked: false,
+                label: t("ThisProduct"),
+                checkbox: <input type="checkbox" className="form-check-input checkbox_animated" id="crosssell-this-product" checked disabled readOnly aria-label={t("ThisProduct")} />,
+                variant: parentHasVariants ? <p className="text-content mb-0">{parentVariation ? variationLabel(parentVariation) : t("SelectVariantFirst")}</p> : null,
+                price: lineUnitPrice(parent, parentVariation),
+              })}
+            </Col>
+          )}
           {items.map((it) => {
             const pid = String(it.product.id);
             const hasVariants = Array.isArray(it.product.variations) && it.product.variations.length > 0;
@@ -152,40 +200,21 @@ const ProductBundleContent = ({ productState, compact = false }) => {
               ? { ...it.product, variations: (it.product.variations || []).filter((v) => it.allowedIds.includes(String(v.id || v._id))) }
               : it.product;
             const variation = selectedVariations[pid];
-            const displayPrice = Number(variation?.sale_price ?? variation?.price ?? it.product?.sale_price ?? it.product?.price ?? 0);
-            const checked = checkedIds.includes(pid);
             return (
-              <Col xl={compact ? 12 : 6} lg="12" sm={compact ? 12 : 6} key={pid}>
-                <div className="bundle-box">
-                  {!isBundle && (
-                    <div className="form-check">
-                      <input type="checkbox" className="form-check-input checkbox_animated" id={`crosssell-${pid}`} value={pid} checked={checked} onChange={onProductCheck} />
-                    </div>
-                  )}
-                  <div className="bundle-image">
-                    <Link href={`/product/${it.product?.slug || ""}`}>
-                      <Avatar customClass={"img-fluid"} data={it.product?.product_thumbnail} name={it.product?.name} placeHolder={placeHolderImage} height={70} width={70} />
-                    </Link>
-                  </div>
-                  <div className="bundle-content">
-                    <div>
-                      <Link href={`/product/${it.product?.slug || ""}`}>
-                        <h4>{it.product?.name}</h4>
-                      </Link>
-                    </div>
-                    {hasVariants ? (
-                      <VariantDropDown product={filteredProductForVariants} value={variationId(variation)} selectedOption={(v) => onVariantSelected(pid, v)} />
-                    ) : null}
-                    {!isBundle && <h3>{convertCurrency(displayPrice)}</h3>}
-                  </div>
-                </div>
+              <Col {...colProps} key={pid}>
+                {card({
+                  product: it.product,
+                  checkbox: isBundle ? null : <input type="checkbox" className="form-check-input checkbox_animated" id={`crosssell-${pid}`} value={pid} checked={checkedIds.includes(pid)} onChange={onProductCheck} />,
+                  variant: hasVariants ? <VariantDropDown product={filteredProductForVariants} value={variationId(variation)} selectedOption={(v) => onVariantSelected(pid, v)} /> : null,
+                  price: isBundle ? null : lineUnitPrice(it.product, variation),
+                })}
               </Col>
             );
           })}
         </Row>
         <h4 className="bundle-title">{t(isBundle ? "Precio del bundle:" : "ProductSelectedFor")}</h4>
         <h4 className="theme-color total-price">{convertCurrency(total)}</h4>
-        <Btn loading={isLoading} size="xs" disabled={!canBuy} className=" btn-solid bundle-btn mt-0 mt-sm-2 " onClick={addBundle}>
+        <Btn loading={busy} size="xs" disabled={!canBuy || busy} className=" btn-solid bundle-btn mt-0 mt-sm-2 " onClick={addBundle}>
           {t("BuyThisBundle")}
         </Btn>
       </div>
