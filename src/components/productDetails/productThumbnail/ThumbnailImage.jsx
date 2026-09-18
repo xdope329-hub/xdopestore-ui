@@ -19,13 +19,18 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
   const slider2 = useRef();
   const { nav1, nav2 } = state;
   const currentVariation = productState?.selectedVariation?.variation_galleries?.length ? productState?.selectedVariation?.variation_galleries : productState?.product?.product_galleries;
+  // Slick necesita reengancharse cuando los slides llegan (o cambian de
+  // largo). Sin este key, si product_galleries pasa de 0/undefined a N tras
+  // el fetch, los thumbnails quedan apilados verticalmente porque el
+  // .slick-track ya se inicializó sin hijos y no se recompone.
+  const galleryKey = `${productState?.product?.id || "p"}-${currentVariation?.length || 0}`;
 
   useEffect(() => {
     setState({
       nav1: slider1.current,
       nav2: slider2.current,
     });
-  }, []);
+  }, [galleryKey]);
   useEffect(() => {
     if (!slider1.current) return;
     const variation = productState?.selectedVariation;
@@ -85,7 +90,7 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
                   {productState?.product.is_featured ? <li className="featured">{t("Featured")}</li> : ""}
                 </ul>
               ) : null}
-              <Slider asNavFor={nav2} ref={slider1} prevArrow={<SlickArrowLeft />} nextArrow={<SlickArrowRight />}>
+              <Slider key={`main-${galleryKey}`} asNavFor={nav2} ref={slider1} prevArrow={<SlickArrowLeft />} nextArrow={<SlickArrowRight />}>
                 {currentVariation?.map((image, i) => (
                   <div key={i}>
                     <div className="slider-image">
@@ -115,7 +120,7 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
           </Col>
           <Col xs={12}>
             {
-              <Slider {...thumbnailSlider} className="slider-nav no-arrow thumbnail-slider-box" asNavFor={nav1} ref={slider2} slidesToShow={productState.product?.product_galleries?.length <= 3 ? productState.product?.product_galleries?.length : slideToShow}>
+              <Slider key={`nav-${galleryKey}`} {...thumbnailSlider} className="slider-nav no-arrow thumbnail-slider-box" asNavFor={nav1} ref={slider2} slidesToShow={productState.product?.product_galleries?.length <= 3 ? productState.product?.product_galleries?.length : slideToShow}>
                 {currentVariation?.map((image, i) => (
                   <div key={i} className="slider-image">
                     {videoType.includes(image.mime_type) ? (
