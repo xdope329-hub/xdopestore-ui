@@ -3,6 +3,7 @@ import React from "react";
 import { Col, Row } from "reactstrap";
 import CustomerOrderCount from "../common/CustomerOrderCount";
 import ProductContent from "../common/ProductContent";
+import ProductBundle from "../common/ProductBundle";
 import ProductDetailsTab from "../common/ProductDetailsTab";
 import RelatedProduct from "../common/RelatedProduct";
 import ThumbnailProductImage from "../productThumbnail/ThumbnailImage";
@@ -39,6 +40,7 @@ const ProductAccordion = ({ productState, setProductState }) => {
         <Col xl={4} lg={5}>
           <div className="product-page-details product-form-box product-right-box">
             <ProductContent productState={productState} setProductState={setProductState} noDetails={true} noModals={true} />
+            {(productState?.product?.type === "bundle" || productState?.product?.cross_sell_products?.length > 0) && <ProductBundle productState={productState} compact />}
             <WishlistCompareShare productState={productState} />
             <ProductStatus productState={productState} />
             <PaymentOptions productState={productState} />

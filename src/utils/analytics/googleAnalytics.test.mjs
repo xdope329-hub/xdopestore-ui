@@ -16,6 +16,14 @@ test("configuration accepts GA4 IDs, admin takes precedence, and disabled means 
   for (const id of ["UA-123-4", "GTM-123", 'G-X\"><script>', "invalid"]) assert.equal(resolveMeasurementId(config(true, id)), "");
 });
 
+test("saved admin checkbox values enable analytics only when explicitly checked", () => {
+  assert.equal(resolveMeasurementId(config(["on"])), "G-STORE123");
+  assert.equal(resolveMeasurementId(config("on")), "G-STORE123");
+  for (const status of [[], [undefined], [null], [false], ["false"], ["off"], ["unknown"], ["on", "off"]]) {
+    assert.equal(resolveMeasurementId(config(status), "G-FALLBACK"), "");
+  }
+});
+
 test("items use base COP, selected variant price, actual cart quantity and allowlisted fields", () => {
   const line = { product, quantity: 2, variation: { name: "Negro / M", sale_price: "45000" }, email: "private@example.com", sub_total: 1 };
   assert.deepEqual(ecommerceParams([line]), {
