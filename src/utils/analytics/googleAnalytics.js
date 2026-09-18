@@ -3,7 +3,8 @@ export const ANALYTICS_CURRENCY = "COP";
 
 export function resolveMeasurementId(settings, fallback = "") {
   const config = settings?.analytics?.google_analytics;
-  // Admin checkboxes persist ["on"] or []; older records use scalars.
+  // The admin checkbox persists ["on"] when checked and [] when unchecked.
+  // Older settings use booleans/numbers. Only explicit enabled values qualify.
   const status = Array.isArray(config?.status)
     ? (config.status.length === 1 ? config.status[0] : false)
     : config?.status;
