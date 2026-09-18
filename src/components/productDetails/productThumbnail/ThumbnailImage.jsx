@@ -32,15 +32,23 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
     if (!slider1) return;
     const variation = productState?.selectedVariation;
     if (!variation) return;
-    if (variation.variation_galleries?.length) {
-      // Variation has its own images — go to first slide
-      slider1.slickGoTo(0);
-    } else if (variation.variation_image?.id) {
-      const index = productState?.product?.product_galleries?.findIndex(
-        (object) => object.id === variation.variation_image.id
-      );
-      if (index >= 0) slider1.slickGoTo(index);
-    }
+    // Al cambiar el key del Slider (remount por gallerySignature), slick
+    // deja su innerSlider en null por un tick antes de reinicializarse;
+    // llamar slickGoTo en ese hueco tira "Cannot read properties of null".
+    // Se difiere al siguiente frame y se ignora si aún no está listo.
+    const raf = requestAnimationFrame(() => {
+      try {
+        if (variation.variation_galleries?.length) {
+          slider1.slickGoTo(0);
+        } else if (variation.variation_image?.id) {
+          const index = productState?.product?.product_galleries?.findIndex(
+            (object) => object.id === variation.variation_image.id
+          );
+          if (index >= 0) slider1.slickGoTo(index);
+        }
+      } catch (_) { /* slider aún no montado */ }
+    });
+    return () => cancelAnimationFrame(raf);
   }, [productState?.selectedVariation?.id, slider1]);
 
   let thumbnailSlider = {
