@@ -10,6 +10,7 @@ Meta Ads con Purchase como evento objetivo.
 | PageView         | Browser        | Layout raiz, dispara en cada cambio de ruta (SPA), deduplicado por path |
 | ViewContent      | Browser        | `/product/[slug]` al cargar la ficha                                    |
 | AddToCart        | Browser        | Al agregar un producto (usuario logueado y guest)                       |
+| AddToWishlist    | Browser        | WishlistProvider tras respuesta del server (logueado) o inmediato (guest) |
 | InitiateCheckout | Browser        | `/checkout` al montar (una vez por sesion)                              |
 | AddPaymentInfo   | Browser        | Click en "Realizar pedido" (antes de POST /payment/initialize)          |
 | Purchase         | Browser + CAPI | payment_status = `completed` (MP webhook/verify) o COD al crearse       |

@@ -14,6 +14,7 @@ import Cookies from "js-cookie";
 import React, { useContext, useEffect, useState } from "react";
 import WishlistContext from ".";
 import ThemeOptionContext from "../themeOptionsContext";
+import { useMetaPixel } from "@/components/analytics/MetaPixel";
 
 const buildWishlistIdMap = (items, useProductIdAsValue = false) =>
   Object.fromEntries(
@@ -26,6 +27,7 @@ const buildWishlistIdMap = (items, useProductIdAsValue = false) =>
 const WishlistProvider = (props) => {
   // Re-check the session as soon as modal login or registration completes.
   useContext(ThemeOptionContext);
+  const metaPixel = useMetaPixel();
   const isCookie = Cookies.get("uat");
   const [wishlistProducts, setWishlistProducts] = useState([]);
   const [wishlistReady, setWishlistReady] = useState(false);
@@ -85,7 +87,10 @@ const WishlistProvider = (props) => {
     if (Cookies.get("uat")) {
       setWishlistIds((prev) => ({ ...prev, [productId]: productId }));
       mutate({ product_id: productId }, {
-        onSuccess: () => refetch(),
+        onSuccess: () => {
+          refetch();
+          metaPixel?.trackLines("AddToWishlist", [productObj]);
+        },
         onError: () => setWishlistIds((prev) => {
           const next = { ...prev };
           delete next[productId];
@@ -100,6 +105,7 @@ const WishlistProvider = (props) => {
       });
       setWishlistIds((prev) => ({ ...prev, [productId]: productId }));
       ToastNotification("success", "GuestWishlistSaved");
+      metaPixel?.trackLines("AddToWishlist", [productObj]);
     }
   };
 
