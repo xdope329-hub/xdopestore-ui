@@ -11,6 +11,7 @@ import { ToastNotification } from "@/utils/customFunctions/ToastNotification";
 import i18next from "i18next";
 import Cookies from "js-cookie";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Col, Row } from "reactstrap";
@@ -44,6 +45,7 @@ const ProductBundleContent = ({ productState, compact = false }) => {
   const parentHasVariants = Array.isArray(parent?.variations) && parent.variations.length > 0;
 
   const { mutateAsync } = useCreate(AddToCartAPI, false, false, "No");
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   // Items en pantalla (con producto poblado y variantes permitidas).
@@ -101,7 +103,11 @@ const ProductBundleContent = ({ productState, compact = false }) => {
 
   const canBuy = checkedIds.length > 0 && !missingVariant;
 
-  const addBundle = async () => {
+  // `redirectAfter`: para el flujo "Comprar ahora" — agrega y navega a
+  // /checkout una vez encolada la persistencia (mismo patron fire-and-forget
+  // que buyNow del producto normal). No esperamos la respuesta del servidor:
+  // el checkout carga el carrito con el request auth y ya lo encuentra.
+  const addBundle = async ({ redirectAfter = false } = {}) => {
     if (!canBuy) {
       ToastNotification("error", i18next.t(isBundle ? "Elige las variantes de cada producto del bundle" : "SelectVariantFirst"));
       return;
@@ -118,6 +124,7 @@ const ProductBundleContent = ({ productState, compact = false }) => {
         return { product_id: pid, variation_id: variation ? String(variation.id || variation._id) : null };
       });
       addBundleToCart?.(parent, selections);
+      if (redirectAfter) router.push("/checkout");
       return;
     }
     // Paquete: la ficha y cada relacionado marcado son líneas independientes
@@ -221,9 +228,34 @@ const ProductBundleContent = ({ productState, compact = false }) => {
         </Row>
         <h4 className="bundle-title">{t(isBundle ? "Precio del bundle:" : "ProductSelectedFor")}</h4>
         <h4 className="theme-color total-price">{convertCurrency(total)}</h4>
-        <Btn loading={busy} size="xs" disabled={!canBuy || busy} className=" btn-solid bundle-btn mt-0 mt-sm-2 " onClick={addBundle}>
-          {t("BuyThisBundle")}
-        </Btn>
+        {isBundle ? (
+          // Bundle: mismo par de acciones que un producto normal
+          // (AddToCartButton) — agregar y comprar ahora. "Comprar ahora"
+          // encola la persistencia y navega a /checkout, igual que el buyNow
+          // del producto simple/variable.
+          <div className="product-buy-btn-group bundle-buy-btn-group">
+            <Btn
+              color="transparent"
+              className="btn-animation btn-solid hover-solid buy-button bg-theme btn-md scroll-button"
+              loading={busy}
+              disabled={!canBuy || busy}
+              onClick={() => addBundle({ redirectAfter: false })}
+            >
+              {t("AddToCart")}
+            </Btn>
+            <Btn
+              className="btn-solid buy-button"
+              disabled={!canBuy || busy}
+              onClick={() => addBundle({ redirectAfter: true })}
+            >
+              {t("BuyNow")}
+            </Btn>
+          </div>
+        ) : (
+          <Btn loading={busy} size="xs" disabled={!canBuy || busy} className=" btn-solid bundle-btn mt-0 mt-sm-2 " onClick={addBundle}>
+            {t("BuyThisBundle")}
+          </Btn>
+        )}
       </div>
     </div>
   );
