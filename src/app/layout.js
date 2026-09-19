@@ -1,6 +1,8 @@
 import "../index.scss";
-import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import ConsentProvider from "@/components/consent/ConsentBanner";
+import GatedAnalytics from "@/components/consent/GatedAnalytics";
 import { resolveMeasurementId } from "@/utils/analytics/googleAnalytics";
+import { resolvePixelId } from "@/utils/analytics/metaPixel";
 import { I18nProvider } from "./i18n/i18n-context";
 import { detectLanguage } from "./i18n/server";
 import { serializeJsonLd } from "@/utils/security/jsonLd";
@@ -86,6 +88,7 @@ export default async function RootLayout({ children }) {
 
   const lng = await detectLanguage();
   const measurementId = resolveMeasurementId(settings?.values, process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID);
+  const metaPixelId = resolvePixelId(settings?.values, process.env.NEXT_PUBLIC_META_PIXEL_ID);
   return (
     <I18nProvider language={lng}>
       <html lang="en">
@@ -107,9 +110,11 @@ export default async function RootLayout({ children }) {
           />
         </head>
         <body suppressHydrationWarning={true} style={bodyStyle}>
-          <GoogleAnalytics key={measurementId} measurementId={measurementId}>
-            {children}
-          </GoogleAnalytics>
+          <ConsentProvider>
+            <GatedAnalytics measurementId={measurementId} metaPixelId={metaPixelId}>
+              {children}
+            </GatedAnalytics>
+          </ConsentProvider>
         </body>
       </html>
     </I18nProvider>

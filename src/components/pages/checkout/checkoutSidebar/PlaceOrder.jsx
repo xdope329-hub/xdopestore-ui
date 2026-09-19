@@ -1,5 +1,7 @@
 import Btn from "@/elements/buttons/Btn";
 import { useAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { useMetaPixel } from "@/components/analytics/MetaPixel";
+import { useConsent } from "@/components/consent/ConsentBanner";
 import CartContext from "@/context/cartContext";
 import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
@@ -20,6 +22,8 @@ import { loadCheckoutTerms } from "../checkoutTerms";
 // no hay). El texto del campo de cupón NO cuenta.
 const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "", isQuoteCurrent }) => {
   const analytics = useAnalytics();
+  const metaPixel = useMetaPixel();
+  const { analytics: analyticsConsent } = useConsent();
   const { t } = useTranslation("common");
   // La MISMA fuente de verdad que decidió qué checkout se mostró (formulario
   // de invitado vs direcciones guardadas): el estado del checkout, no una
@@ -117,10 +121,31 @@ const PlaceOrder = ({ values, addToCartData, sessionToken, appliedCouponCode = "
       // Nunca viaja la contraseña; el invitado manda productos + direcciones
       // inline (ver placeOrderRules.js).
       const payload = buildInitializePayload({ values, isGuest, cartProducts, couponCode: appliedCouponCode });
+      // Meta pixel/CAPI: adjuntamos fbp/fbc + user_agent + url actual para que
+      // el backend pueda enviar CAPI con la atribucion original de la sesion
+      // (el Purchase CAPI viaja desde el webhook, fuera del navegador).
+      // Sin consentimiento de analitica no viajan datos de atribucion al
+      // backend: sin fbp/fbc/ip/ua Meta CAPI hace matching menos preciso o no
+      // envia el evento (segun la logica de userData). El resto del checkout
+      // funciona identico.
+      if (analyticsConsent && typeof window !== "undefined") {
+        try {
+          const url = new URL(window.location.href);
+          const fbclid = url.searchParams.get("fbclid");
+          payload.meta = {
+            fbp: metaPixel?.readFbp?.() || null,
+            fbc: metaPixel?.readFbc?.() || null,
+            fbclid: fbclid || null,
+            user_agent: window.navigator?.userAgent || null,
+            event_source_url: window.location.href,
+          };
+        } catch { /* ignore */ }
+      }
       analytics?.ecommerce("add_payment_info", cartProducts, {
         payment_type: values.payment_method,
         ...(appliedCouponCode ? { coupon: appliedCouponCode } : {}),
       });
+      metaPixel?.trackLines("AddPaymentInfo", cartProducts, undefined, appliedCouponCode ? { coupon: appliedCouponCode } : undefined);
       const res = await request({ url: "/payment/initialize", method: "post", data: payload });
       const ok = res?.status === 200 || res?.status === 201;
       if (["TERMS_VERSION_CHANGED", "TERMS_ACCEPTANCE_REQUIRED"].includes(res?.data?.code)) {

@@ -45,11 +45,11 @@ try {
 const imgSources = new Set(["'self'", "data:", "blob:", apiOrigin, ...imageHosts.map((h) => `${h.protocol}://${h.hostname}`)]);
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"} https://accounts.google.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com`,
+  `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"} https://accounts.google.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://connect.facebook.net`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  `img-src ${[...imgSources].join(" ")} https://*.googleusercontent.com https://*.google-analytics.com https://www.googletagmanager.com`,
-  `connect-src 'self' ${apiOrigin} https://www.google.com https://accounts.google.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com${isProd ? "" : " ws: wss:"}`,
+  `img-src ${[...imgSources].join(" ")} https://*.googleusercontent.com https://*.google-analytics.com https://www.googletagmanager.com https://www.facebook.com`,
+  `connect-src 'self' ${apiOrigin} https://www.google.com https://accounts.google.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.facebook.com https://connect.facebook.net${isProd ? "" : " ws: wss:"}`,
   `media-src 'self' blob: ${apiOrigin} https://res.cloudinary.com https://xdope-api.onrender.com`,
   "frame-src https://www.google.com https://recaptcha.google.com https://accounts.google.com",
   "worker-src 'self' blob:",
