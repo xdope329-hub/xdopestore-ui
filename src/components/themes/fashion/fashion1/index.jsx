@@ -23,7 +23,11 @@ import HomeTitle from '../../widgets/HomeTitle'
 const pickField = (obj, key, isMobile) => (isMobile && obj?.[`${key}_mobile`]) || obj?.[key];
 const fontStyle = (obj, prefix, isMobile, base) => {
   const family = pickField(obj, `${prefix}_font_family`, isMobile);
-  const size = pickField(obj, `${prefix}_font_size`, isMobile);
+  // En mobile solo aplicamos font-size inline si el admin definio uno
+  // especifico para mobile: si solo hay tamaño desktop, el CSS responsive
+  // (`.banner-section` en src/index.scss) se encarga con un clamp que respeta
+  // el ancho de la tarjeta.
+  const size = isMobile ? obj?.[`${prefix}_font_size_mobile`] : obj?.[`${prefix}_font_size`];
   const style = { ...(base || {}) };
   if (family) style.fontFamily = family;
   if (size) style.fontSize = `${size}px`;

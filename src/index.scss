@@ -423,6 +423,71 @@
   }
 }
 
+/* Home offer banners (themes/fashion/fashion1): en mobile las posiciones
+   configuradas desde el admin (right, top-left, top-right) pegan el texto a
+   los bordes de una tarjeta muy angosta y con las dos columnas al 50% el
+   resultado se ve apretado. Centramos, damos padding generoso y limitamos el
+   ancho del texto para que respire y quede organico. */
+@media (max-width: 767px) {
+  .banner-section .collection-banner {
+    /* Fuerza centrado horizontal y vertical sin importar la posicion elegida
+       en el admin: en 160-180px de ancho las esquinas no dan lectura. */
+    &.p-right,
+    &.p-top,
+    &.p-top.p-right {
+      .contain-banner,
+      .contain-banner.banner-3 {
+        justify-content: center;
+        align-items: center;
+      }
+    }
+
+    .contain-banner,
+    .contain-banner.banner-3 {
+      padding-inline: 18px;
+      padding-block: 20px;
+      text-align: center;
+
+      > div {
+        max-width: 100%;
+        width: 100%;
+      }
+
+      h2,
+      h4 {
+        margin-inline: auto;
+        max-width: 22ch;
+        line-height: 1.2;
+        word-break: normal;
+        overflow-wrap: break-word;
+      }
+
+      h4 {
+        margin-bottom: 6px;
+        font-size: clamp(11px, 3.4vw, 15px);
+      }
+
+      h2 {
+        font-size: clamp(14px, 4.4vw, 22px);
+      }
+    }
+  }
+}
+
+/* Con las dos columnas al 50% en telefonos muy pequenos el titulo apenas
+   entra en dos lineas: damos aire extra reduciendo un poco el font-size. */
+@media (max-width: 380px) {
+  .banner-section .collection-banner {
+    .contain-banner,
+    .contain-banner.banner-3 {
+      padding-inline: 12px;
+
+      h4 { font-size: 11px; }
+      h2 { font-size: 14px; }
+    }
+  }
+}
+
 /* Logos de métodos disponibles bajo la opción Mercado Pago en el checkout. */
 .product-main-touch-image {
   display: block;
