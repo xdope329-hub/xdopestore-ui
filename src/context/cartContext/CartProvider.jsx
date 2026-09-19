@@ -1,5 +1,6 @@
 import request from "@/utils/axiosUtils";
 import { useAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { useMetaPixel } from "@/components/analytics/MetaPixel";
 import { AddToCartAPI, ClearCart, ReplaceCartAPI } from "@/utils/axiosUtils/API";
 import syncLocalCart from "@/utils/customFunctions/SyncLocalCart";
 import { getCartProductId, getCartVariationId, isSameCartLine } from "@/utils/customFunctions/CartItemIdentity";
@@ -16,6 +17,7 @@ import CartContext from ".";
 
 const CartProvider = (props) => {
   const analytics = useAnalytics();
+  const metaPixel = useMetaPixel();
   const isCookie = Cookies.get("uat");
   // Cupo diario (Ajustes → Capacidad): con el cupo lleno no se agrega nada.
   const { capacityReached } = useContext(SettingContext) || {};
@@ -43,7 +45,11 @@ const CartProvider = (props) => {
         setCartTotal(resDta.data.total ?? 0);
         setGetCardData(resDta.data.items[0]);
         const line = resDta.data.items.find((item) => isSameCartLine(item, variables.product_id, variables.variation_id));
-        if (line && variables.quantity) analytics?.ecommerce(variables.quantity > 0 ? "add_to_cart" : "remove_from_cart", [{ ...line, quantity: Math.abs(variables.quantity) }]);
+        if (line && variables.quantity) {
+          const eventLine = { ...line, quantity: Math.abs(variables.quantity) };
+          analytics?.ecommerce(variables.quantity > 0 ? "add_to_cart" : "remove_from_cart", [eventLine]);
+          if (variables.quantity > 0) metaPixel?.trackLines("AddToCart", [eventLine]);
+        }
       }
     }
   });
@@ -242,11 +248,13 @@ const CartProvider = (props) => {
         quantity: obj.quantity,
       });
     } else if (qty) {
-      analytics?.ecommerce(qty > 0 ? "add_to_cart" : "remove_from_cart", [{
+      const eventLine = {
         product: productObj,
         variation: cloneVariation?.selectedVariation || cloneVariation?.variation || cart[index]?.variation || null,
         quantity: Math.abs(qty),
-      }]);
+      };
+      analytics?.ecommerce(qty > 0 ? "add_to_cart" : "remove_from_cart", [eventLine]);
+      if (qty > 0) metaPixel?.trackLines("AddToCart", [eventLine]);
     }
 
     // Update the productQty state immediately after updating the cartProducts state

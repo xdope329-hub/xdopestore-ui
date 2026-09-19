@@ -1,6 +1,7 @@
 "use client";
 import NoDataFound from "@/components/widgets/NoDataFound";
 import { useEcommerceView } from "@/components/analytics/GoogleAnalytics";
+import { useMetaPixelView } from "@/components/analytics/MetaPixel";
 import ProductIdsContext from "@/context/productIdsContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
 import Loader from "@/layout/loader";
@@ -38,6 +39,7 @@ const ProductDetailContent = ({ params }) => {
   // Calling Product API on slug
   const { data: ProductData, isLoading, isFetched, isFetching, refetch, error } = useFetchQuery([params], () => request({ url: `${ProductAPI}/${params}` }, router), { enabled: false, refetchOnWindowFocus: false, select: (res) => res?.data });
   useEcommerceView("view_item", [ProductData], params, isFetched && !isFetching && !!ProductData?.id);
+  useMetaPixelView("ViewContent", [ProductData], params, isFetched && !isFetching && !!ProductData?.id);
   // Calling Product API when params is there
   useEffect(() => {
     params && refetch();

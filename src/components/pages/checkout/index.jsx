@@ -1,6 +1,7 @@
 "use client";
 import CapacityNotice from "@/components/widgets/capacity/CapacityNotice";
 import { useEcommerceView } from "@/components/analytics/GoogleAnalytics";
+import { useMetaPixelView } from "@/components/analytics/MetaPixel";
 import CartContext from "@/context/cartContext";
 import WrapperComponent from "@/components/widgets/WrapperComponent";
 import AccountContext from "@/context/accountContext";
@@ -35,6 +36,7 @@ const CheckoutContent = () => {
   const { isLoading: themeLoad, openAuthModal, setOpenAuthModal } = useContext(ThemeOptionContext);
   const { cartProducts } = useContext(CartContext);
   useEcommerceView("begin_checkout", cartProducts, "checkout", !themeLoad && !!capacity && !capacityReached);
+  useMetaPixelView("InitiateCheckout", cartProducts, "checkout", !themeLoad && !!capacity && !capacityReached);
 
   // Re-read the auth cookie whenever the auth modal opens/closes, so once a
   // guest logs in from the checkout prompt the address/payment UI appears

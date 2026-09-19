@@ -3,8 +3,9 @@ import request from "@/utils/axiosUtils";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useMetaPixel } from "@/components/analytics/MetaPixel";
 
 const OrderSuccess = () => {
   const { t } = useTranslation("common");
@@ -13,19 +14,44 @@ const OrderSuccess = () => {
   const [status, setStatus] = useState("loading");
   const [orderNumber, setOrderNumber] = useState(null);
   const [isGuest, setIsGuest] = useState(false);
+  const metaPixel = useMetaPixel();
+  // Guard local: en un mismo montaje (StrictMode, rerenders) no reenviamos
+  // Purchase. La deduplicacion cross-source con CAPI la hace Meta via
+  // event_id compartido (purchase_<orderId>); un F5 en esta pagina volveria
+  // a disparar Purchase browser, pero como el event_id NO cambia, Meta lo
+  // deduplica igualmente contra el CAPI original.
+  const firedRef = useRef(false);
   useEffect(() => { setIsGuest(!Cookies.get("uat")); }, []);
 
   useEffect(() => {
     if (!orderId) { setStatus("error"); return; }
     request({ url: `/payment/verify/${orderId}` })
       .then((res) => {
-        const ps = res?.data?.payment_status;
+        const data = res?.data || {};
+        const ps = data.payment_status;
         if (ps === "completed" || ps === "pending") setStatus("success");
         else setStatus("failed");
-        setOrderNumber(res?.data?.order_number || null);
+        setOrderNumber(data.order_number || null);
+        // Purchase browser SOLO si el pago esta realmente confirmado.
+        // event_id = purchase_<orderId> (el mismo que envia CAPI). Meta
+        // deduplica ambos y no cuenta doble. Nunca disparamos Purchase con
+        // payment_status "pending" ni por navegacion trasera al success page
+        // dentro del mismo montaje.
+        if (ps === "completed" && data.tracking && !firedRef.current) {
+          firedRef.current = true;
+          metaPixel?.trackPurchase({
+            eventId: data.tracking.event_id,
+            value: data.tracking.value,
+            currency: data.tracking.currency,
+            contents: data.tracking.contents,
+            content_ids: data.tracking.content_ids,
+            num_items: data.tracking.num_items,
+            order_id: data.order_id,
+          });
+        }
       })
       .catch(() => setStatus("success")); // COD won't fail here
-  }, [orderId]);
+  }, [orderId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (status === "loading") {
     return (
