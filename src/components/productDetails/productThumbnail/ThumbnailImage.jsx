@@ -22,6 +22,12 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
   const [audioType, setAudioType] = useState(["audio/mpeg", "audio/wav", "audio/ogg"]);
   const currentVariation = productState?.selectedVariation?.variation_galleries?.length ? productState?.selectedVariation?.variation_galleries : productState?.product?.product_galleries;
   const hasGallery = Array.isArray(currentVariation) && currentVariation.length > 0;
+  // Con una sola imagen slick clona el slide para su loop interno y en el DOM
+  // aparece la misma imagen apilada 2-3 veces; ademas la fila de thumbnails
+  // duplica el unico thumb. Simple product con 1 imagen no necesita carrusel:
+  // se pinta la unica imagen y se oculta la nav.
+  const hasMultipleImages = hasGallery && currentVariation.length > 1;
+  const singleImage = hasGallery && !hasMultipleImages ? currentVariation[0] : null;
   // Slick no reinicializa `slidesToShow` cuando cambia en vivo (p.ej. de 1 a
   // 3 al elegir una variante con más imágenes): los thumbnails se salen del
   // track y quedan apilados. Con este key el Slider se remonta cuando cambia
@@ -95,7 +101,7 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
                   {productState?.product.is_featured ? <li className="featured">{t("Featured")}</li> : ""}
                 </ul>
               ) : null}
-              {hasGallery && (
+              {hasMultipleImages && (
               <Slider key={`main-${gallerySignature}`} asNavFor={slider2} ref={setSlider1} prevArrow={<SlickArrowLeft />} nextArrow={<SlickArrowRight />}>
                 {currentVariation?.map((image, i) => (
                   <div key={i}>
@@ -120,13 +126,30 @@ const ThumbnailProductImage = ({ productState, slideToShow }) => {
                 ))}
               </Slider>
               )}
+              {!hasMultipleImages && singleImage && (
+                videoType.includes(singleImage.mime_type) ? (
+                  <div className="slider-image">
+                    <video className="w-100" controls>
+                      <source src={singleImage.original_url} type={singleImage.mime_type} />
+                    </video>
+                  </div>
+                ) : audioType.includes(singleImage.mime_type) ? (
+                  <div className="slider-main-img">
+                    <audio controls>
+                      <source src={singleImage.original_url} type={singleImage.mime_type} />
+                    </audio>
+                  </div>
+                ) : (
+                  <ProductMainImage src={singleImage.original_url} alt={singleImage.name || productState?.product?.name} />
+                )
+              )}
               {!hasGallery && <ProductMainImage src={productState?.product?.product_thumbnail ? productState?.product?.product_thumbnail?.original_url : placeHolderImage} alt={productState?.product?.name} />}
 
               {productState?.product?.product_type == "digital" && <DigitalImageOptions product={productState?.product} />}
             </div>
           </Col>
           <Col xs={12}>
-            {hasGallery && (
+            {hasMultipleImages && (
               <Slider key={`nav-${gallerySignature}`} {...thumbnailSlider} className="slider-nav no-arrow thumbnail-slider-box" asNavFor={slider1} ref={setSlider2} slidesToShow={currentVariation.length <= 3 ? currentVariation.length : slideToShow}>
                 {currentVariation?.map((image, i) => (
                   <div key={i} className="slider-image">
