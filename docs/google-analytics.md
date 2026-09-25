@@ -16,6 +16,7 @@ Optional: set `NEXT_PUBLIC_GA_MEASUREMENT_ID` in `.env.local` / the deployment e
 | Event | Trigger |
 | --- | --- |
 | `page_view` | Initial page and each pathname change, including product, cart, checkout and order result pages. Query-only changes do not create extra views. |
+| `whatsapp_click` | Each click/tap on the floating WhatsApp button or product inquiry button, including keyboard activation. |
 | `view_item` | Product details load successfully, once per product visit. |
 | `add_to_cart` | Add/increase cart quantity, including bundles. Authenticated writes are tracked after API success. |
 | `remove_from_cart` | Decrease/remove items or explicitly clear the cart, after API success when signed in. |
@@ -25,14 +26,18 @@ Optional: set `NEXT_PUBLIC_GA_MEASUREMENT_ID` in `.env.local` / the deployment e
 
 In **Reports → Engagement → Pages and screens**, use page path to compare `/product/…`, `/cart`, and `/checkout`. In **Explore → Funnel exploration**, add steps `view_item → add_to_cart → begin_checkout → add_payment_info` to see where visitors stop. Use an open funnel if visitors may enter directly at cart or checkout. Google may organize the report navigation differently depending on the property's selected reporting collection.
 
+For WhatsApp, filter the **Events** report to `whatsapp_click`: **Event count** is the number of taps (repeat taps count), and **Total users** is the number of distinct users GA4 observed tapping. This measures opening WhatsApp, not sending a message. Existing GA4 settings and browser blockers apply; deploy these changes before expecting live data.
+
+The event includes `button_location` (`floating` or `product_inquiry`) and, when a product is available, `product_slug`. Register those parameters as event-scoped custom dimensions to compare placements or products in Explore. Page location uses the same URL filtering as other events. The event does not send the WhatsApp URL, phone number or prefilled message. Footer/contact social links, capacity fallback links and product sharing are not included in this event.
+
 Values are the item price × quantity in **COP**, the database currency, independent of the display currency. Shipping and tax are excluded. Payloads contain product IDs/names, variant, brand/category when available, quantity and price. Payment submission additionally includes the payment method and applied coupon. No checkout contact/address fields, passwords or account IDs are passed. URLs drop query parameters except campaign attribution; order-detail IDs and fragments are removed. Google Signals and ad personalization are disabled.
 
 `purchase` is deliberately not emitted: the current verification endpoint returns payment status without authoritative order items/totals, and the success page can also represent a pending payment. A success-page visit is not confirmed revenue. Reliable revenue tracking requires a separate integration with confirmed payment/order data. Variant replacement in the cart does not emit quantity-change events.
 
 ## Verification
 
-- `npm run test:unit` checks configuration precedence, item amounts, URL filtering, route deduplication and tag failures.
+- `npm run test:unit` checks configuration precedence, item amounts, URL filtering, route deduplication, WhatsApp click counts/payloads and tag failures.
 - The integration can be inspected without sending test data to Google by intercepting `https://www.googletagmanager.com/gtag/js*` in browser tests and reading the queued `window.dataLayer` commands.
 - Production security headers allow the Google tag and Analytics collection endpoints.
 
-References: [Google ecommerce events](https://developers.google.com/analytics/devguides/collection/ga4/ecommerce), [manual page views and history settings](https://developers.google.com/analytics/devguides/collection/ga4/views), [Google tag security policy](https://developers.google.com/tag-platform/security/guides/csp).
+References: [Google custom events](https://developers.google.com/analytics/devguides/collection/ga4/events), [custom event parameters](https://developers.google.com/analytics/devguides/collection/ga4/event-parameters), [Google ecommerce events](https://developers.google.com/analytics/devguides/collection/ga4/ecommerce), [manual page views and history settings](https://developers.google.com/analytics/devguides/collection/ga4/views), [Google tag security policy](https://developers.google.com/tag-platform/security/guides/csp).

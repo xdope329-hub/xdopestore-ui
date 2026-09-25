@@ -88,4 +88,35 @@ test("disabled analytics does not create a data layer; broken tags cannot break 
   const client = createAnalyticsClient("G-STORE123", browser);
   assert.doesNotThrow(() => client.pageView());
   assert.equal(client.ecommerce("add_to_cart", [{ product, quantity: 1 }]), false);
+  assert.equal(client.whatsappClick("floating"), false);
+});
+
+
+test("WhatsApp counts each activation, without requiring a product or exposing chat content", () => {
+  const browser = fakeBrowser();
+  const client = createAnalyticsClient("G-STORE123", browser);
+  client.pageView();
+  assert.equal(events(browser, "whatsapp_click").length, 0);
+  assert.equal(client.whatsappClick("floating"), true);
+  assert.equal(client.whatsappClick("floating"), true);
+  const inquiry = { slug: "camiseta", number: "573001234567", message: "private chat", href: "https://wa.me/573001234567?text=private" };
+  client.whatsappClick("product_inquiry", inquiry);
+  client.whatsappClick("floating", inquiry);
+  const clicks = events(browser, "whatsapp_click");
+  assert.equal(clicks.length, 4);
+  assert.deepEqual(clicks[0][2], {
+    button_location: "floating",
+    page_location: "https://xdopestore.com/product/camiseta?utm_source=instagram",
+    page_title: "Camiseta",
+    send_to: "G-STORE123",
+  });
+  assert.deepEqual(clicks[2][2], { ...clicks[0][2], button_location: "product_inquiry", product_slug: "camiseta" });
+  assert.equal(clicks[3][2].product_slug, "camiseta");
+  assert.equal(events(browser, "page_view").length, 1);
+  const payload = JSON.stringify(clicks);
+  for (const excluded of ["private", "573001234567", "wa.me", "token"]) assert.ok(!payload.includes(excluded));
+  browser.location = new URL("https://xdopestore.com/cart?email=private");
+  client.whatsappClick("floating");
+  assert.equal(events(browser, "whatsapp_click").at(-1)[2].page_location, "https://xdopestore.com/cart");
+  assert.equal(events(browser, "page_view").length, 2);
 });

@@ -1,4 +1,5 @@
 "use client";
+import { useAnalytics } from "@/components/analytics/GoogleAnalytics";
 import SettingContext from "@/context/settingContext";
 import ThemeOptionContext from "@/context/themeOptionsContext";
 import { buildWhatsAppLink, whatsappHref } from "@/utils/customFunctions/whatsappLink";
@@ -22,6 +23,7 @@ const STICKY_BAR_SETTLE_MS = 600;
  * bar so it never covers its "add to cart" button.
  */
 const WhatsAppButton = () => {
+  const analytics = useAnalytics();
   const { t } = useTranslation("common");
   const { settingData } = useContext(SettingContext);
   const { whatsappProduct } = useContext(ThemeOptionContext) || {};
@@ -110,7 +112,7 @@ const WhatsAppButton = () => {
           .xd-whatsapp-fab:hover { transform: none; }
         }
       `}</style>
-      <a className="xd-whatsapp-fab" href={href} target="_blank" rel="noopener noreferrer" aria-label={label} title={label} style={lift ? { bottom: `${lift}px` } : undefined}>
+      <a onClick={() => analytics?.whatsappClick("floating", whatsappProduct)} className="xd-whatsapp-fab" href={href} target="_blank" rel="noopener noreferrer" aria-label={label} title={label} style={lift ? { bottom: `${lift}px` } : undefined}>
         {/* WhatsApp glyph */}
         <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
           <path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.65-2.05-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.6-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.06 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.75-.72 2-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35z" />
