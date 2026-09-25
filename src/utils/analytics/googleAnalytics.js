@@ -90,6 +90,17 @@ export function createAnalyticsClient(measurementId, browser) {
   };
   return {
     pageView,
+    whatsappClick(buttonLocation, product) {
+      pageView();
+      // Send only the button placement and public product slug, never the
+      // WhatsApp destination URL, phone number or prefilled message.
+      return command("event", "whatsapp_click", {
+        button_location: buttonLocation,
+        ...(product?.slug ? { product_slug: product.slug } : {}),
+        ...pageFields(),
+        send_to: measurementId,
+      });
+    },
     ecommerce(name, lines, extra = {}) {
       const params = ecommerceParams(lines);
       if (!params) return false;

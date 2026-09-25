@@ -1,4 +1,5 @@
 "use client";
+import { useAnalytics } from "@/components/analytics/GoogleAnalytics";
 import SettingContext from "@/context/settingContext";
 import { buildWhatsAppLink, whatsappHref } from "@/utils/customFunctions/whatsappLink";
 import { buildProductInquiryMessage, productUrl } from "@/utils/customFunctions/whatsappProductMessage";
@@ -13,6 +14,7 @@ import { RiWhatsappLine } from "react-icons/ri";
  * producto le preguntan. Solo se muestra si WhatsApp está activo en el admin.
  */
 const WhatsAppInquiryButton = ({ productState }) => {
+  const analytics = useAnalytics();
   const { t } = useTranslation("common");
   const { settingData } = useContext(SettingContext);
   // El origen se lee en el cliente: en el servidor no hay window.
@@ -33,7 +35,7 @@ const WhatsAppInquiryButton = ({ productState }) => {
   });
 
   return (
-    <a className="btn btn-md whatsapp-inquiry-btn" href={whatsappHref(link.number, message)} target="_blank" rel="noopener noreferrer">
+    <a onClick={() => analytics?.whatsappClick("product_inquiry", product)} className="btn btn-md whatsapp-inquiry-btn" href={whatsappHref(link.number, message)} target="_blank" rel="noopener noreferrer">
       <RiWhatsappLine /> {t("AskOnWhatsApp")}
     </a>
   );
