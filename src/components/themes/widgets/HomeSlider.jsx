@@ -114,7 +114,8 @@ const AutoplayProgress = ({ seconds, paused, cycle, onElapsed }) => {
 
 const HomeSlider = ({ bannerData, height, width, sliderClass }) => {
   const isMobile = useIsMobile();
-  const banners = bannerData?.banners ?? [];
+  // status omitido = visible (compatibilidad con banners viejos); false/0 lo oculta.
+  const banners = (bannerData?.banners ?? []).filter((b) => b?.status === undefined || b?.status === null || !!b?.status);
   // Segundos entre banners (Front → Home Banner): vacío = 5, 0 = sin auto-desplazamiento.
   const seconds = resolveAutoplaySeconds(bannerData?.autoplay_interval);
   const autoplay = shouldAutoplay(banners.length, seconds);
@@ -146,7 +147,8 @@ const HomeSlider = ({ bannerData, height, width, sliderClass }) => {
     );
   }
 
-  const single = banners[0] ?? bannerData;
+  if (banners.length === 0) return null;
+  const single = banners[0];
   return <SliderSlide banner={single} height={height} width={width} isMobile={isMobile} />;
 };
 
